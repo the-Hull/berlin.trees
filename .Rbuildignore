@@ -1,0 +1,13 @@
+^berlin\.trees\.Rproj$
+^\.Rproj\.user$
+^LICENSE\.md$
+^README\.Rmd$
+^README-.*\.png$
+^CONDUCT\.md$
+^CONTRIBUTING\.md$
+analysis
+^\./_setup\.R$
+^\./_drake\.R$
+^\./_make\.R$
+^\./R/plan\.R$
+^\.drake/

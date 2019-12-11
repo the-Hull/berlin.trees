@@ -1,0 +1,32 @@
+Package: berlin.trees
+Title: Analysis of Berlin City Trees and their Climate-Urban Envelope
+Version: 0.0.0.9000
+Authors@R:
+    person(given = "First",
+           family = "Last",
+           role = c("aut", "cre"),
+           email = "first.last@example.com")
+Description: This analysis explores the current climatic conditions of Berlin City trees in relation to urbanization.
+License: MIT + file LICENSE
+ByteCompile: true
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    bookdown,
+    here,
+    ckanr,
+    ggplot2,
+    dplyr,
+    xml2,
+    httr,
+    purrr,
+    stringr,
+    sf,
+    extrafont,
+    future.callr,
+    drake,
+    furrr,
+    tools
+Suggests: devtools,
+    git2r
+RoxygenNote: 6.1.1
