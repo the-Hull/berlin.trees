@@ -7,11 +7,12 @@
 clean_genus(sf_data)
 }
 \arguments{
-\item{sf_data}{sf tibble of Berlin City trees}
+\item{sf_data}{sf-tibble of Berlin City trees}
 }
 \value{
 sf tibble with cleaned genus names
 }
 \description{
-Clean Feature Meta Data
+Formats upper/lower case and removes "" as genera; still need to check if other
+problematic values exist or can be recovered from other meta data.
 }

@@ -9,7 +9,12 @@
 # usethis::use_package("future.callr")
 # usethis::use_package("drake")
 # usethis::use_package("furrr")
-usethis::use_package("tools")
+# usethis::use_package("tools")
+# usethis::use_package("forcats")
+# usethis::use_package("tibble")
+# usethis::use_package("rmarkdown")
+# usethis::use_package("raster")
+# usethis::use_package("magrittr")
 
 ## packages
 
@@ -19,7 +24,9 @@ future::plan(future.callr::callr)
 
 # clean()
 #
-devtools::install(upgrade = FALSE)
+devtools::install(upgrade = TRUE)
+
+
 drake::r_outdated(source = './_drake.R')
 # redownload <- FALSE
 

@@ -10,12 +10,16 @@
 # source("R/packages.R")  # Load your packages, e.g. library(drake).
 # source("R/functions.R") # Define your custom code as a bunch of functions.
 # devtools::install(upgrade = FALSE)
+# drake::expose_imports("bookdown",
+#                       character_only = TRUE)
 
 drake::expose_imports("berlin.trees",
                       character_only = TRUE)
-redownload <- FALSE
+# redownload <- FALSE
 
 source("R/plan.R")      # Create your drake plan.
 # _drake.R must end with a call to drake_config().
 # The arguments to drake_config() are basically the same as those to make().
+# drake::expose_imports("berlin.trees",
+                      # character_only = TRUE)
 drake_config(plan)

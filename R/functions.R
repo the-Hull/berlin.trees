@@ -1,4 +1,4 @@
-## Functions for reading/accessing data
+# Functions for reading, accessing and wrangling data --------------------
 
 
 #' Download Trees from daten.berlin.de
@@ -158,6 +158,53 @@ load_downloaded_data_to_lists <- function(download_data){
 }
 
 
+#' Bind rows of sf tibbles to single data set
+#'
+#' @param sf_list list containing simple feature tibbles
+#'
+#' @return single sf-tibble
+#' @export
+#'
+bind_rows_sf <- function(sf_list){
+    # bind data without geometry
+    sf_df  <- lapply(sf_list, function(x) sf::st_set_geometry(x, NULL)) %>%
+        dplyr::bind_rows()
+
+    # make data frame and set geometry based on original sfcs
+    d_sf  <-  sf::st_sf(sf_df, geometry = purrr::map(sf_list, "geometry") %>%
+                            do.call(c, .))
+
+    return(d_sf)
+
+}
+
+
+#' Clean Feature Meta Data
+#'
+#' @param sf_data sf-tibble of Berlin City trees
+#'
+#' @description Formats upper/lower case and removes "" as genera; still need to check if other
+#' problematic values exist or can be recovered from other meta data.
+#'
+#' @return sf tibble with cleaned genus names
+#' @export
+#'
+clean_genus <- function(sf_data){
+
+    sf_data$GATTUNG <- tools::toTitleCase(tolower(sf_data$GATTUNG))
+    sf_data$GATTUNG[sf_data$GATTUNG==""] <- NA
+
+    return(sf_data)
+
+}
+
+
+
+# Spatial -----------------------------------------------------------------
+
+
+
+
 #' Define bounding box as area of interest
 #'
 #' @param lat_min numeric
@@ -198,43 +245,6 @@ make_bbox <- function(lat_min, lat_max, lon_min, lon_max, feature_name, crs = 43
 
 
 
-
-#' Bind rows of sf tibbles to single data set
-#'
-#' @param sf_list list containing simple feature tibbles
-#'
-#' @return single sf-tibble
-#' @export
-#'
-bind_rows_sf <- function(sf_list){
-    # bind data without geometry
-    sf_df  <- lapply(sf_list, function(x) sf::st_set_geometry(x, NULL)) %>%
-        dplyr::bind_rows()
-
-    # make data frame and set geometry based on original sfcs
-    d_sf  <-  sf::st_sf(sf_df, geometry = purrr::map(sf_list, "geometry") %>%
-                            do.call(c, .))
-
-    return(d_sf)
-
-}
-
-
-#' Clean Feature Meta Data
-#'
-#' @param sf_data sf tibble of Berlin City trees
-#'
-#' @return sf tibble with cleaned genus names
-#' @export
-#'
-clean_genus <- function(sf_data){
-
-    sf_data$GATTUNG <- tools::toTitleCase(tolower(sf_data$GATTUNG))
-    sf_data$GATTUNG[sf_data$GATTUNG==""] <- NA
-
-    return(sf_data)
-
-}
 
 
 #' Access Berlin district polygon from external source
@@ -277,6 +287,209 @@ crop_data_with_bbox <- function(sf_data_list, bbox){
 
 
 
+
+#' Extract UHI rasters from tifs
+#'
+#' @description Extracts summer and night time UHI gridded data from tifs.
+#' Data was accessed via the UHI Explorer App (2020-01-08;
+#' \url{https://yceo.users.earthengine.app/view/uhimap}) for the Berlin Urban Cluster.
+#'
+#' @references Chakraborty, T., and X. Lee.
+#' A Simplified Urban-Extent Algorithm to Characterize Surface Urban Heat Islands
+#' on a Global Scale and Examine Vegetation Control on Their Spatiotemporal Variability’.
+#' International Journal of Applied Earth Observation and Geoinformation 74 (February 2019):
+#' 269–80. \url{https://doi.org/10.1016/j.jag.2018.09.015}.
+
+#'
+#' @param path Character, path to folder containing UHI zip archives.
+#'
+#' @return A nested list containing RasterLayers with the following levels:
+#' \enumerate{
+#' \item{Time of year}{Summer / Winter}
+#' \item{Time of day}{Night / Day}
+#' }
+#' For the Years 2003 to 2017.
+#'
+#' @export
+#'
+get_uhi_rasters <- function(path){
+
+
+
+    folder_path <- path
+    grid_zips <- file.path(folder_path) %>%
+        list.files()
+
+
+    uhi_stacks <- furrr::future_map(
+        grid_zips,
+        function(x){
+
+
+            # grab all tif files
+            all_files <- utils::unzip(zipfile = file.path(folder_path, x), list = TRUE) %>%
+                dplyr::filter(grepl(pattern = "tif", x = .$Name)) %>%
+                dplyr::select(Name)
+
+            # if(nrow(all_files) == 0) stop("No UHI .tif(s) found.")
+
+            day_night_list <- furrr::future_map(
+                c("night", "day"),
+                function(time_of_day) {
+
+
+                    uhi_grid_stack <- raster::stack(x = utils::unzip(zipfile = file.path(folder_path, x),
+                                                                     files = dplyr::filter(all_files,
+                                                                                           grepl(pattern = time_of_day,
+                                                                                                 x = Name))$Name,
+                                                                     exdir = tempdir()))
+
+
+                    uhi_grid_stack[uhi_grid_stack < -100] <- NA
+
+
+                    names(uhi_grid_stack) <- paste0(time_of_day,
+                                                    "_",
+                                                    sub(pattern = ".*([0-9]{4})$",
+                                                        replacement = "\\1",
+                                                        x = names(uhi_grid_stack)))
+
+
+                    return(uhi_grid_stack)
+
+
+
+                }) %>%
+                purrr::set_names(c("night", "day"))
+
+            return(day_night_list)
+
+                                    }) %>%
+        purrr::set_names(tools::file_path_sans_ext(grid_zips))
+
+
+    return(uhi_stacks)
+}
+
+
+
+
+
+
+
+#' Add UHI data from RasterLayer stack to sf data frame
+#'
+#' @param uhi_stack_list List, nested on time of year, time of day
+#' @param sf_data sf points, data frame with Berlin tree locations and meta data
+#'
+#' @return A nested list containing RasterLayers with the following levels:
+#' \enumerate{
+#' \item{Time of year}{Summer / Winter}
+#' \item{Time of day}{Night / Day}
+#' }
+#' Containing sf point objects (multiple copies of full data set - careful! \strong{needs improvement!})
+#'
+#'
+#' @export
+#'
+#' @examples
+add_uhi_hist_data <- function(uhi_stack_list, sf_data){
+
+
+    # brief checks
+    if (!is(sf_data, "sf")) {
+        stop("input data is not in sf")
+    }
+    # if (!is(uhi_stack_list, "RasterLayer")) {
+    #     stop("input raster is not a RasterLayer")
+    # }
+
+
+    # LOGIC
+
+
+
+    ## raster stats
+
+    stat_funs <- c("median", "mean", "sd")
+
+    ### cycle into list containing the 4 (total) stacks (2x summer, 2x winter)
+    raster_stats <- lapply(stat_funs,
+                           function(stats) {
+
+                               # into list (summer vs. winter)
+                               lapply(uhi_stack_list,
+                                      function(stacks) {
+                                          # into stacks (day vs. night)
+                                          lapply(stacks,
+                                                 raster::cellStats, stats)
+                                      })
+                           }) %>%
+        setNames(stat_funs)
+
+
+    ## tree uhi exposure
+
+    ### prepare tree data
+
+    sf_data <- sf_data %>%
+        dplyr::filter(!is.na(GATTUNG)) %>%
+        dplyr::mutate(STAMMUMFG = as.numeric(STAMMUMFG),
+                      # GATTUNG = forcats::fct_infreq(as.factor(GATTUNG)),
+
+
+                      gattung_short = forcats::fct_lump(as.factor(GATTUNG),11, other_level = "Other") %>%
+                          as.character(),
+                      gattung_short =   ifelse(GATTUNG == "Pinus", "Pinus", gattung_short),
+                      gattung_short = forcats::fct_infreq(as.factor(gattung_short)),
+                      gattung_short = forcats::fct_relevel(gattung_short, "Other", after = Inf),
+
+
+                      bezirk_num = as.numeric(as.factor(BEZIRK)))
+
+
+
+    ### re-project raster to UTM of sf data
+
+    uhi_stack_list <- lapply(uhi_stack_list,
+                             function(stack)
+                                 lapply(stack, function(x)  {
+
+                                     raster::projectRaster(x,
+                                                           crs =  sf::st_crs(sf_data)$proj4string)
+
+                                 }  ))
+
+
+    extract_vals <- lapply(uhi_stack_list,
+                           function(stacks){
+                               lapply(stacks,
+                                      raster::extract,
+                                      sf::as_Spatial(sf_data),
+                                      # df = TRUE,
+                                      sp = TRUE)
+                           }) %>%
+        # transform back to sf
+        lapply(.,
+               function(stacks){
+                   lapply(stacks,
+                          sf::st_as_sf)
+               })
+
+
+
+    return(extract_vals)
+
+
+
+}
+
+
+# PLOTS -------------------------------------------------------------------
+
+
+
+
 #' Create overview-map of all data sets
 #'
 #' @param sf_data sf-tibble of Berlin trees
@@ -284,36 +497,205 @@ crop_data_with_bbox <- function(sf_data_list, bbox){
 #'
 #' @return ggplot object
 #' @export
-#' @import ggplot2
 make_overview_map <- function(sf_data, poly){
 
     # extrafont::loadfonts("win", quiet = TRUE)
 
+
     gplot <- sf_data %>%
         dplyr::group_by(provenance) %>%
-        dplyr::sample_n(5000) %>%
+        dplyr::sample_n(7000) %>%
         dplyr::ungroup() %>%
         ggplot() +
-        geom_sf(aes(color = GATTUNG),
+
+
+
+        geom_sf(inherit.aes = FALSE,
+                # aes(geometry = geometry),
+                data = poly,
+                fill = "gray80",
+                color = "white",
+                show.legend = FALSE,
+                size = 0.7) +
+
+
+        geom_sf(color = "black",
+                # aes(geometry = geometry),
+                size = 0.2,
                 show.legend = FALSE,
                 alpha = 0.3) +
 
-        geom_sf(inherit.aes = FALSE,
-                data = poly,
-                fill = "transparent",
-                show.legend = FALSE,
-                color = "gray20",
-                size = 0.5) +
+
+        # geom_sf(inherit.aes = FALSE,
+        #         data = poly,
+        #         fill = "transparent",
+        #         color = "white",
+        #         show.legend = FALSE,
+        #         size = 0.75,
+        #         alpha = 0.5) +
 
         facet_wrap(~provenance) +
 
         scale_x_continuous(breaks = seq(13, 14, 0.2)) +
         scale_y_continuous(breaks = seq(52.3, 53.7, 0.1)) +
 
-        theme_minimal(base_size = 16
+        theme_minimal(base_size = 18
                       # base_family = "Roboto Condensed"
-        )
+        ) +
+
+        labs(caption = paste0("Data source: daten.berlin.de; WFS Service, accessed: ",
+                              Sys.Date()))
 
     return(gplot)
+
+}
+
+
+
+#' Generate overview of records (bar plot)
+#'
+#' @param sf_data sf-tibble of Berlin City trees
+#'
+#' @return ggplot bar graph
+#' @export
+#'
+#' @import ggplot2
+tree_sums_bar_plot <- function(sf_data){
+
+
+
+    sf_data %>%
+        dplyr::mutate(STAMMUMFG = as.numeric(STAMMUMFG),
+               GATTUNG = forcats::fct_infreq(as.factor(GATTUNG)),
+               gattung_short = forcats::fct_lump(GATTUNG,11),
+               bezirk_num = as.numeric(as.factor(BEZIRK))) %>%
+
+
+        ggplot() +
+
+        coord_flip() +
+
+        geom_bar(aes(x = gattung_short,
+                              fill = provenance),
+                          show.legend = TRUE,
+                          color = "gray10") +
+
+
+        labs(subtitle =  paste0("total records: ",
+                                nrow(sf_data),
+                                "\n",
+                                "total genera: ",
+                                sf_data$GATTUNG %>%
+                                    unique() %>% length()),
+
+             caption = paste0("Data source: daten.berlin.de; WFS Service, accessed: ",
+                              Sys.Date()),
+             y = "Count",
+             x = "Genus",
+             fill = NULL) +
+
+
+        theme_minimal(base_size = 18) +
+        theme(legend.position = c(0.8,0.5),
+              axis.text.y = element_text(face = "italic")) +
+
+
+        scale_fill_brewer(type = "seq", palette = "Greens")
+
+}
+
+
+
+
+#' Spatially-binned tree counts
+#'
+#' @param sf_data sf-tibble of Berlin City trees
+#' @param poly sf-tibble of Berlin Districts
+#'
+#' @return ggplot map
+#' @export
+#'
+#' @import ggplot2
+tree_count_map <- function(sf_data, poly){
+
+
+
+
+    sf_plot <- sf_data %>%
+        dplyr::filter(!is.na(GATTUNG)) %>%
+        dplyr::mutate(STAMMUMFG = as.numeric(STAMMUMFG),
+                      # GATTUNG = forcats::fct_infreq(as.factor(GATTUNG)),
+
+
+                      gattung_short = forcats::fct_lump(as.factor(GATTUNG),11, other_level = "Other") %>%
+                          as.character(),
+                      gattung_short =   ifelse(GATTUNG == "Pinus", "Pinus", gattung_short),
+                      gattung_short = forcats::fct_infreq(as.factor(gattung_short)),
+                      gattung_short = forcats::fct_relevel(gattung_short, "Other", after = Inf),
+
+
+                      bezirk_num = as.numeric(as.factor(BEZIRK))) %>%
+        # dplyr::add_count(gattung_short) %>%
+        # dplyr::filter(!is.na(gattung_short)) %>%
+        dplyr::filter(STAMMUMFG > 62.83185) %>% {
+            ggplot(.) +
+
+                geom_sf(inherit.aes = FALSE,
+                        aes(geometry = geometry),
+                        data = poly,
+                        fill = "gray80",
+                        color = "white",
+                        show.legend = FALSE,
+                        size = 0.7) +
+
+
+                stat_bin2d(aes(x = sf::st_coordinates(.)[,"X"],
+                               y = sf::st_coordinates(.)[,"Y"],
+                               group = gattung_short,
+                               fill = stat(ncount)),
+                           alpha = 0.8,
+                           bins = 25,
+                           binwidth = c(1500,1500)) +
+
+
+
+                geom_sf(inherit.aes = FALSE,
+                        aes(geometry = geometry),
+                        data = poly,
+                        fill = "transparent",
+                        color = "gray80",
+                        show.legend = FALSE,
+                        size = 0.5) +
+
+
+
+
+                facet_wrap(~gattung_short) +
+
+                labs(caption = paste0("Data source: daten.berlin.de; WFS Service, accessed: ",
+                                      "2019-12-15"),
+                     fill = "normalized Count")+
+
+
+
+                scale_x_continuous(breaks = seq(13, 14, 0.2)) +
+                scale_y_continuous(breaks = seq(52.3, 53.7, 0.1)) +
+                scale_fill_viridis_c() +
+                guides(fill = guide_colorbar(barwidth = grid::unit(10, units = "cm"),
+                                             barheight = grid::unit(.45, units = "cm"))) +
+
+
+                theme_minimal(base_size = 18) +
+
+                theme(axis.title = element_blank(),
+                      strip.text = element_text(face = c("bold.italic")),
+                      legend.position = "bottom",
+                      legend.dir = "horizontal",
+                      legend.title = element_text(vjust = 1))
+
+        }
+
+    return(sf_plot)
+
 
 }

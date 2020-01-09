@@ -26,7 +26,12 @@ Imports:
     future.callr,
     drake,
     furrr,
-    tools
+    tools,
+    forcats,
+    tibble,
+    rmarkdown,
+    magrittr,
+    raster
 Suggests: devtools,
     git2r
 RoxygenNote: 6.1.1
