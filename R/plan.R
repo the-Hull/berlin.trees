@@ -36,7 +36,7 @@ plan <- drake_plan(
                                                          bounding_box),
     full_data_set = berlin.trees::bind_rows_sf(cropped_data_set),
 
-    full_data_set_clean = target(berlin.trees::clean_genus(full_data_set),
+    full_data_set_clean = target(berlin.trees::clean_data(full_data_set),
                                  format = "rds"),
 
 

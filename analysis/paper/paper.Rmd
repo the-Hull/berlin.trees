@@ -71,7 +71,23 @@ Here is a citation [@Marwick2017]
 Some results
 
 
+
+```{r fig-bar-tree, fig.cap="A plot of random numbers",fig.width = 15, fig.height = 8, out.width="100%"}
+
+# loadd(full_data_set_clean)
+# loadd(plot_overview_map)
+# print(class(full_data_set_clean))
+readd(plot_tree_sums_bar)
+# plot_overview_map
+
+```
+
+
 ```{r fig-tree-overview-map, fig.cap="A plot of random numbers",fig.width = 15, fig.height = 8, out.width="100%"}
+
+# loadd(full_data_set_clean)
+# loadd(plot_overview_map)
+# print(class(full_data_set_clean))
 readd(plot_overview_map)
 # plot_overview_map
 

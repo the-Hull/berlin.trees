@@ -189,10 +189,33 @@ bind_rows_sf <- function(sf_list){
 #' @return sf tibble with cleaned genus names
 #' @export
 #'
-clean_genus <- function(sf_data){
+clean_data <- function(sf_data){
 
     sf_data$GATTUNG <- tools::toTitleCase(tolower(sf_data$GATTUNG))
     sf_data$GATTUNG[sf_data$GATTUNG==""] <- NA
+
+
+    too_old_idx <- which(as.numeric(sf_data$STANDALTER) > 1500)
+
+
+    sf_data[too_old_idx, c("STANDALTER", "PFLANZJAHR")] <-
+        sf_data[too_old_idx, rev(c("STANDALTER", "PFLANZJAHR"))]
+
+
+    sf_data <- sf_data %>%
+        dplyr::filter(!is.na(GATTUNG)) %>%
+        dplyr::mutate(STAMMUMFG = as.numeric(STAMMUMFG),
+                      # GATTUNG = forcats::fct_infreq(as.factor(GATTUNG)),
+
+
+                      gattung_short = forcats::fct_lump(as.factor(GATTUNG),11, other_level = "Other") %>%
+                          as.character(),
+                      gattung_short =  ifelse(GATTUNG == "Pinus", "Pinus", gattung_short),
+                      gattung_short = forcats::fct_infreq(as.factor(gattung_short)),
+                      gattung_short = forcats::fct_relevel(gattung_short, "Other", after = Inf),
+
+
+                      bezirk_num = as.numeric(as.factor(BEZIRK)))
 
     return(sf_data)
 
@@ -392,7 +415,6 @@ get_uhi_rasters <- function(path){
 #'
 #' @export
 #'
-#' @examples
 add_uhi_hist_data <- function(uhi_stack_list, sf_data){
 
 
@@ -409,43 +431,24 @@ add_uhi_hist_data <- function(uhi_stack_list, sf_data){
 
 
 
-    ## raster stats
-
-    stat_funs <- c("median", "mean", "sd")
-
-    ### cycle into list containing the 4 (total) stacks (2x summer, 2x winter)
-    raster_stats <- lapply(stat_funs,
-                           function(stats) {
-
-                               # into list (summer vs. winter)
-                               lapply(uhi_stack_list,
-                                      function(stacks) {
-                                          # into stacks (day vs. night)
-                                          lapply(stacks,
-                                                 raster::cellStats, stats)
-                                      })
-                           }) %>%
-        setNames(stat_funs)
-
-
     ## tree uhi exposure
 
     ### prepare tree data
 
-    sf_data <- sf_data %>%
-        dplyr::filter(!is.na(GATTUNG)) %>%
-        dplyr::mutate(STAMMUMFG = as.numeric(STAMMUMFG),
-                      # GATTUNG = forcats::fct_infreq(as.factor(GATTUNG)),
-
-
-                      gattung_short = forcats::fct_lump(as.factor(GATTUNG),11, other_level = "Other") %>%
-                          as.character(),
-                      gattung_short =   ifelse(GATTUNG == "Pinus", "Pinus", gattung_short),
-                      gattung_short = forcats::fct_infreq(as.factor(gattung_short)),
-                      gattung_short = forcats::fct_relevel(gattung_short, "Other", after = Inf),
-
-
-                      bezirk_num = as.numeric(as.factor(BEZIRK)))
+    # sf_data <- sf_data %>%
+    #     dplyr::filter(!is.na(GATTUNG)) %>%
+    #     dplyr::mutate(STAMMUMFG = as.numeric(STAMMUMFG),
+    #                   # GATTUNG = forcats::fct_infreq(as.factor(GATTUNG)),
+    #
+    #
+    #                   gattung_short = forcats::fct_lump(as.factor(GATTUNG),11, other_level = "Other") %>%
+    #                       as.character(),
+    #                   gattung_short =   ifelse(GATTUNG == "Pinus", "Pinus", gattung_short),
+    #                   gattung_short = forcats::fct_infreq(as.factor(gattung_short)),
+    #                   gattung_short = forcats::fct_relevel(gattung_short, "Other", after = Inf),
+    #
+    #
+    #                   bezirk_num = as.numeric(as.factor(BEZIRK)))
 
 
 
@@ -485,6 +488,55 @@ add_uhi_hist_data <- function(uhi_stack_list, sf_data){
 }
 
 
+# Stats -------------------------------------------------------------------
+
+### UHI
+
+
+#' Calculate descriptive statistics for a UHI stacks (in lists)
+#'
+#' @param uhi_stack_list A two-level list (time of year, time of day) of UHI data
+#'
+#' @return A list containing Median, Mean and StDev of UHI intensities by RasterLayer (years)
+#' @export
+#'
+calc_uhi_stats <- function(uhi_stack_list){
+
+
+        ## raster stats
+
+        stat_funs <- c("median", "mean", "sd")
+
+        ### cycle into list containing the 4 (total) stacks (2x summer, 2x winter)
+        raster_stats <- lapply(stat_funs,
+                               function(stats) {
+
+                                   # into list (summer vs. winter)
+                                   lapply(uhi_stack_list,
+                                          function(stacks) {
+                                              # into stacks (day vs. night)
+                                              lapply(stacks,
+
+                                                     function(stack){
+                                                         stat_result <- raster::cellStats(stack, stats) %>%
+                                                             data.frame(val = .,
+                                                                        year = sub(pattern = ".*([0-9]{4})$",
+                                                                                   replacement = "\\1",
+                                                                                   x = names(.)),
+                                                                        stringsAsFactors = FALSE)
+                                                     })
+                                          })
+
+                               }) %>%
+            setNames(stat_funs)
+
+
+        return(raster_stats)
+
+
+}
+
+
 # PLOTS -------------------------------------------------------------------
 
 
@@ -496,6 +548,8 @@ add_uhi_hist_data <- function(uhi_stack_list, sf_data){
 #' @param poly sf-tibble, polygons of Berlin districts
 #'
 #' @return ggplot object
+#' @import ggplot2
+#' @import sf
 #' @export
 make_overview_map <- function(sf_data, poly){
 
@@ -505,13 +559,13 @@ make_overview_map <- function(sf_data, poly){
     gplot <- sf_data %>%
         dplyr::group_by(provenance) %>%
         dplyr::sample_n(7000) %>%
-        dplyr::ungroup() %>%
+        dplyr::ungroup() %>% {
         ggplot() +
 
 
 
         geom_sf(inherit.aes = FALSE,
-                # aes(geometry = geometry),
+                aes(geometry = geometry),
                 data = poly,
                 fill = "gray80",
                 color = "white",
@@ -520,7 +574,9 @@ make_overview_map <- function(sf_data, poly){
 
 
         geom_sf(color = "black",
-                # aes(geometry = geometry),
+                inherit.aes = FALSE,
+                data = .,
+                aes(geometry = geometry),
                 size = 0.2,
                 show.legend = FALSE,
                 alpha = 0.3) +
@@ -544,7 +600,8 @@ make_overview_map <- function(sf_data, poly){
         ) +
 
         labs(caption = paste0("Data source: daten.berlin.de; WFS Service, accessed: ",
-                              Sys.Date()))
+                              "2019-12-13"))
+        }
 
     return(gplot)
 
@@ -565,10 +622,10 @@ tree_sums_bar_plot <- function(sf_data){
 
 
     sf_data %>%
-        dplyr::mutate(STAMMUMFG = as.numeric(STAMMUMFG),
-               GATTUNG = forcats::fct_infreq(as.factor(GATTUNG)),
-               gattung_short = forcats::fct_lump(GATTUNG,11),
-               bezirk_num = as.numeric(as.factor(BEZIRK))) %>%
+        # dplyr::mutate(STAMMUMFG = as.numeric(STAMMUMFG),
+        #        GATTUNG = forcats::fct_infreq(as.factor(GATTUNG)),
+        #        gattung_short = forcats::fct_lump(GATTUNG,11),
+        #        bezirk_num = as.numeric(as.factor(BEZIRK))) %>%
 
 
         ggplot() +
@@ -622,19 +679,19 @@ tree_count_map <- function(sf_data, poly){
 
 
     sf_plot <- sf_data %>%
-        dplyr::filter(!is.na(GATTUNG)) %>%
-        dplyr::mutate(STAMMUMFG = as.numeric(STAMMUMFG),
-                      # GATTUNG = forcats::fct_infreq(as.factor(GATTUNG)),
-
-
-                      gattung_short = forcats::fct_lump(as.factor(GATTUNG),11, other_level = "Other") %>%
-                          as.character(),
-                      gattung_short =   ifelse(GATTUNG == "Pinus", "Pinus", gattung_short),
-                      gattung_short = forcats::fct_infreq(as.factor(gattung_short)),
-                      gattung_short = forcats::fct_relevel(gattung_short, "Other", after = Inf),
-
-
-                      bezirk_num = as.numeric(as.factor(BEZIRK))) %>%
+        # dplyr::filter(!is.na(GATTUNG)) %>%
+        # dplyr::mutate(STAMMUMFG = as.numeric(STAMMUMFG),
+        #               # GATTUNG = forcats::fct_infreq(as.factor(GATTUNG)),
+        #
+        #
+        #               gattung_short = forcats::fct_lump(as.factor(GATTUNG),11, other_level = "Other") %>%
+        #                   as.character(),
+        #               gattung_short =   ifelse(GATTUNG == "Pinus", "Pinus", gattung_short),
+        #               gattung_short = forcats::fct_infreq(as.factor(gattung_short)),
+        #               gattung_short = forcats::fct_relevel(gattung_short, "Other", after = Inf),
+        #
+        #
+        #               bezirk_num = as.numeric(as.factor(BEZIRK))) %>%
         # dplyr::add_count(gattung_short) %>%
         # dplyr::filter(!is.na(gattung_short)) %>%
         dplyr::filter(STAMMUMFG > 62.83185) %>% {
