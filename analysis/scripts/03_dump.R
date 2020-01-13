@@ -27,8 +27,11 @@ extract_values <- berlin.trees::add_uhi_hist_data(uhi_stack_list = uhi_list,
 
 extract_values[["Summertime_gridded_UHI_data"]][["day"]] %>%
     filter(provenance == "s_wfs_baumbestand") %>%
-    mutate(age_group = cut(STANDALTER, breaks = seq(20, 340, 20))) %>%
-    ggplot(aes(x = BAUMUMFG))
+    mutate(STANDALTER = as.numeric(STANDALTER),
+        age_group = cut((STANDALTER), breaks = seq(20, 340, 20))) %>%
+    ggplot(aes(x = as.numeric(STAMMUMFG), group = age_group)) +
+    geom_histogram() +
+    facet_wrap(~gattung_short)
 
 
 
