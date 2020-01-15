@@ -1,5 +1,6 @@
 library(drake)
-
+library(future.callr)
+future::plan(future.callr::callr)
 
 plan <- drake_plan(
 
@@ -25,6 +26,7 @@ plan <- drake_plan(
 
 
 
+
     ## Berlin trees
     download_data = target(berlin.trees::download_berlin_trees()),
 
@@ -40,6 +42,13 @@ plan <- drake_plan(
                                  format = "rds"),
 
 
+    extract_uhi_values_to_list = berlin.trees::add_uhi_hist_data(uhi_stack_list = uhi_stacks,
+                                                      sf_data = full_data_set_clean[, ]),
+
+
+
+
+
     # Plotting
     # plot_overview_map = berlin.trees::make_overview_map(full_data_set_clean,
                                                         # berlin_polygons),
@@ -49,6 +58,9 @@ plan <- drake_plan(
     # plot_count_map = berlin.trees::tree_count_map(full_data_set_clean,
                                                   # berlin_polygons),
 
+
+    plot_density = berlin.trees::dens_plot_trees(sf_extrachted_uhi = extract_uhi_values_to_list,
+                                                 position_stack = "stack")
 
     # Reporting
     # paper = rmarkdown::render(

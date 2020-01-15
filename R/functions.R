@@ -758,3 +758,162 @@ tree_count_map <- function(sf_data, poly){
 
 
 }
+
+
+#' Density plot overview
+#'
+#' This function is hard-codes use of 2007 Summer, Day UHI data.
+#'
+#' @param sf_extrachted_uhi List of extracted UHI data for time of year and time of day.
+#' @param position_stack Character, either "stack" or "dodge".
+#' @param ymin Numeric, coordinate for inset plot.
+#' @param ymax Numeric, coordinate for inset plot.
+#' @param xmin Numeric, coordinate for inset plot.
+#' @param xmax Numeric, coordinate for inset plot.
+#'
+#' @usage dens_plot_trees(sf_extrachted_uhi,
+#'   position_stack = "stack",
+#'   ymin = 0.4,
+#'   ymax=1.4,
+#'   xmin=-5,
+#'   xmax=-0.5)
+#'
+#' @return A ggplot2 plot object
+#' @export
+#'
+#' @import ggplot2
+dens_plot_trees <- function(sf_extrachted_uhi,
+                            position_stack = "stack",
+                            ymin = 0.4,
+                            ymax=1.4,
+                            xmin=-5,
+                            xmax=-0.5){
+
+    # helper function to add panel-dependent insets
+    annotation_custom2 <- function (grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, data)
+    {
+        layer(data = data, stat = StatIdentity, position = PositionIdentity,
+              geom = ggplot2:::GeomCustomAnn,
+              inherit.aes = TRUE, params = list(grob = grob,
+                                                xmin = xmin, xmax = xmax,
+                                                ymin = ymin, ymax = ymax))
+    }
+
+
+    # density plots with panels
+    dens_plot <- sf_extrachted_uhi$Summertime_gridded_UHI_data$day %>%
+
+        ggplot() +
+        # geoms by tree type
+        geom_density(aes(x = day_2007, fill = provenance),
+                     alpha =  0.2,
+                     col = "transparent",
+                     size = 1,
+                     position = position_stack) +
+        stat_density(geom = "line",
+                     aes(x = day_2007,
+                         col = provenance,
+                         fill = provenance),
+                     alpha =  0.8,
+                     size = 1.2,
+                     position = position_stack) +
+
+        # full data set
+        stat_density(geom = "line",
+                     aes(x = day_2007),
+                     col = "gray10",
+                     alpha =  0.8,
+                     size = 0.8) +
+
+        geom_vline(xintercept = 0, linetype = 2) +
+
+        facet_wrap(~gattung_short) +
+
+        # scales
+        xlim(c(-5, 6.5)) +
+        scale_color_brewer(type = "qual", palette = "Set2") +
+        scale_fill_brewer(type = "qual", palette = "Set2") +
+
+        # theming
+        guides(color = FALSE) +
+        theme_bw(base_size = 16) +
+        theme(legend.position = c(0.6, 0.1),
+              legend.direction = "horizontal") +
+        labs(x = "Summer day-time UHI magnitude (C)", y = "Density", fill = "Type")
+
+
+
+
+
+
+    bar_plots <- purrr::map(levels(sf_extrachted_uhi$Summertime_gridded_UHI_data$day$gattung_short),
+
+                            function(gattung){
+
+
+                                annotation_custom2(
+                                    grob = ggplotGrob(
+                                        sf_extrachted_uhi$Summertime_gridded_UHI_data$day %>%
+
+                                            ggplot() +
+
+                                            coord_flip() +
+
+                                            geom_bar(aes(x = gattung_short,
+                                                         fill = provenance,
+                                                         alpha = gattung_short == gattung),
+                                                     color = "transparent",
+                                                     show.legend = FALSE) +
+
+
+
+                                            scale_alpha_manual(values = c(0.3,
+                                                                          0.95)) +
+                                            scale_fill_brewer(type = "qual", palette = "Set2") +
+
+
+                                            scale_y_continuous(breaks = c(0, 150000),
+                                                               labels = c("0", "150k")) +
+
+
+                                            labs(fill = NULL) +
+                                            theme_minimal(base_size = 9) +
+                                            theme(axis.text.y = element_blank(),
+                                                  axis.title = element_blank(),
+                                                  plot.margin = margin(),
+                                                  panel.grid = element_blank(),
+                                                  axis.ticks.length = unit(2, "mm"),
+                                                  axis.ticks = element_line(color = "gray10"),
+                                                  axis.ticks.y = element_blank())
+                                    ),
+
+
+                                    data = data.frame(gattung_short=gattung),
+                                    ymin = ymin, ymax=ymax, xmin=xmin, xmax=xmax)
+
+
+
+
+
+
+                            })
+
+
+    return(dens_plot + bar_plots)
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
