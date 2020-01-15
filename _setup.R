@@ -19,8 +19,8 @@
 ## packages
 
 library(drake)
-library(future.callr)
-future::plan(future.callr::callr)
+# library(future.callr)
+# future::plan(future.callr::callr)
 
 # clean()
 #

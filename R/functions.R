@@ -470,16 +470,10 @@ add_uhi_hist_data <- function(uhi_stack_list, sf_data){
                            function(stacks){
                                lapply(stacks,
                                       raster::extract,
-                                      sf::as_Spatial(sf_data),
+                                      sf_data,
                                       # df = TRUE,
-                                      sp = TRUE)
-                           }) %>%
-        # transform back to sf
-        lapply(.,
-               function(stacks){
-                   lapply(stacks,
-                          sf::st_as_sf)
-               })
+                                      sp = FALSE)
+                           })
 
 
 
@@ -764,14 +758,16 @@ tree_count_map <- function(sf_data, poly){
 #'
 #' This function is hard-codes use of 2007 Summer, Day UHI data.
 #'
-#' @param sf_extrachted_uhi List of extracted UHI data for time of year and time of day.
+#' @param sf_data sf, data set containing Berlin trees
+#' @param extracted_uhi List, contains UHI intensities for Summer/Winter and day/night.
 #' @param position_stack Character, either "stack" or "dodge".
 #' @param ymin Numeric, coordinate for inset plot.
 #' @param ymax Numeric, coordinate for inset plot.
 #' @param xmin Numeric, coordinate for inset plot.
 #' @param xmax Numeric, coordinate for inset plot.
 #'
-#' @usage dens_plot_trees(sf_extrachted_uhi,
+#' @usage dens_plot_trees(sf_data,
+#'   extracted_uhi,
 #'   position_stack = "stack",
 #'   ymin = 0.4,
 #'   ymax=1.4,
@@ -782,12 +778,17 @@ tree_count_map <- function(sf_data, poly){
 #' @export
 #'
 #' @import ggplot2
-dens_plot_trees <- function(sf_extrachted_uhi,
+dens_plot_trees <- function(sf_data,
+                            extracted_uhi,
                             position_stack = "stack",
                             ymin = 0.4,
                             ymax=1.4,
                             xmin=-5,
                             xmax=-0.5){
+
+
+
+    sf_extracted_uhi <- cbind(sf_data, extracted_uhi$Summertime_gridded_UHI_data$day)
 
     # helper function to add panel-dependent insets
     annotation_custom2 <- function (grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, data)
@@ -801,7 +802,7 @@ dens_plot_trees <- function(sf_extrachted_uhi,
 
 
     # density plots with panels
-    dens_plot <- sf_extrachted_uhi$Summertime_gridded_UHI_data$day %>%
+    dens_plot <- sf_extracted_uhi %>%
 
         ggplot() +
         # geoms by tree type
@@ -846,14 +847,14 @@ dens_plot_trees <- function(sf_extrachted_uhi,
 
 
 
-    bar_plots <- purrr::map(levels(sf_extrachted_uhi$Summertime_gridded_UHI_data$day$gattung_short),
+    bar_plots <- purrr::map(levels(sf_extracted_uhi$gattung_short),
 
                             function(gattung){
 
 
                                 annotation_custom2(
                                     grob = ggplotGrob(
-                                        sf_extrachted_uhi$Summertime_gridded_UHI_data$day %>%
+                                        sf_extracted_uhi %>%
 
                                             ggplot() +
 

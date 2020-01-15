@@ -50,16 +50,17 @@ plan <- drake_plan(
 
 
     # Plotting
-    # plot_overview_map = berlin.trees::make_overview_map(full_data_set_clean,
-                                                        # berlin_polygons),
+    plot_overview_map = berlin.trees::make_overview_map(full_data_set_clean,
+                                                        berlin_polygons),
 
-    # plot_tree_sums_bar = berlin.trees::tree_sums_bar_plot(full_data_set_clean),
+    plot_tree_sums_bar = berlin.trees::tree_sums_bar_plot(full_data_set_clean),
 
-    # plot_count_map = berlin.trees::tree_count_map(full_data_set_clean,
-                                                  # berlin_polygons),
+    plot_count_map = berlin.trees::tree_count_map(full_data_set_clean,
+                                                  berlin_polygons),
 
 
-    plot_density = berlin.trees::dens_plot_trees(sf_extrachted_uhi = extract_uhi_values_to_list,
+    plot_density = berlin.trees::dens_plot_trees(sf_data = full_data_set_clean,
+                                                 extracted_uhi = extract_uhi_values_to_list,
                                                  position_stack = "stack")
 
     # Reporting

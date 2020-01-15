@@ -4,7 +4,8 @@
 \alias{dens_plot_trees}
 \title{Density plot overview}
 \usage{
-dens_plot_trees(sf_extrachted_uhi,
+dens_plot_trees(sf_data,
+  extracted_uhi,
   position_stack = "stack",
   ymin = 0.4,
   ymax=1.4,
@@ -12,7 +13,9 @@ dens_plot_trees(sf_extrachted_uhi,
   xmax=-0.5)
 }
 \arguments{
-\item{sf_extrachted_uhi}{List of extracted UHI data for time of year and time of day.}
+\item{sf_data}{sf, data set containing Berlin trees}
+
+\item{extracted_uhi}{List, contains UHI intensities for Summer/Winter and day/night.}
 
 \item{position_stack}{Character, either "stack" or "dodge".}
 
