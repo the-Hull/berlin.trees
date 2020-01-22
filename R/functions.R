@@ -214,7 +214,11 @@ clean_data <- function(sf_data){
                       gattung_short = forcats::fct_infreq(as.factor(gattung_short)),
                       gattung_short = forcats::fct_relevel(gattung_short, "Other", after = Inf),
                       krone_m = as.numeric(ifelse(!is.na(KRONEDURCH), KRONEDURCH, KRONENDURC)),
-                      dbh_cm = as.numeric(ifelse(!is.na(STAMMUMFAN), STAMMUMFAN, STAMMUMFG)),
+                      dbh_cm = as.numeric(ifelse(!is.na(STAMMUMFAN), STAMMUMFAN, STAMMUMFG)) /
+                                              pi,
+                      species_corrected = ifelse(!is.na(ART_BOT),
+                                                 ART_BOT,
+                                                 paste(gattung_short, "spec.")),
 
 
                       bezirk_num = as.numeric(as.factor(BEZIRK)))
