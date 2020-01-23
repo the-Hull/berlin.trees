@@ -67,6 +67,7 @@ test_set_nested <- test_set[,] %>%
     select(-geometry) %>%
     mutate(pca_m2 = krone_m^2 * pi) %>%
     filter(STANDALTER < 350,
+           dbh_cm < 600,
            krone_m < 40) %>%
     group_by(gattung_short) %>%
     tidyr::nest()
@@ -229,7 +230,9 @@ future::plan(future::multiprocess)
 model_out <- furrr::future_map(model_list,
                         apply_model_full,
                         .data = test_set %>%
-                            filter(ART_BOT %in% top_species$ART_BOT[top_species$n > 150]))
+                            filter(STANDALTER < 350,
+                                   krone_m < 50,
+                            ART_BOT %in% top_species$ART_BOT[top_species$n > 150]))
 
 
 model_out %>%
@@ -266,12 +269,23 @@ ranef_slopes <- model_out$heat_age_RIspecies_RSspecies_provenance %>%
 
 
 ranef_slopes %>%
+    left_join(top_species, by = c("grp" = "ART_BOT")) %>%
     arrange(gattung,condval ) %>%
     mutate(grp = factor(grp,levels = grp)) %>%
     ggplot(aes(x = grp, y = condval, ymin = condval - condsd, ymax = condval + condsd)) +
     geom_hline(yintercept = 0) +
     geom_linerange() +
-    geom_point(aes(color = condval > 0)) +
+    geom_point(aes(color = condval > 0, size = n)) +
     facet_wrap(~gattung, scales = "free_y") +
     theme_bw() +
     coord_flip()
+
+
+
+test_set %>%
+    filter(gattung_short == "Populus",
+           ART_BOT %in% top_species$ART_BOT[top_species$n > 150]) %>%
+    ggplot(aes(y = dbh_cm,
+               x = day_2007)) +
+    # geom_point(aes(color = ART_BOT)) +
+    geom_smooth(method = "lm", aes(color = ART_BOT))
