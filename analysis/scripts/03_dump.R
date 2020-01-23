@@ -163,6 +163,7 @@ model_list <- list(
                    heat_RIspecies_provenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + (1 | ART_BOT) + provenance , data = x) ,
                    heat_RIspecies_RSspecies = function(x) lme4::lmer(dbh_cm ~ day_2007 + (1 + day_2007 | ART_BOT) , data = x)  ,
                    heat_RIspecies_RSspecies_provenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + (1 + day_2007 | ART_BOT) + provenance , data = x)  ,
+                   heat_RIspecies_RSspecies_RIprovenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + provenance + (1 + day_2007 | provenance : ART_BOT)  , data = x)  ,
                    # heat_age = function(x) lme4::lmer(dbh_cm ~ day_2007 + STANDALTER, data = x)  ,
                    # heat_age_species = function(x) lme4::lmer(dbh_cm ~ day_2007 + STANDALTER + ART_BOT, data = x)  ,
                    heat_age_RIspecies = function(x) lme4::lmer(dbh_cm ~ day_2007 + STANDALTER + (1 | ART_BOT), data = x)  ,
@@ -232,6 +233,7 @@ model_out <- furrr::future_map(model_list,
                         .data = test_set %>%
                             filter(STANDALTER < 350,
                                    krone_m < 50,
+                                   dbh_cm < 600,
                             ART_BOT %in% top_species$ART_BOT[top_species$n > 150]))
 
 
@@ -274,8 +276,8 @@ ranef_slopes %>%
     mutate(grp = factor(grp,levels = grp)) %>%
     ggplot(aes(x = grp, y = condval, ymin = condval - condsd, ymax = condval + condsd)) +
     geom_hline(yintercept = 0) +
-    geom_linerange() +
     geom_point(aes(color = condval > 0, size = n)) +
+    geom_linerange() +
     facet_wrap(~gattung, scales = "free_y") +
     theme_bw() +
     coord_flip()
@@ -284,8 +286,66 @@ ranef_slopes %>%
 
 test_set %>%
     filter(gattung_short == "Populus",
+           STANDALTER < 350,
+           krone_m < 50,
+           dbh_cm < 600,
+           ART_BOT %in% top_species$ART_BOT[top_species$n > 150]) %>%
+    ggplot(aes(y = dbh_cm,
+               x = day_2007)) +
+    geom_smooth(method = "lm", size = 1.5, color = "black", linetype = 2, alpha = 0.5) +
+    geom_point(aes(color = ART_BOT), alpha = 0.2) +
+    geom_smooth(method = "lm", aes(color = ART_BOT)) +
+    facet_wrap(~provenance)
+
+
+
+
+test_set %>%
+    filter(gattung_short == "Pinus",
            ART_BOT %in% top_species$ART_BOT[top_species$n > 150]) %>%
     ggplot(aes(y = dbh_cm,
                x = day_2007)) +
     # geom_point(aes(color = ART_BOT)) +
     geom_smooth(method = "lm", aes(color = ART_BOT))
+
+
+
+
+
+
+
+
+
+ranef_slopes <- model_out$heat_RIspecies_RSspecies_RIprovenance %>%
+    ranef() %>%
+    as.data.frame() %>%
+    filter(term == "day_2007") %>%
+    mutate(grp = as.character(grp)) %>%
+    arrange(as.character(grp), as.numeric(condval)) %>%
+    mutate(gattung = sub("(.*:)(\\w+)(.*)", replacement = "\\2", x = as.character(grp), perl = FALSE),
+           species = sub("(.*:)(.*$)", replacement = "\\2", x = as.character(grp), perl = FALSE),
+           species_short = paste0(substr(gattung, 1, 1),
+                                 ". ",
+                                 sub("(^\\w+)( )(.*)", replacement = "\\3", x = as.character(species), perl = TRUE)),
+           provenance = sub("(^\\w+):(.*)", replacement = "\\1", x = as.character(grp), perl = FALSE))
+
+
+ranef_slopes %>%
+    left_join(top_species, by = c("species" = "ART_BOT")) %>%
+    arrange(gattung,condval ) %>%
+    mutate(grp = factor(grp,levels = grp),
+           species_short = forcats::fct_reorder(species_short, condval),
+           gattung = forcats::fct_reorder(gattung, n, .fun = sum, .desc = TRUE)) %>%
+    ggplot(aes(x = species_short, y = condval, ymin = condval - condsd, ymax = condval + condsd)) +
+    geom_hline(yintercept = 0) +
+    geom_point(aes(color = provenance, size = n,  group = provenance),
+               position = position_dodge(width = 0.2),
+               alpha = 0.8) +
+    geom_linerange(aes(group = provenance, color = provenance),
+                   position = position_dodge(width = 0.2),
+                   alpha = 0.8) +
+    facet_wrap(~gattung, scales = "free_y") +
+    theme_minimal() +
+    scale_color_brewer(type = "qual", palette = "Set2", direction = +1) +
+    coord_flip() +
+    theme(panel.border = element_rect(fill = "transparent"))
