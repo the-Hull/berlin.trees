@@ -6,6 +6,179 @@ loadd(extract_uhi_values_to_list)
 
 
 
+#' Title
+#'
+#' @param full_df
+#' @param extract_uhi
+#'
+#' @return
+#' @export
+#'
+#' @examples
+make_test_data_set <- function(full_df = full_data_set_clean,
+                               extract_uhi = extract_uhi_values_to_list){
+
+
+    test_set <- cbind(as.data.frame(full_df),
+                      extract_uhi$Summertime_gridded_UHI_data$day)
+
+
+    test_set <- test_set %>%
+        # dplyr::filter(provenance == "s_wfs_baumbestand") %>%
+        dplyr::mutate(STANDALTER = as.numeric(STANDALTER),
+                      age_group = cut(STANDALTER, breaks = seq(0, 280, 40))) %>%
+        mutate(ART_BOT = ifelse(is.na(ART_BOT),
+                                paste(gattung_short, "spec."),
+                                ART_BOT))
+
+
+    return(test_set)
+}
+
+
+
+test_set <- make_test_data_set()
+
+
+
+#' Apply models (lme4)
+#'
+#' @param full_df cleaned data set
+#' @param extract_uhi extracted UHI data
+#' @param model_list list of models to apply
+#'
+#' @return a list containing lme4 model outputs
+#' @export
+#'
+#' @import furrr
+#' @import dplyr
+#' @import lme4
+#'
+apply_models <- function(test_df,
+         model_list = model_list,
+         n_top_species = 6){
+
+
+
+
+    apply_model_full <- function(.model, .data){
+        .model(.data)
+    }
+
+    top_species <- test_df %>%
+        group_by(gattung_short) %>%
+        count(ART_BOT) %>%
+        arrange(desc(n), .by_group = TRUE) %>%
+        top_n(n_top_species)
+
+
+    future::plan(future::multiprocess)
+    model_out <- furrr::future_map(model_list,
+                                   apply_model_full,
+                                   .data = test_df %>%
+                                       filter(STANDALTER < 350,
+                                              krone_m < 50,
+                                              dbh_cm < 600,
+                                              ART_BOT %in% top_species$ART_BOT[top_species$n > 150]))
+
+
+    return(model_out)
+
+
+
+}
+
+
+
+test_out_model <- apply_models(test_df = test_set,
+                               model_list = model_list)
+
+
+#' Make Random-effects effect-size plot
+#'
+#' @param model_out output list with models
+#' @param model_name Character, model name
+#'
+#' @return ggplot2 object and plot
+#' @export
+#' @import ggplot2
+#' @import dplyr
+#'
+#'
+make_ranef_plot <- function(model_out,
+                            model_name = "heat_RIspecies_RSspecies_RIprovenance",
+                            n_top_species = 6,
+                            full_df = full_data_set_clean,
+                            extract_uhi = extract_uhi_values_to_list){
+
+
+    test_set <- cbind(as.data.frame(full_data_set_clean),
+                      extract_uhi_values_to_list$Summertime_gridded_UHI_data$day)
+
+
+
+
+    top_species <- test_set %>%
+        group_by(gattung_short) %>%
+        count(ART_BOT) %>%
+        arrange(desc(n), .by_group = TRUE) %>%
+        top_n(n_top_species)
+
+
+    ranef_slopes <- model_out[[model_name]] %>%
+        lme4::ranef() %>%
+        as.data.frame() %>%
+        filter(term == "day_2007") %>%
+        mutate(grp = as.character(grp)) %>%
+        arrange(as.character(grp), as.numeric(condval)) %>%
+        mutate(gattung = sub("(.*:)(\\w+)(.*)", replacement = "\\2", x = as.character(grp), perl = FALSE),
+               species = sub("(.*:)(.*$)", replacement = "\\2", x = as.character(grp), perl = FALSE),
+               species_short = paste0(substr(gattung, 1, 1),
+                                      ". ",
+                                      sub("(^\\w+)( )(.*)", replacement = "\\3", x = as.character(species), perl = TRUE)),
+               provenance = sub("(^\\w+):(.*)", replacement = "\\1", x = as.character(grp), perl = FALSE))
+
+
+    p <- ranef_slopes %>%
+        left_join(top_species, by = c("species" = "ART_BOT")) %>%
+        arrange(gattung,condval ) %>%
+        mutate(grp = factor(grp,levels = grp),
+               species_short = forcats::fct_reorder(species_short, condval),
+               gattung = forcats::fct_reorder(gattung, n, .fun = sum, .desc = TRUE)) %>%
+        ggplot(aes(x = species_short, y = condval, ymin = condval - condsd, ymax = condval + condsd)) +
+        geom_hline(yintercept = 0) +
+        geom_point(aes(color = provenance, size = n,  group = provenance),
+                   position = position_dodge(width = 0.2),
+                   alpha = 0.8) +
+        geom_linerange(aes(group = provenance, color = provenance),
+                       position = position_dodge(width = 0.2),
+                       alpha = 0.8) +
+        facet_wrap(~gattung, scales = "free_y") +
+        theme_bw(base_size = 16) +
+        scale_color_brewer(type = "qual", palette = "Set2", direction = +1) +
+        coord_flip() +
+        theme(panel.border = element_rect(fill = "transparent"))
+
+    return(p)
+
+
+
+}
+
+
+
+
+make_ranef_plot(model_out = test_out_model,
+                model_name = "heat_RIspecies_RSspecies_RIprovenance")
+
+
+make_ranef_plot(model_out = test_out_model,
+                model_name = "heat_age_RIspecies_RSspecies_RIprovenance")
+
+
+
+
+
 
 # plot_uhi_dist <- function(uhi_stack_list, uhi_stats){
 #
@@ -32,6 +205,7 @@ test_set <- test_set %>%
                             ART_BOT))
 
 nrow(filter(test_set, !is.na(STANDALTER), STANDALTER < 200)) / nrow(filter(test_set, !is.na(STANDALTER)))
+nrow(filter(test_set, !is.na(STANDALTER), STANDALTER < 100)) / nrow(filter(test_set, !is.na(STANDALTER)))
 
 
 test_set %>%
@@ -51,7 +225,8 @@ test_set %>%
     ggplot2::geom_vline(xintercept = 2018 - bad_years) +
     ggplot2::geom_density(aes(fill = provenance),
                           alpha = 0.5) +
-    ggplot2::facet_wrap(~gattung_short)
+    ggplot2::facet_wrap(~gattung_short) +
+    theme_bw(base_size = 16)
 
 
 

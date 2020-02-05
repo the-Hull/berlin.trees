@@ -15,6 +15,7 @@
 # usethis::use_package("rmarkdown")
 # usethis::use_package("raster")
 # usethis::use_package("magrittr")
+# usethis::use_package("lme4")
 
 ## packages
 

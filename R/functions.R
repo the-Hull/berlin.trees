@@ -537,6 +537,74 @@ calc_uhi_stats <- function(uhi_stack_list){
 }
 
 
+
+
+
+
+
+
+
+
+#' Apply models (lme4)
+#'
+#' @param full_df cleaned data set
+#' @param extract_uhi extracted UHI data
+#' @param model_list list of models to apply
+#'
+#' @return a list containing lme4 model outputs
+#' @export
+#'
+#' @import furrr
+#' @import dplyr
+#' @import lme4
+#'
+apply_models <- function(full_df = full_data_set_clean,
+                         extract_uhi = extract_uhi_values_to_list,
+                         model_list = model_list,
+                         n_top_species = 6){
+
+    test_set <- cbind(as.data.frame(full_data_set_clean),
+                      extract_uhi_values_to_list$Summertime_gridded_UHI_data$day)
+
+
+
+
+
+    apply_model_full <- function(.model, .data){
+        .model(.data)
+    }
+
+    top_species <- test_set %>%
+        group_by(gattung_short) %>%
+        count(ART_BOT) %>%
+        arrange(desc(n), .by_group = TRUE) %>%
+        top_n(n_top_species)
+
+
+    # future::plan(future::multiprocess)
+    model_out <- furrr::future_map(model_list,
+                                   apply_model_full,
+                                   .data = test_set %>%
+                                       filter(STANDALTER < 350,
+                                              krone_m < 50,
+                                              dbh_cm < 600,
+                                              ART_BOT %in% top_species$ART_BOT[top_species$n > 150]))
+
+
+    return(model_out)
+
+
+
+}
+
+
+
+
+
+
+
+
+
 # PLOTS -------------------------------------------------------------------
 
 

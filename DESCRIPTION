@@ -31,7 +31,8 @@ Imports:
     tibble,
     rmarkdown,
     magrittr,
-    raster
+    raster,
+    lme4
 Suggests: devtools,
     git2r
 RoxygenNote: 6.1.1
