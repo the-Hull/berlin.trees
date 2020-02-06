@@ -32,7 +32,8 @@ Imports:
     rmarkdown,
     magrittr,
     raster,
-    lme4
+    lme4,
+    rlang
 Suggests: devtools,
     git2r
 RoxygenNote: 6.1.1

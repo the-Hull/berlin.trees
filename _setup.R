@@ -16,6 +16,7 @@
 # usethis::use_package("raster")
 # usethis::use_package("magrittr")
 # usethis::use_package("lme4")
+# usethis::use_package("rlang")
 
 ## packages
 

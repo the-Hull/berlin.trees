@@ -545,11 +545,15 @@ calc_uhi_stats <- function(uhi_stack_list){
 
 
 
+
 #' Apply models (lme4)
+#'
+#'
 #'
 #' @param full_df cleaned data set
 #' @param extract_uhi extracted UHI data
 #' @param model_list list of models to apply
+#' @param ... an optional unquoted expression passed to \code{dplyr::filter}
 #'
 #' @return a list containing lme4 model outputs
 #' @export
@@ -557,14 +561,20 @@ calc_uhi_stats <- function(uhi_stack_list){
 #' @import furrr
 #' @import dplyr
 #' @import lme4
+#' @import rlang
 #'
-apply_models <- function(full_df = full_data_set_clean,
-                         extract_uhi = extract_uhi_values_to_list,
-                         model_list = model_list,
-                         n_top_species = 6){
+#'
+apply_models <- function(full_df,
+                         extract_uhi,
+                         model_list,
+                         n_top_species = 6,
+                         min_individuals = 150,
+                         ...){
 
-    test_set <- cbind(as.data.frame(full_data_set_clean),
-                      extract_uhi_values_to_list$Summertime_gridded_UHI_data$day)
+    filt_args <- rlang::quo(...)
+
+    test_set <- cbind(as.data.frame(full_df),
+                      extract_uhi$Summertime_gridded_UHI_data$day)
 
 
 
@@ -580,15 +590,15 @@ apply_models <- function(full_df = full_data_set_clean,
         arrange(desc(n), .by_group = TRUE) %>%
         top_n(n_top_species)
 
+    test_set <- test_set %>%
+        filter(ART_BOT %in% top_species$ART_BOT[top_species$n > min_individuals])
+
 
     # future::plan(future::multiprocess)
     model_out <- furrr::future_map(model_list,
                                    apply_model_full,
                                    .data = test_set %>%
-                                       filter(STANDALTER < 350,
-                                              krone_m < 50,
-                                              dbh_cm < 600,
-                                              ART_BOT %in% top_species$ART_BOT[top_species$n > 150]))
+                                       filter_maybe(!!!...))
 
 
     return(model_out)
@@ -983,6 +993,32 @@ dens_plot_trees <- function(sf_data,
 
 
 
+# helpers -----------------------------------------------------------------
+
+
+
+#' Adjusted filtering with ...
+#'
+#' @param df data frame / tibble for filtering
+#' @param ... unquoted expression for filtering
+#'
+#' @return filtered df
+#' @export
+#'
+filter_maybe <- function(df, ...){
+
+    if(...length() > 0){
+        fargs <- rlang::quo(...)
+
+        df <- df %>%
+            dplyr::filter(!!!fargs)
+
+        return(df)
+    }
+
+    else{return(df)}
+
+}
 
 
 
