@@ -540,6 +540,38 @@ calc_uhi_stats <- function(uhi_stack_list){
 
 
 
+#' Generate data set for stat-models
+#'
+#' @param full_df cleaned data.frame of berlin trees
+#' @param extract_uhi list of sf data frames with UHI values
+#'
+#' @return a data frame for use with \code{\link{apply_models}}
+#' @export
+#' @importFrom magrittr %>%
+#'
+make_test_data_set <- function(full_df = full_data_set_clean,
+                               extract_uhi = extract_uhi_values_to_list){
+
+
+    test_set <- cbind(as.data.frame(full_df),
+                      extract_uhi$Summertime_gridded_UHI_data$day)
+
+
+    test_set <- test_set %>%
+        # dplyr::filter(provenance == "s_wfs_baumbestand") %>%
+        dplyr::mutate(STANDALTER = as.numeric(STANDALTER),
+                      age_group = cut(STANDALTER, breaks = seq(0, 280, 40))) %>%
+        dplyr::mutate(ART_BOT = ifelse(is.na(ART_BOT),
+                                paste(gattung_short, "spec."),
+                                ART_BOT))
+
+
+    return(test_set)
+}
+
+
+
+
 
 
 
@@ -550,10 +582,12 @@ calc_uhi_stats <- function(uhi_stack_list){
 #'
 #'
 #'
-#' @param full_df cleaned data set
-#' @param extract_uhi extracted UHI data
+#' @param df data.frame containing extracted uhi values and tree data
 #' @param model_list list of models to apply
-#' @param ... an optional unquoted expression passed to \code{dplyr::filter}
+#' @param n_top_species numeric, number of top species to consider
+#' @param min_individuals numeric, min. individuals per species required
+#'   for inclusion
+#' @param ... a list of unquoted expression passed to \code{dplyr::filter}
 #'
 #' @return a list containing lme4 model outputs
 #' @export
@@ -564,8 +598,7 @@ calc_uhi_stats <- function(uhi_stack_list){
 #' @import rlang
 #'
 #'
-apply_models <- function(full_df,
-                         extract_uhi,
+apply_models <- function(df,
                          model_list,
                          n_top_species = 6,
                          min_individuals = 150,
@@ -573,9 +606,7 @@ apply_models <- function(full_df,
 
     filt_args <- rlang::quo(...)
 
-    test_set <- cbind(as.data.frame(full_df),
-                      extract_uhi$Summertime_gridded_UHI_data$day)
-
+    test_set <- df
 
 
 
@@ -983,6 +1014,81 @@ dens_plot_trees <- function(sf_data,
 
 
     return(dens_plot + bar_plots)
+
+
+}
+
+
+
+
+
+#' Make Random-effects effect-size plot
+#'
+#' @param model_out output list with models
+#' @param model_name Character, model name
+#'
+#' @return ggplot2 object and plot
+#' @export
+#' @import ggplot2
+#' @import dplyr
+#'
+#'
+make_ranef_plot <- function(model_out,
+                            model_name = "heat_RIspecies_RSspecies_RIprovenance",
+                            n_top_species = 6,
+                            full_df = full_data_set_clean,
+                            extract_uhi = extract_uhi_values_to_list){
+
+
+    test_set <- cbind(as.data.frame(full_data_set_clean),
+                      extract_uhi_values_to_list$Summertime_gridded_UHI_data$day)
+
+
+
+
+    top_species <- test_set %>%
+        group_by(gattung_short) %>%
+        count(ART_BOT) %>%
+        arrange(desc(n), .by_group = TRUE) %>%
+        top_n(n_top_species)
+
+
+    ranef_slopes <- model_out[[model_name]] %>%
+        lme4::ranef() %>%
+        as.data.frame() %>%
+        filter(term == "day_2007") %>%
+        mutate(grp = as.character(grp)) %>%
+        arrange(as.character(grp), as.numeric(condval)) %>%
+        mutate(gattung = sub("(.*:)(\\w+)(.*)", replacement = "\\2", x = as.character(grp), perl = FALSE),
+               species = sub("(.*:)(.*$)", replacement = "\\2", x = as.character(grp), perl = FALSE),
+               species_short = paste0(substr(gattung, 1, 1),
+                                      ". ",
+                                      sub("(^\\w+)( )(.*)", replacement = "\\3", x = as.character(species), perl = TRUE)),
+               provenance = sub("(^\\w+):(.*)", replacement = "\\1", x = as.character(grp), perl = FALSE))
+
+
+    p <- ranef_slopes %>%
+        left_join(top_species, by = c("species" = "ART_BOT")) %>%
+        arrange(gattung,condval ) %>%
+        mutate(grp = factor(grp,levels = grp),
+               species_short = forcats::fct_reorder(species_short, condval),
+               gattung = forcats::fct_reorder(gattung, n, .fun = sum, .desc = TRUE)) %>%
+        ggplot(aes(x = species_short, y = condval, ymin = condval - condsd, ymax = condval + condsd)) +
+        geom_hline(yintercept = 0) +
+        geom_point(aes(color = provenance, size = n,  group = provenance),
+                   position = position_dodge(width = 0.2),
+                   alpha = 0.8) +
+        geom_linerange(aes(group = provenance, color = provenance),
+                       position = position_dodge(width = 0.2),
+                       alpha = 0.8) +
+        facet_wrap(~gattung, scales = "free_y") +
+        theme_bw(base_size = 16) +
+        scale_color_brewer(type = "qual", palette = "Set2", direction = +1) +
+        coord_flip() +
+        theme(panel.border = element_rect(fill = "transparent"))
+
+    return(p)
+
 
 
 }

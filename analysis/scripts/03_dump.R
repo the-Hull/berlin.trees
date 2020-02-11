@@ -37,8 +37,11 @@ make_test_data_set <- function(full_df = full_data_set_clean,
 
 
 
-test_set <- make_test_data_set()
+test_set <- berlin.trees::make_test_data_set(full_df = full_data_set_clean,
+                                             extract_uhi = extract_uhi_values_to_list)
 
+
+library(berlin.trees)
 
 
 #' Apply models (lme4)

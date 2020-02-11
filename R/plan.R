@@ -49,21 +49,6 @@ plan <- drake_plan(
 
 
 
-    # Plotting
-    plot_overview_map = berlin.trees::make_overview_map(full_data_set_clean,
-                                                        berlin_polygons),
-
-    plot_tree_sums_bar = berlin.trees::tree_sums_bar_plot(full_data_set_clean),
-
-    plot_count_map = berlin.trees::tree_count_map(full_data_set_clean,
-                                                  berlin_polygons),
-
-
-    plot_density = berlin.trees::dens_plot_trees(sf_data = full_data_set_clean,
-                                                 extracted_uhi = extract_uhi_values_to_list,
-                                                 position_stack = "stack"),
-
-
     model_list = list(
         # null = function(x) lme4::lmer(dbh_cm ~ 1, data = x),
         # heat_only = function(x) lme4::lmer(dbh_cm ~ day_2007, data = x)  ,
@@ -89,16 +74,50 @@ plan <- drake_plan(
     ),
 
 
+    model_df = make_test_data_set(full_df = full_data_set_clean,
+                                  extract_uhi = extract_uhi_values_to_list),
 
 
-    model_out = berlin.trees::apply_models(full_df = full_data_set_clean,
-                             extract_uhi = extract_uhi_values_to_list,
+
+
+
+    model_res = berlin.trees::apply_models(df = model_df,
                              model_list = model_list,
                              n_top_species = 6,
                              min_individuals = 150,
                              list(STANDALTER < 350,
                              krone_m < 50,
-                             dbh_cm < 600)))
+                             dbh_cm < 600)),
+
+
+
+
+    # Plotting
+    plot_overview_map = berlin.trees::make_overview_map(full_data_set_clean,
+                                                        berlin_polygons),
+
+    plot_tree_sums_bar = berlin.trees::tree_sums_bar_plot(full_data_set_clean),
+
+    plot_count_map = berlin.trees::tree_count_map(full_data_set_clean,
+                                                  berlin_polygons),
+
+
+    plot_density = berlin.trees::dens_plot_trees(sf_data = full_data_set_clean,
+                                                 extracted_uhi = extract_uhi_values_to_list,
+                                                 position_stack = "stack"),
+
+
+    plot_LME_no_age = make_ranef_plot(model_out = model_res,
+                    model_name = "heat_RIspecies_RSspecies_RIprovenance"),
+
+
+    plot_LME_age = make_ranef_plot(model_out = model_res,
+                    model_name = "heat_age_RIspecies_RSspecies_RIprovenance")
+
+
+
+
+
 # ,
 # ART_BOT %in% top_species$ART_BOT[top_species$n > 150]
     # Reporting
@@ -110,6 +129,6 @@ plan <- drake_plan(
     #     quiet = TRUE
     # )
 
-
+)
 
 
