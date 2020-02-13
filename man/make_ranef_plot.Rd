@@ -4,15 +4,21 @@
 \alias{make_ranef_plot}
 \title{Make Random-effects effect-size plot}
 \usage{
-make_ranef_plot(model_out,
+make_ranef_plot(
+  model_out,
   model_name = "heat_RIspecies_RSspecies_RIprovenance",
-  n_top_species = 6, full_df = full_data_set_clean,
-  extract_uhi = extract_uhi_values_to_list)
+  df,
+  n_top_species = 6
+)
 }
 \arguments{
 \item{model_out}{output list with models}
 
 \item{model_name}{Character, model name}
+
+\item{df}{data.frame with all trees}
+
+\item{n_top_species}{Numeric, max number of species to inspect}
 }
 \value{
 ggplot2 object and plot

@@ -4,8 +4,12 @@
 \alias{apply_models}
 \title{Apply models (lme4)}
 \usage{
-apply_models(df, model_list, n_top_species = 6, min_individuals = 150,
-  ...)
+apply_models(
+  df = test_df,
+  model_list = model_list,
+  n_top_species = 6,
+  min_individuals = 150
+)
 }
 \arguments{
 \item{df}{data.frame containing extracted uhi values and tree data}
@@ -16,8 +20,6 @@ apply_models(df, model_list, n_top_species = 6, min_individuals = 150,
 
 \item{min_individuals}{numeric, min. individuals per species required
 for inclusion}
-
-\item{...}{a list of unquoted expression passed to \code{dplyr::filter}}
 }
 \value{
 a list containing lme4 model outputs

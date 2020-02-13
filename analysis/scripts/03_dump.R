@@ -550,3 +550,14 @@ ranef_slopes %>%
     scale_color_brewer(type = "qual", palette = "Set2", direction = +1) +
     coord_flip() +
     theme(panel.border = element_rect(fill = "transparent"))
+
+
+
+model_res <-  berlin.trees::apply_models(df = model_df %>%
+                                           filter(STANDALTER < 350 &
+                                                      krone_m < 50 &
+                                                      dbh_cm < 600),
+                                       model_list = model_list,
+                                       n_top_species = 6,
+                                       min_individuals = 150)
+

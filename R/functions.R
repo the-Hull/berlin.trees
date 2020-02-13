@@ -417,7 +417,7 @@ get_uhi_rasters <- function(path){
 #' \item{Time of day}{Night / Day}
 #' }
 #' Containing sf point objects (multiple copies of full data set - careful! \strong{needs improvement!})
-#'
+#' @importFrom methods "is"
 #'
 #' @export
 #'
@@ -425,7 +425,7 @@ add_uhi_hist_data <- function(uhi_stack_list, sf_data){
 
 
     # brief checks
-    if (!is(sf_data, "sf")) {
+    if (!methods::is(sf_data, "sf")) {
         stop("input data is not in sf")
     }
     # if (!is(uhi_stack_list, "RasterLayer")) {
@@ -528,7 +528,7 @@ calc_uhi_stats <- function(uhi_stack_list){
                                           })
 
                                }) %>%
-            setNames(stat_funs)
+            stats::setNames(stat_funs)
 
 
         return(raster_stats)
@@ -547,23 +547,21 @@ calc_uhi_stats <- function(uhi_stack_list){
 #'
 #' @return a data frame for use with \code{\link{apply_models}}
 #' @export
-#' @importFrom magrittr %>%
-#'
+#' @importFrom magrittr "%>%"
+# #'
 make_test_data_set <- function(full_df = full_data_set_clean,
                                extract_uhi = extract_uhi_values_to_list){
 
 
-    test_set <- cbind(as.data.frame(full_df),
-                      extract_uhi$Summertime_gridded_UHI_data$day)
 
+    test_set <- dplyr::mutate(cbind(as.data.frame(full_df),
+                            extract_uhi$Summertime_gridded_UHI_data$day),
 
-    test_set <- test_set %>%
-        # dplyr::filter(provenance == "s_wfs_baumbestand") %>%
-        dplyr::mutate(STANDALTER = as.numeric(STANDALTER),
-                      age_group = cut(STANDALTER, breaks = seq(0, 280, 40))) %>%
-        dplyr::mutate(ART_BOT = ifelse(is.na(ART_BOT),
-                                paste(gattung_short, "spec."),
-                                ART_BOT))
+                      STANDALTER = as.numeric(STANDALTER),
+                      age_group = cut(STANDALTER, breaks = seq(0, 280, 40)),
+                      ART_BOT = ifelse(is.na(ART_BOT),
+                                       paste(gattung_short, "spec."),
+                                       ART_BOT))
 
 
     return(test_set)
@@ -587,7 +585,6 @@ make_test_data_set <- function(full_df = full_data_set_clean,
 #' @param n_top_species numeric, number of top species to consider
 #' @param min_individuals numeric, min. individuals per species required
 #'   for inclusion
-#' @param ... a list of unquoted expression passed to \code{dplyr::filter}
 #'
 #' @return a list containing lme4 model outputs
 #' @export
@@ -596,15 +593,51 @@ make_test_data_set <- function(full_df = full_data_set_clean,
 #' @import dplyr
 #' @import lme4
 #' @import rlang
+#' @importFrom magrittr "%>%"
 #'
 #'
-apply_models <- function(df,
-                         model_list,
+# apply_models <- function(df,
+#                          model_list,
+#                          n_top_species = 6,
+#                          min_individuals = 150){
+# #
+# #     filt_args <- rlang::enquos(filter_args)
+#
+#     test_set <- df
+#
+#
+#
+#
+#     apply_model_full <- function(.model, .df){
+#         .model(.df)
+#     }
+#
+#     top_species <- test_set %>%
+#         group_by(gattung_short) %>%
+#         count(ART_BOT) %>%
+#         arrange(desc(n), .by_group = TRUE) %>%
+#         top_n(n_top_species)
+#
+#     test_set <- test_set %>%
+#         filter(ART_BOT %in% top_species$ART_BOT[top_species$n > min_individuals])
+#
+#
+#     # future::plan(future::multiprocess)
+#     model_out <- furrr::future_map(model_list,
+#                                    apply_model_full,
+#                                    .df = test_set)
+#
+#
+#     return(model_out)
+#
+#
+#
+# }
+apply_models <- function(df = test_df,
+                         model_list = model_list,
                          n_top_species = 6,
-                         min_individuals = 150,
-                         ...){
+                         min_individuals = 150){
 
-    filt_args <- rlang::quo(...)
 
     test_set <- df
 
@@ -616,20 +649,20 @@ apply_models <- function(df,
     }
 
     top_species <- test_set %>%
-        group_by(gattung_short) %>%
-        count(ART_BOT) %>%
-        arrange(desc(n), .by_group = TRUE) %>%
-        top_n(n_top_species)
+        dplyr::group_by(gattung_short) %>%
+        dplyr::count(ART_BOT) %>%
+        dplyr::arrange(desc(n), .by_group = TRUE) %>%
+        dplyr::top_n(n_top_species)
+
 
     test_set <- test_set %>%
-        filter(ART_BOT %in% top_species$ART_BOT[top_species$n > min_individuals])
+        dplyr::filter(ART_BOT %in% top_species$ART_BOT[top_species$n > min_individuals])
 
 
-    # future::plan(future::multiprocess)
+    future::plan(future::multiprocess)
     model_out <- furrr::future_map(model_list,
                                    apply_model_full,
-                                   .data = test_set %>%
-                                       filter_maybe(!!!...))
+                                   .data = test_set)
 
 
     return(model_out)
@@ -856,7 +889,7 @@ tree_count_map <- function(sf_data, poly){
                 theme(axis.title = element_blank(),
                       strip.text = element_text(face = c("bold.italic")),
                       legend.position = "bottom",
-                      legend.dir = "horizontal",
+                      legend.direction = "horizontal",
                       legend.title = element_text(vjust = 1))
 
         }
@@ -1026,6 +1059,8 @@ dens_plot_trees <- function(sf_data,
 #'
 #' @param model_out output list with models
 #' @param model_name Character, model name
+#' @param df data.frame with all trees
+#' @param n_top_species Numeric, max number of species to inspect
 #'
 #' @return ggplot2 object and plot
 #' @export
@@ -1035,31 +1070,28 @@ dens_plot_trees <- function(sf_data,
 #'
 make_ranef_plot <- function(model_out,
                             model_name = "heat_RIspecies_RSspecies_RIprovenance",
-                            n_top_species = 6,
-                            full_df = full_data_set_clean,
-                            extract_uhi = extract_uhi_values_to_list){
-
-
-    test_set <- cbind(as.data.frame(full_data_set_clean),
-                      extract_uhi_values_to_list$Summertime_gridded_UHI_data$day)
+                            df,
+                            n_top_species = 6){
 
 
 
 
-    top_species <- test_set %>%
-        group_by(gattung_short) %>%
-        count(ART_BOT) %>%
-        arrange(desc(n), .by_group = TRUE) %>%
-        top_n(n_top_species)
+
+    top_species <- df %>%
+        as.data.frame() %>%
+        dplyr::group_by(gattung_short) %>%
+        dplyr::count(ART_BOT) %>%
+        dplyr::arrange(desc(n), .by_group = TRUE) %>%
+        dplyr::top_n(n_top_species)
 
 
     ranef_slopes <- model_out[[model_name]] %>%
         lme4::ranef() %>%
         as.data.frame() %>%
-        filter(term == "day_2007") %>%
-        mutate(grp = as.character(grp)) %>%
-        arrange(as.character(grp), as.numeric(condval)) %>%
-        mutate(gattung = sub("(.*:)(\\w+)(.*)", replacement = "\\2", x = as.character(grp), perl = FALSE),
+        dplyr::filter(term == "day_2007") %>%
+        dplyr::mutate(grp = as.character(grp)) %>%
+        dplyr::arrange(as.character(grp), as.numeric(condval)) %>%
+        dplyr::mutate(gattung = sub("(.*:)(\\w+)(.*)", replacement = "\\2", x = as.character(grp), perl = FALSE),
                species = sub("(.*:)(.*$)", replacement = "\\2", x = as.character(grp), perl = FALSE),
                species_short = paste0(substr(gattung, 1, 1),
                                       ". ",
@@ -1068,24 +1100,24 @@ make_ranef_plot <- function(model_out,
 
 
     p <- ranef_slopes %>%
-        left_join(top_species, by = c("species" = "ART_BOT")) %>%
-        arrange(gattung,condval ) %>%
-        mutate(grp = factor(grp,levels = grp),
+        dplyr::left_join(top_species, by = c("species" = "ART_BOT")) %>%
+        dplyr::arrange(gattung,condval ) %>%
+        dplyr::mutate(grp = factor(grp,levels = grp),
                species_short = forcats::fct_reorder(species_short, condval),
                gattung = forcats::fct_reorder(gattung, n, .fun = sum, .desc = TRUE)) %>%
-        ggplot(aes(x = species_short, y = condval, ymin = condval - condsd, ymax = condval + condsd)) +
-        geom_hline(yintercept = 0) +
-        geom_point(aes(color = provenance, size = n,  group = provenance),
+        ggplot2::ggplot(ggplot2::aes(x = species_short, y = condval, ymin = condval - condsd, ymax = condval + condsd)) +
+        ggplot2::geom_hline(yintercept = 0) +
+        ggplot2::geom_point(ggplot2::aes(color = provenance, size = n,  group = provenance),
                    position = position_dodge(width = 0.2),
                    alpha = 0.8) +
-        geom_linerange(aes(group = provenance, color = provenance),
+        ggplot2::geom_linerange(ggplot2::aes(group = provenance, color = provenance),
                        position = position_dodge(width = 0.2),
                        alpha = 0.8) +
-        facet_wrap(~gattung, scales = "free_y") +
-        theme_bw(base_size = 16) +
-        scale_color_brewer(type = "qual", palette = "Set2", direction = +1) +
-        coord_flip() +
-        theme(panel.border = element_rect(fill = "transparent"))
+        ggplot2::facet_wrap(~gattung, scales = "free_y") +
+        ggplot2::theme_bw(base_size = 16) +
+        ggplot2::scale_color_brewer(type = "qual", palette = "Set2", direction = +1) +
+        ggplot2::coord_flip() +
+        ggplot2::theme(panel.border = element_rect(fill = "transparent"))
 
     return(p)
 
@@ -1111,10 +1143,10 @@ make_ranef_plot <- function(model_out,
 #' @return filtered df
 #' @export
 #'
-filter_maybe <- function(df, ...){
+filter_maybe <- function(df, fargs){
 
-    if(...length() > 0){
-        fargs <- rlang::quo(...)
+    if(length(fargs) > 0){
+
 
         df <- df %>%
             dplyr::filter(!!!fargs)

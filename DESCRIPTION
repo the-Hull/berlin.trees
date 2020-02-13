@@ -33,7 +33,8 @@ Imports:
     magrittr,
     raster,
     lme4,
-    rlang
+    rlang,
+    stats
 Suggests: devtools,
     git2r
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2

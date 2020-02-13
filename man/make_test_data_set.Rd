@@ -4,8 +4,10 @@
 \alias{make_test_data_set}
 \title{Generate data set for stat-models}
 \usage{
-make_test_data_set(full_df = full_data_set_clean,
-  extract_uhi = extract_uhi_values_to_list)
+make_test_data_set(
+  full_df = full_data_set_clean,
+  extract_uhi = extract_uhi_values_to_list
+)
 }
 \arguments{
 \item{full_df}{cleaned data.frame of berlin trees}

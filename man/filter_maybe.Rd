@@ -4,7 +4,7 @@
 \alias{filter_maybe}
 \title{Adjusted filtering with ...}
 \usage{
-filter_maybe(df, ...)
+filter_maybe(df, fargs)
 }
 \arguments{
 \item{df}{data frame / tibble for filtering}

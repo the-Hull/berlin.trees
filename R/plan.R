@@ -1,5 +1,6 @@
 library(drake)
 library(future.callr)
+library(dplyr)
 future::plan(future.callr::callr)
 
 plan <- drake_plan(
@@ -81,13 +82,13 @@ plan <- drake_plan(
 
 
 
-    model_res = berlin.trees::apply_models(df = model_df,
+    model_res = berlin.trees::apply_models(df = model_df %>%
+                                               dplyr::filter(STANDALTER < 350 &
+                                                          krone_m < 50 &
+                                                          dbh_cm < 600),
                              model_list = model_list,
-                             n_top_species = 6,
-                             min_individuals = 150,
-                             list(STANDALTER < 350,
-                             krone_m < 50,
-                             dbh_cm < 600)),
+                             n_top_species = 3,
+                             min_individuals = 150),
 
 
 
@@ -107,12 +108,17 @@ plan <- drake_plan(
                                                  position_stack = "stack"),
 
 
-    plot_LME_no_age = make_ranef_plot(model_out = model_res,
-                    model_name = "heat_RIspecies_RSspecies_RIprovenance"),
+    plot_LME_no_age = berlin.trees::make_ranef_plot(model_out = model_res,
+                    model_name = "heat_RIspecies_RSspecies_RIprovenance",
+                    df = full_data_set_clean,
+                    n_top_species = 3
+                    ),
 
 
-    plot_LME_age = make_ranef_plot(model_out = model_res,
-                    model_name = "heat_age_RIspecies_RSspecies_RIprovenance")
+    plot_LME_age = berlin.trees::make_ranef_plot(model_out = model_res,
+                    model_name = "heat_age_RIspecies_RSspecies_RIprovenance",
+                    df = full_data_set_clean,
+                    n_top_species = 3)
 
 
 
