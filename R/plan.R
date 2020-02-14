@@ -118,22 +118,19 @@ plan <- drake_plan(
     plot_LME_age = berlin.trees::make_ranef_plot(model_out = model_res,
                     model_name = "heat_age_RIspecies_RSspecies_RIprovenance",
                     df = full_data_set_clean,
-                    n_top_species = 3)
+                    n_top_species = 3),
 
 
 
 
-
-# ,
-# ART_BOT %in% top_species$ART_BOT[top_species$n > 150]
     # Reporting
-    # paper = rmarkdown::render(
-    #     knitr_in("./analysis/paper/paper.Rmd"),
-    #     output_file = file_out(file.path(here::here(), "paper_knit.html")),
-    #     # output_file = file_out(file.path("./paper_knit.html")),
-    #     output_format = bookdown::html_document2(),
-    #     quiet = TRUE
-    # )
+    paper = rmarkdown::render(
+        knitr_in("./analysis/paper/paper.Rmd"),
+        output_file = file_out(file.path(here::here(), "paper_knit.html")),
+        # output_file = file_out(file.path("./paper_knit.html")),
+        output_format = bookdown::html_document2(),
+        quiet = TRUE
+    )
 
 )
 

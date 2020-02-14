@@ -102,6 +102,27 @@ readd(plot_count_map)
 ```
 
 
+
+```{r fig-density, fig.cap="A plot of random numbers",fig.width = 12, fig.height = 12, out.width="100%"}
+readd(plot_density)
+# plot_count_map
+
+# plot(1:10)
+```
+
+
+
+
+
+```{r fig-lmestat, fig.cap="A plot of random numbers",fig.width = 20, fig.height = 12, out.width="100%"}
+readd(plot_LME_age)
+# plot_count_map
+
+# plot(1:10)
+```
+
+
+
 <!-- Figure \@ref(fig:demo-plot) shows how we can have a caption and cross-reference for a plot -->
 
 # Discussion

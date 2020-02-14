@@ -799,7 +799,12 @@ tree_sums_bar_plot <- function(sf_data){
               axis.text.y = element_text(face = "italic")) +
 
 
-        scale_fill_brewer(type = "seq", palette = "Greens")
+    ggplot2::scale_fill_brewer(type = "qual",
+                                palette = "Set2",
+                                direction = +1,
+                                labels = c("Riparian",
+                                           "Street",
+                                           "Park"))
 
 }
 
@@ -978,8 +983,18 @@ dens_plot_trees <- function(sf_data,
 
         # scales
         xlim(c(-5, 6.5)) +
-        scale_color_brewer(type = "qual", palette = "Set2") +
-        scale_fill_brewer(type = "qual", palette = "Set2") +
+        scale_color_brewer(type = "qual",
+                           palette = "Set2",
+                           labels = c("Riparian",
+                                      "Street",
+                                      "Park"),
+                           direction = +1) +
+        scale_fill_brewer(type = "qual",
+                          palette = "Set2",
+                          labels = c("Riparian",
+                                     "Street",
+                                     "Park"),
+                          direction = +1) +
 
         # theming
         guides(color = FALSE) +
@@ -1016,7 +1031,10 @@ dens_plot_trees <- function(sf_data,
 
                                             scale_alpha_manual(values = c(0.3,
                                                                           0.95)) +
-                                            scale_fill_brewer(type = "qual", palette = "Set2") +
+                                            scale_fill_brewer(type = "qual", palette = "Set2",
+                                                              labels = c("Riparian",
+                                                                         "Street",
+                                                                         "Park")) +
 
 
                                             scale_y_continuous(breaks = c(0, 150000),
@@ -1031,7 +1049,8 @@ dens_plot_trees <- function(sf_data,
                                                   panel.grid = element_blank(),
                                                   axis.ticks.length = unit(2, "mm"),
                                                   axis.ticks = element_line(color = "gray10"),
-                                                  axis.ticks.y = element_blank())
+                                                  axis.ticks.y = element_blank(),
+                                                  strip.text = element_text(face = "italic"))
                                     ),
 
 
@@ -1105,7 +1124,10 @@ make_ranef_plot <- function(model_out,
         dplyr::mutate(grp = factor(grp,levels = grp),
                species_short = forcats::fct_reorder(species_short, condval),
                gattung = forcats::fct_reorder(gattung, n, .fun = sum, .desc = TRUE)) %>%
+
+
         ggplot2::ggplot(ggplot2::aes(x = species_short, y = condval, ymin = condval - condsd, ymax = condval + condsd)) +
+
         ggplot2::geom_hline(yintercept = 0) +
         ggplot2::geom_point(ggplot2::aes(color = provenance, size = n,  group = provenance),
                    position = position_dodge(width = 0.2),
@@ -1113,11 +1135,25 @@ make_ranef_plot <- function(model_out,
         ggplot2::geom_linerange(ggplot2::aes(group = provenance, color = provenance),
                        position = position_dodge(width = 0.2),
                        alpha = 0.8) +
-        ggplot2::facet_wrap(~gattung, scales = "free_y") +
+
+
         ggplot2::theme_bw(base_size = 16) +
-        ggplot2::scale_color_brewer(type = "qual", palette = "Set2", direction = +1) +
+        ggplot2::theme(panel.border = element_rect(fill = "transparent"),
+                       strip.text = element_text(face = "italic"),
+                       legend.position = c(0.9,0.11)) +
+
+        ggplot2::scale_color_brewer(type = "qual",
+                                    palette = "Set2",
+                                    direction = +1,
+                                    labels = c("Street",
+                                               "Park")) +
         ggplot2::coord_flip() +
-        ggplot2::theme(panel.border = element_rect(fill = "transparent"))
+        ggplot2::facet_wrap(~gattung, scales = "free_y") +
+
+        labs(y = "Effect Size (cm / C UHI)",
+             x = NULL,
+             color = NULL)
+
 
     return(p)
 
