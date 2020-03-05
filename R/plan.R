@@ -119,9 +119,11 @@ plan <- drake_plan(
 
 
 
+
     plot_tree_sums_bar = berlin.trees::tree_sums_bar_plot(full_data_set_clean,
                                                           file = drake::file_out("./analysis/figures/plot_01_tree_sums_bar.png"),
                                                           base_size = 18,
+
                                                           height = 12,
                                                           width = 12,
                                                           dpi = 300),

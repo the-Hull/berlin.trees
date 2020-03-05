@@ -1,8 +1,10 @@
 # source("renv/activate.R")
 
 #
-.First <- function(){
+
+# .First <- function(){
     # .wd <<- function(){shell.exec(".")}
     # cat("use function .wd() to open working directory\n")
-}
+# }
+
 #
