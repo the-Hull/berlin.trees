@@ -4,12 +4,20 @@
 \alias{make_overview_map}
 \title{Create overview-map of all data sets}
 \usage{
-make_overview_map(sf_data, poly)
+make_overview_map(sf_data, poly, base_size = 18, file, height, width, dpi)
 }
 \arguments{
 \item{sf_data}{sf-tibble of Berlin trees}
 
 \item{poly}{sf-tibble, polygons of Berlin districts}
+
+\item{file}{character, file path (use with \code{\link{file_out}}), must include file ending}
+
+\item{height}{numeric, height in inches}
+
+\item{width}{numeric, width in inches}
+
+\item{dpi}{numeric, dpi of output}
 }
 \value{
 ggplot object

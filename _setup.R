@@ -17,6 +17,10 @@
 # usethis::use_package("magrittr")
 # usethis::use_package("lme4")
 # usethis::use_package("rlang")
+# usethis::use_package("stars")
+# usethis::use_package("extrafont")
+# usethis::use_package("scales")
+# usethis::use_package("raster")
 
 ## packages
 
@@ -36,4 +40,4 @@ drake::r_make()
 
 
 source("R/plan.R")      # Create your drake plan.
-drake::vis_drake_graph(config = drake_config(plan))
+drake::vis_drake_graph(plan, targets_only = TRUE)

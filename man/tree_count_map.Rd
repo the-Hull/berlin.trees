@@ -4,12 +4,20 @@
 \alias{tree_count_map}
 \title{Spatially-binned tree counts}
 \usage{
-tree_count_map(sf_data, poly)
+tree_count_map(sf_data, poly, base_size = 18, file, height, width, dpi)
 }
 \arguments{
 \item{sf_data}{sf-tibble of Berlin City trees}
 
 \item{poly}{sf-tibble of Berlin Districts}
+
+\item{file}{character, file path (use with \code{\link{file_out}}), must include file ending}
+
+\item{height}{numeric, height in inches}
+
+\item{width}{numeric, width in inches}
+
+\item{dpi}{numeric, dpi of output}
 }
 \value{
 ggplot map

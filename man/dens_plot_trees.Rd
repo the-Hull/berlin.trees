@@ -26,6 +26,14 @@ dens_plot_trees(sf_data,
 \item{xmin}{Numeric, coordinate for inset plot.}
 
 \item{xmax}{Numeric, coordinate for inset plot.}
+
+\item{file}{character, file path (use with \code{\link{file_out}}), must include file ending}
+
+\item{width}{numeric, width in inches}
+
+\item{height}{numeric, height in inches}
+
+\item{dpi}{numeric, dpi of output}
 }
 \value{
 A ggplot2 plot object

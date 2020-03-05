@@ -8,7 +8,12 @@ make_ranef_plot(
   model_out,
   model_name = "heat_RIspecies_RSspecies_RIprovenance",
   df,
-  n_top_species = 6
+  n_top_species = 6,
+  base_size = 18,
+  file,
+  height,
+  width,
+  dpi
 )
 }
 \arguments{
@@ -19,6 +24,14 @@ make_ranef_plot(
 \item{df}{data.frame with all trees}
 
 \item{n_top_species}{Numeric, max number of species to inspect}
+
+\item{file}{character, file path (use with \code{\link{file_out}}), must include file ending}
+
+\item{height}{numeric, height in inches}
+
+\item{width}{numeric, width in inches}
+
+\item{dpi}{numeric, dpi of output}
 }
 \value{
 ggplot2 object and plot

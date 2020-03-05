@@ -215,7 +215,7 @@ clean_data <- function(sf_data){
                       gattung_short = forcats::fct_relevel(gattung_short, "Other", after = Inf),
                       krone_m = as.numeric(ifelse(!is.na(KRONEDURCH), KRONEDURCH, KRONENDURC)),
                       dbh_cm = as.numeric(ifelse(!is.na(STAMMUMFAN), STAMMUMFAN, STAMMUMFG)) /
-                                              pi,
+                          pi,
                       species_corrected = ifelse(!is.na(ART_BOT),
                                                  ART_BOT,
                                                  paste(gattung_short, "spec.")),
@@ -393,7 +393,7 @@ get_uhi_rasters <- function(path){
 
             return(day_night_list)
 
-                                    }) %>%
+        }) %>%
         purrr::set_names(tools::file_path_sans_ext(grid_zips))
 
 
@@ -503,35 +503,35 @@ add_uhi_hist_data <- function(uhi_stack_list, sf_data){
 calc_uhi_stats <- function(uhi_stack_list){
 
 
-        ## raster stats
+    ## raster stats
 
-        stat_funs <- c("median", "mean", "sd")
+    stat_funs <- c("median", "mean", "sd")
 
-        ### cycle into list containing the 4 (total) stacks (2x summer, 2x winter)
-        raster_stats <- lapply(stat_funs,
-                               function(stats) {
+    ### cycle into list containing the 4 (total) stacks (2x summer, 2x winter)
+    raster_stats <- lapply(stat_funs,
+                           function(stats) {
 
-                                   # into list (summer vs. winter)
-                                   lapply(uhi_stack_list,
-                                          function(stacks) {
-                                              # into stacks (day vs. night)
-                                              lapply(stacks,
+                               # into list (summer vs. winter)
+                               lapply(uhi_stack_list,
+                                      function(stacks) {
+                                          # into stacks (day vs. night)
+                                          lapply(stacks,
 
-                                                     function(stack){
-                                                         stat_result <- raster::cellStats(stack, stats) %>%
-                                                             data.frame(val = .,
-                                                                        year = sub(pattern = ".*([0-9]{4})$",
-                                                                                   replacement = "\\1",
-                                                                                   x = names(.)),
-                                                                        stringsAsFactors = FALSE)
-                                                     })
-                                          })
+                                                 function(stack){
+                                                     stat_result <- raster::cellStats(stack, stats) %>%
+                                                         data.frame(val = .,
+                                                                    year = sub(pattern = ".*([0-9]{4})$",
+                                                                               replacement = "\\1",
+                                                                               x = names(.)),
+                                                                    stringsAsFactors = FALSE)
+                                                 })
+                                      })
 
-                               }) %>%
-            stats::setNames(stat_funs)
+                           }) %>%
+        stats::setNames(stat_funs)
 
 
-        return(raster_stats)
+    return(raster_stats)
 
 
 }
@@ -555,13 +555,13 @@ make_test_data_set <- function(full_df = full_data_set_clean,
 
 
     test_set <- dplyr::mutate(cbind(as.data.frame(full_df),
-                            extract_uhi$Summertime_gridded_UHI_data$day),
+                                    extract_uhi$Summertime_gridded_UHI_data$day),
 
-                      STANDALTER = as.numeric(STANDALTER),
-                      age_group = cut(STANDALTER, breaks = seq(0, 280, 40)),
-                      ART_BOT = ifelse(is.na(ART_BOT),
-                                       paste(gattung_short, "spec."),
-                                       ART_BOT))
+                              STANDALTER = as.numeric(STANDALTER),
+                              age_group = cut(STANDALTER, breaks = seq(0, 280, 40)),
+                              ART_BOT = ifelse(is.na(ART_BOT),
+                                               paste(gattung_short, "spec."),
+                                               ART_BOT))
 
 
     return(test_set)
@@ -688,64 +688,86 @@ apply_models <- function(df = test_df,
 #'
 #' @param sf_data sf-tibble of Berlin trees
 #' @param poly sf-tibble, polygons of Berlin districts
+#' @param file character, file path (use with \code{\link{file_out}}), must include file ending
+#' @param height numeric, height in inches
+#' @param width numeric, width in inches
+#' @param dpi numeric, dpi of output
 #'
 #' @return ggplot object
 #' @import ggplot2
 #' @import sf
 #' @export
-make_overview_map <- function(sf_data, poly){
+make_overview_map <- function(sf_data,
+                              poly,
+                              base_size = 18,
+                              file,
+                              height,
+                              width,
+                              dpi){
 
-    # extrafont::loadfonts("win", quiet = TRUE)
+    extrafont::loadfonts("win", quiet = TRUE)
 
 
     gplot <- sf_data %>%
         dplyr::group_by(provenance) %>%
         dplyr::sample_n(7000) %>%
         dplyr::ungroup() %>% {
-        ggplot() +
+            ggplot() +
 
 
 
-        geom_sf(inherit.aes = FALSE,
-                aes(geometry = geometry),
-                data = poly,
-                fill = "gray80",
-                color = "white",
-                show.legend = FALSE,
-                size = 0.7) +
+                geom_sf(inherit.aes = FALSE,
+                        aes(geometry = geometry),
+                        data = poly,
+                        fill = "gray80",
+                        color = "white",
+                        show.legend = FALSE,
+                        size = 0.7) +
 
 
-        geom_sf(color = "black",
-                inherit.aes = FALSE,
-                data = .,
-                aes(geometry = geometry),
-                size = 0.2,
-                show.legend = FALSE,
-                alpha = 0.3) +
+                geom_sf(color = "black",
+                        inherit.aes = FALSE,
+                        data = .,
+                        aes(geometry = geometry),
+                        size = 0.2,
+                        show.legend = FALSE,
+                        alpha = 0.3) +
 
 
-        # geom_sf(inherit.aes = FALSE,
-        #         data = poly,
-        #         fill = "transparent",
-        #         color = "white",
-        #         show.legend = FALSE,
-        #         size = 0.75,
-        #         alpha = 0.5) +
+                # geom_sf(inherit.aes = FALSE,
+                #         data = poly,
+                #         fill = "transparent",
+                #         color = "white",
+                #         show.legend = FALSE,
+                #         size = 0.75,
+                #         alpha = 0.5) +
 
-        facet_wrap(~provenance) +
+                facet_wrap(~provenance) +
 
-        scale_x_continuous(breaks = seq(13, 14, 0.2)) +
-        scale_y_continuous(breaks = seq(52.3, 53.7, 0.1)) +
+                scale_x_continuous(breaks = seq(13, 14, 0.2)) +
+                scale_y_continuous(breaks = seq(52.3, 53.7, 0.1)) +
 
-        theme_minimal(base_size = 18
-                      # base_family = "Roboto Condensed"
-        ) +
+                theme_minimal(base_size = base_size,
+                              base_family = "Roboto Condensed"
+                ) +
 
-        labs(caption = paste0("Data source: daten.berlin.de; WFS Service, accessed: ",
-                              "2019-12-13"))
+                # labs(caption = paste0("Data source: daten.berlin.de; WFS Service, accessed: ",
+                #                       "2019-12-13"))
+
+                facet_wrap(~provenance,
+                           labeller = labeller(provenance = c("s_uferbaeume" = "Riparian",
+                                                              "s_wfs_baumbestand" = "Street",
+                                                              "s_wfs_baumbestand_an" = "Park")))
         }
 
-    return(gplot)
+
+    ggplot2::ggsave(filename = file,
+                    plot = gplot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+    # return(gplot)
 
 }
 
@@ -754,16 +776,26 @@ make_overview_map <- function(sf_data, poly){
 #' Generate overview of records (bar plot)
 #'
 #' @param sf_data sf-tibble of Berlin City trees
+#' @param file character, file path (use with \code{\link{file_out}}), must include file ending
+#' @param height numeric, height in inches
+#' @param width numeric, width in inches
+#' @param dpi numeric, dpi of output
 #'
 #' @return ggplot bar graph
 #' @export
 #'
 #' @import ggplot2
-tree_sums_bar_plot <- function(sf_data){
+tree_sums_bar_plot <- function(sf_data,
+                               base_size = 18,
+                               file,
+                               height,
+                               width,
+                               dpi){
+
+    extrafont::loadfonts("win", quiet = TRUE)
 
 
-
-    sf_data %>%
+    gplot <- sf_data %>%
         # dplyr::mutate(STAMMUMFG = as.numeric(STAMMUMFG),
         #        GATTUNG = forcats::fct_infreq(as.factor(GATTUNG)),
         #        gattung_short = forcats::fct_lump(GATTUNG,11),
@@ -775,9 +807,9 @@ tree_sums_bar_plot <- function(sf_data){
         coord_flip() +
 
         geom_bar(aes(x = gattung_short,
-                              fill = provenance),
-                          show.legend = TRUE,
-                          color = "gray10") +
+                     fill = provenance),
+                 show.legend = TRUE,
+                 color = "gray10") +
 
 
         labs(subtitle =  paste0("total records: ",
@@ -786,25 +818,32 @@ tree_sums_bar_plot <- function(sf_data){
                                 "total genera: ",
                                 sf_data$GATTUNG %>%
                                     unique() %>% length()),
-
-             caption = paste0("Data source: daten.berlin.de; WFS Service, accessed: ",
-                              Sys.Date()),
+             #
+             #              caption = paste0("Data source: daten.berlin.de; WFS Service, accessed: ",
+             #                               Sys.Date()),
              y = "Count",
              x = "Genus",
              fill = NULL) +
 
 
-        theme_minimal(base_size = 18) +
+        theme_minimal(base_size = base_size, base_family = "Roboto Condensed") +
         theme(legend.position = c(0.8,0.5),
               axis.text.y = element_text(face = "italic")) +
 
 
-    ggplot2::scale_fill_brewer(type = "qual",
-                                palette = "Set2",
-                                direction = +1,
-                                labels = c("Riparian",
-                                           "Street",
-                                           "Park"))
+        ggplot2::scale_fill_brewer(type = "qual",
+                                   palette = "Set2",
+                                   direction = +1,
+                                   labels = c("Riparian",
+                                              "Street",
+                                              "Park"))
+
+
+    ggplot2::ggsave(filename = file,
+                    plot = gplot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
 
 }
 
@@ -815,14 +854,25 @@ tree_sums_bar_plot <- function(sf_data){
 #'
 #' @param sf_data sf-tibble of Berlin City trees
 #' @param poly sf-tibble of Berlin Districts
+#' @param file character, file path (use with \code{\link{file_out}}), must include file ending
+#' @param height numeric, height in inches
+#' @param width numeric, width in inches
+#' @param dpi numeric, dpi of output
 #'
 #' @return ggplot map
 #' @export
 #'
 #' @import ggplot2
-tree_count_map <- function(sf_data, poly){
+tree_count_map <- function(sf_data,
+                           poly,
+                           base_size = 18,
+                           file,
+                           height,
+                           width,
+                           dpi){
 
 
+    extrafont::loadfonts("win", quiet = TRUE)
 
 
     sf_plot <- sf_data %>%
@@ -837,73 +887,162 @@ tree_count_map <- function(sf_data, poly){
         #               gattung_short = forcats::fct_infreq(as.factor(gattung_short)),
         #               gattung_short = forcats::fct_relevel(gattung_short, "Other", after = Inf),
         #
-        #
-        #               bezirk_num = as.numeric(as.factor(BEZIRK))) %>%
-        # dplyr::add_count(gattung_short) %>%
-        # dplyr::filter(!is.na(gattung_short)) %>%
-        dplyr::filter(STAMMUMFG > 62.83185) %>% {
-            ggplot(.) +
+    #
+    #               bezirk_num = as.numeric(as.factor(BEZIRK))) %>%
+    # dplyr::add_count(gattung_short) %>%
+    # dplyr::filter(!is.na(gattung_short)) %>%
+    dplyr::filter(STAMMUMFG > 62.83185) %>% {
+        ggplot(.) +
 
-                geom_sf(inherit.aes = FALSE,
-                        aes(geometry = geometry),
-                        data = poly,
-                        fill = "gray80",
-                        color = "white",
-                        show.legend = FALSE,
-                        size = 0.7) +
-
-
-                stat_bin2d(aes(x = sf::st_coordinates(.)[,"X"],
-                               y = sf::st_coordinates(.)[,"Y"],
-                               group = gattung_short,
-                               fill = stat(ncount)),
-                           alpha = 0.8,
-                           bins = 25,
-                           binwidth = c(1500,1500)) +
+            geom_sf(inherit.aes = FALSE,
+                    aes(geometry = geometry),
+                    data = poly,
+                    fill = "gray80",
+                    color = "white",
+                    show.legend = FALSE,
+                    size = 0.7) +
 
 
-
-                geom_sf(inherit.aes = FALSE,
-                        aes(geometry = geometry),
-                        data = poly,
-                        fill = "transparent",
-                        color = "gray80",
-                        show.legend = FALSE,
-                        size = 0.5) +
+            stat_bin2d(aes(x = sf::st_coordinates(.)[,"X"],
+                           y = sf::st_coordinates(.)[,"Y"],
+                           group = gattung_short,
+                           fill = stat(ncount)),
+                       alpha = 0.8,
+                       bins = 25,
+                       binwidth = c(1500,1500)) +
 
 
 
-
-                facet_wrap(~gattung_short) +
-
-                labs(caption = paste0("Data source: daten.berlin.de; WFS Service, accessed: ",
-                                      "2019-12-15"),
-                     fill = "normalized Count")+
-
-
-
-                scale_x_continuous(breaks = seq(13, 14, 0.2)) +
-                scale_y_continuous(breaks = seq(52.3, 53.7, 0.1)) +
-                scale_fill_viridis_c() +
-                guides(fill = guide_colorbar(barwidth = grid::unit(10, units = "cm"),
-                                             barheight = grid::unit(.45, units = "cm"))) +
+            geom_sf(inherit.aes = FALSE,
+                    aes(geometry = geometry),
+                    data = poly,
+                    fill = "transparent",
+                    color = "gray80",
+                    show.legend = FALSE,
+                    size = 0.5) +
 
 
-                theme_minimal(base_size = 18) +
 
-                theme(axis.title = element_blank(),
-                      strip.text = element_text(face = c("bold.italic")),
-                      legend.position = "bottom",
-                      legend.direction = "horizontal",
-                      legend.title = element_text(vjust = 1))
 
-        }
+            facet_wrap(~gattung_short) +
 
-    return(sf_plot)
+            labs(caption = paste0("Data source: daten.berlin.de; WFS Service, accessed: ",
+                                  "2019-12-15"),
+                 fill = "normalized Count")+
+
+
+
+            scale_x_continuous(breaks = seq(13, 14, 0.2)) +
+            scale_y_continuous(breaks = seq(52.3, 53.7, 0.1)) +
+            scale_fill_viridis_c() +
+            guides(fill = guide_colorbar(barwidth = grid::unit(10, units = "cm"),
+                                         barheight = grid::unit(.45, units = "cm"))) +
+
+
+            theme_minimal(base_size = base_size, base_family = "Roboto Condensed") +
+
+            theme(axis.title = element_blank(),
+                  strip.text = element_text(face = c("bold.italic")),
+                  legend.position = "bottom",
+                  legend.direction = "horizontal",
+                  legend.title = element_text(vjust = 1))
+
+    }
+
+    ggplot2::ggsave(filename = file,
+                    plot = sf_plot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+    # return(sf_plot)
 
 
 }
 
+
+
+
+
+#' Plot UHI with Berlin districts
+#'
+#' @param uhi_stacks Rasterstack lists for UHI
+#' @param berlin_poly Berlin District Polygon
+#' @param base_size Numeric, base char size for ggplot
+#' @param file Character, output file path
+#' @param height Numeric, for plot output (cm)
+#' @param width Numeric, for plot output (cm)
+#' @param dpi Numeric
+#' @import raster
+#'
+#' @return
+#' @export
+#'
+make_uhi_plot <- function(uhi_stacks,
+                          berlin_poly,
+                          base_size = 18,
+                          file,
+                          height,
+                          width,
+                          dpi){
+
+    extrafont::loadfonts(device = "win",quiet = TRUE)
+
+
+    mid_rescaler <- function(mid = 0) {
+        function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
+            scales::rescale_mid(x, to, from, mid)
+        }
+    }
+
+
+    p <- ggplot2::ggplot() +
+
+
+        ggplot2::geom_sf(data = berlin_poly,
+                         color = "gray60",
+                         fill = "gray80",
+                         size = 1,
+                         show.legend = FALSE) +
+
+
+        stars::geom_stars(data = stars::st_as_stars(uhi_stacks$Summertime_gridded_UHI_data$day$day_2007),
+                          na.rm = TRUE) +
+
+
+        ggplot2::geom_sf(data = berlin_poly,
+                         color = "gray60",
+                         fill = "transparent",
+                         size = 1,
+                         show.legend = FALSE) +
+
+        # scale_fill_viridis_c(na.value = "transparent") +
+        ggplot2::scale_fill_distiller(palette = "RdBu",
+                                      rescaler = mid_rescaler(),
+                                      na.value = "transparent")   +
+
+        ggplot2::labs(fill = expression(Summer~day-time~UHI~(degree*C)),
+                      x = NULL,
+                      # title = "Estimate of Urban Heat Loading",
+                      y = NULL) +
+
+
+        ggplot2::theme_minimal(base_family = "Roboto Condensed",
+                               base_size = base_size) +
+        ggplot2::theme(legend.direction = "horizontal",
+                       legend.position = c(0.8, 0.95)) +
+        ggplot2::guides(fill = guide_colorbar(barwidth = unit(5, "cm"),
+                                              title.vjust = 1))
+
+
+    ggplot2::ggsave(filename = file,
+                    plot = p,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+
+}
 
 #' Density plot overview
 #'
@@ -916,6 +1055,10 @@ tree_count_map <- function(sf_data, poly){
 #' @param ymax Numeric, coordinate for inset plot.
 #' @param xmin Numeric, coordinate for inset plot.
 #' @param xmax Numeric, coordinate for inset plot.
+#' @param file character, file path (use with \code{\link{file_out}}), must include file ending
+#' @param height numeric, height in inches
+#' @param width numeric, width in inches
+#' @param dpi numeric, dpi of output
 #'
 #' @usage dens_plot_trees(sf_data,
 #'   extracted_uhi,
@@ -935,8 +1078,14 @@ dens_plot_trees <- function(sf_data,
                             ymin = 0.4,
                             ymax=1.4,
                             xmin=-5,
-                            xmax=-0.5){
+                            xmax=-0.5,
+                            base_size = 18,
+                            file,
+                            width,
+                            height,
+                            dpi){
 
+    extrafont::loadfonts(device = "win",quiet = TRUE)
 
 
     sf_extracted_uhi <- cbind(sf_data, extracted_uhi$Summertime_gridded_UHI_data$day)
@@ -998,10 +1147,11 @@ dens_plot_trees <- function(sf_data,
 
         # theming
         guides(color = FALSE) +
-        theme_bw(base_size = 16) +
+        theme_bw(base_size = base_size, base_family = "Roboto Condensed") +
         theme(legend.position = c(0.6, 0.1),
-              legend.direction = "horizontal") +
-        labs(x = "Summer day-time UHI magnitude (C)", y = "Density", fill = "Type")
+              legend.direction = "horizontal",
+              strip.text = element_text(face = "italic")) +
+        labs(x = expression(Summer~day-time~UHI~magnitude~(degree*C)), y = "Density", fill = "Type")
 
 
 
@@ -1042,7 +1192,7 @@ dens_plot_trees <- function(sf_data,
 
 
                                             labs(fill = NULL) +
-                                            theme_minimal(base_size = 9) +
+                                            theme_minimal(base_size = 11, base_family = "Roboto Condensed") +
                                             theme(axis.text.y = element_blank(),
                                                   axis.title = element_blank(),
                                                   plot.margin = margin(),
@@ -1064,8 +1214,16 @@ dens_plot_trees <- function(sf_data,
 
                             })
 
+    gplot <- dens_plot + bar_plots
 
-    return(dens_plot + bar_plots)
+
+    ggplot2::ggsave(filename = file,
+                    plot = gplot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+    # return(dens_plot + bar_plots)
 
 
 }
@@ -1080,6 +1238,10 @@ dens_plot_trees <- function(sf_data,
 #' @param model_name Character, model name
 #' @param df data.frame with all trees
 #' @param n_top_species Numeric, max number of species to inspect
+#' @param file character, file path (use with \code{\link{file_out}}), must include file ending
+#' @param height numeric, height in inches
+#' @param width numeric, width in inches
+#' @param dpi numeric, dpi of output
 #'
 #' @return ggplot2 object and plot
 #' @export
@@ -1090,10 +1252,16 @@ dens_plot_trees <- function(sf_data,
 make_ranef_plot <- function(model_out,
                             model_name = "heat_RIspecies_RSspecies_RIprovenance",
                             df,
-                            n_top_species = 6){
+                            n_top_species = 6,
+                            base_size = 18,
+                            file,
+                            height,
+                            width,
+                            dpi){
 
 
 
+    extrafont::loadfonts(device = "win", quiet = TRUE)
 
 
     top_species <- df %>%
@@ -1111,33 +1279,33 @@ make_ranef_plot <- function(model_out,
         dplyr::mutate(grp = as.character(grp)) %>%
         dplyr::arrange(as.character(grp), as.numeric(condval)) %>%
         dplyr::mutate(gattung = sub("(.*:)(\\w+)(.*)", replacement = "\\2", x = as.character(grp), perl = FALSE),
-               species = sub("(.*:)(.*$)", replacement = "\\2", x = as.character(grp), perl = FALSE),
-               species_short = paste0(substr(gattung, 1, 1),
-                                      ". ",
-                                      sub("(^\\w+)( )(.*)", replacement = "\\3", x = as.character(species), perl = TRUE)),
-               provenance = sub("(^\\w+):(.*)", replacement = "\\1", x = as.character(grp), perl = FALSE))
+                      species = sub("(.*:)(.*$)", replacement = "\\2", x = as.character(grp), perl = FALSE),
+                      species_short = paste0(substr(gattung, 1, 1),
+                                             ". ",
+                                             sub("(^\\w+)( )(.*)", replacement = "\\3", x = as.character(species), perl = TRUE)),
+                      provenance = sub("(^\\w+):(.*)", replacement = "\\1", x = as.character(grp), perl = FALSE))
 
 
     p <- ranef_slopes %>%
         dplyr::left_join(top_species, by = c("species" = "ART_BOT")) %>%
         dplyr::arrange(gattung,condval ) %>%
         dplyr::mutate(grp = factor(grp,levels = grp),
-               species_short = forcats::fct_reorder(species_short, condval),
-               gattung = forcats::fct_reorder(gattung, n, .fun = sum, .desc = TRUE)) %>%
+                      species_short = forcats::fct_reorder(species_short, condval),
+                      gattung = forcats::fct_reorder(gattung, n, .fun = sum, .desc = TRUE)) %>%
 
 
         ggplot2::ggplot(ggplot2::aes(x = species_short, y = condval, ymin = condval - condsd, ymax = condval + condsd)) +
 
         ggplot2::geom_hline(yintercept = 0) +
         ggplot2::geom_point(ggplot2::aes(color = provenance, size = n,  group = provenance),
-                   position = position_dodge(width = 0.2),
-                   alpha = 0.8) +
+                            position = position_dodge(width = 0.2),
+                            alpha = 0.8) +
         ggplot2::geom_linerange(ggplot2::aes(group = provenance, color = provenance),
-                       position = position_dodge(width = 0.2),
-                       alpha = 0.8) +
+                                position = position_dodge(width = 0.2),
+                                alpha = 0.8) +
 
 
-        ggplot2::theme_bw(base_size = 16) +
+        ggplot2::theme_bw(base_size = base_size, base_family = "Roboto Condensed") +
         ggplot2::theme(panel.border = element_rect(fill = "transparent"),
                        strip.text = element_text(face = "italic"),
                        legend.position = c(0.9,0.11)) +
@@ -1150,12 +1318,20 @@ make_ranef_plot <- function(model_out,
         ggplot2::coord_flip() +
         ggplot2::facet_wrap(~gattung, scales = "free_y") +
 
-        labs(y = "Effect Size (cm / C UHI)",
-             x = NULL,
-             color = NULL)
+        ggplot2::scale_x_discrete(labels = function(x) lapply(strwrap(x, width = 10, simplify = FALSE), paste, collapse="\n")) +
+
+        ggplot2::labs(y = expression(Effect~Size~(cm/degree*C)),
+                      x = NULL,
+                      color = NULL)
+
+    ggplot2::ggsave(filename = file,
+                    plot = p,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
 
 
-    return(p)
+    # return(p)
 
 
 

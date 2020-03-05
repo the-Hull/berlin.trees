@@ -44,7 +44,7 @@ plan <- drake_plan(
 
 
     extract_uhi_values_to_list = berlin.trees::add_uhi_hist_data(uhi_stack_list = uhi_stacks,
-                                                      sf_data = full_data_set_clean[, ]),
+                                                                 sf_data = full_data_set_clean[, ]),
 
 
 
@@ -84,41 +84,77 @@ plan <- drake_plan(
 
     model_res = berlin.trees::apply_models(df = model_df %>%
                                                dplyr::filter(STANDALTER < 350 &
-                                                          krone_m < 50 &
-                                                          dbh_cm < 600),
-                             model_list = model_list,
-                             n_top_species = 3,
-                             min_individuals = 150),
+                                                                 krone_m < 50 &
+                                                                 dbh_cm < 600),
+                                           model_list = model_list,
+                                           n_top_species = 3,
+                                           min_individuals = 150),
 
 
 
 
     # Plotting
     plot_overview_map = berlin.trees::make_overview_map(full_data_set_clean,
-                                                        berlin_polygons),
+                                                        berlin_polygons,
+                                                        file = drake::file_out("./analysis/figures/map_01_overview.png"),
+                                                        height = 4,
+                                                        width = 12,
+                                                        dpi = 300),
 
-    plot_tree_sums_bar = berlin.trees::tree_sums_bar_plot(full_data_set_clean),
 
     plot_count_map = berlin.trees::tree_count_map(full_data_set_clean,
-                                                  berlin_polygons),
+                                                  berlin_polygons,file = drake::file_out("./analysis/figures/map_02_tree_sums_standardized.png"),
+                                                  height = 12,
+                                                  width = 12,
+                                                  dpi = 300),
 
+    plot_uhi_map = berlin.trees::make_uhi_plot(uhi_stacks = uhi_stacks,
+                                                        berlin_poly = berlin_polygons,
+                                                    base_size = 18,
+                                                    file = drake::file_out("./analysis/figures/map_03_uhi.png"),
+                                                        height = 6,
+                                                        width = 6,
+                                                        dpi = 300),
+
+
+
+
+    plot_tree_sums_bar = berlin.trees::tree_sums_bar_plot(full_data_set_clean,
+                                                          file = drake::file_out("./analysis/figures/plot_01_tree_sums_bar.png"),
+                                                          height = 12,
+                                                          width = 12,
+                                                          dpi = 300),
 
     plot_density = berlin.trees::dens_plot_trees(sf_data = full_data_set_clean,
                                                  extracted_uhi = extract_uhi_values_to_list,
-                                                 position_stack = "stack"),
+                                                 position_stack = "stack",
+                                                 file = drake::file_out("./analysis/figures/plot_02_genus_UHI_dens.png"),
+                                                 height = 12,
+                                                 width = 12,
+                                                 dpi = 300),
 
 
-    plot_LME_no_age = berlin.trees::make_ranef_plot(model_out = model_res,
-                    model_name = "heat_RIspecies_RSspecies_RIprovenance",
-                    df = full_data_set_clean,
-                    n_top_species = 3
-                    ),
+    # plot_LME_no_age = berlin.trees::make_ranef_plot(model_out = model_res,
+    #                 model_name = "heat_RIspecies_RSspecies_RIprovenance",
+    #                 df = full_data_set_clean,
+    #                 n_top_species = 3
+    #                 ),
 
 
     plot_LME_age = berlin.trees::make_ranef_plot(model_out = model_res,
-                    model_name = "heat_age_RIspecies_RSspecies_RIprovenance",
-                    df = full_data_set_clean,
-                    n_top_species = 3),
+                                                 model_name = "heat_age_RIspecies_RSspecies_RIprovenance",
+                                                 df = full_data_set_clean,
+                                                 n_top_species = 3,
+                                                 base_size = 18,
+                                                 file = drake::file_out("./analysis/figures/plot_03_ranef_species_dbh_uhi.png"),
+                                                 height = 12,
+                                                 width = 12,
+                                                 dpi = 300),
+
+
+
+
+
 
 
 
