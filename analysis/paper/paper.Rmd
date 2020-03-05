@@ -1,5 +1,5 @@
 ---
-title: "Exploratory overview of Berlin city trees"
+title: "Species-specific effects of the Urban Heat Island on tree growth across Berlin"
 author:
   - Alexander Hurley:
       email: hurley@gfz-potsdam.de
@@ -15,13 +15,17 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
     bookdown::html_document2:
       fig_caption: yes
+      toc: yes
+    bookdown::pdf_document2:
+      fig_caption: yes
+      toc: yes
 
-bibliography: references.bib
+bibliography: uhi_references.bib
 csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
 abstract: |
-  Quick overview of publicly available tree records.
+  **This document serves as a brief overview and outline** .
 keywords: |
-  Uferbaeume; Anlagenbaeume; Strassenhighlights
+  Uferbaeume; Anlagenbaeume; Strassenbaeume; 
 highlights: |
   We will see. 
 ---
@@ -56,6 +60,7 @@ knitr::opts_chunk$set(
 
 library(drake)
 library(ggplot2)
+library(patchwork)
 ```
 
 # Introduction
@@ -70,32 +75,60 @@ Here is a citation [@Marwick2017]
 
 Some results
 
-
-
-```{r fig-bar-tree, fig.cap="A plot of random numbers",fig.width = 15, fig.height = 8, out.width="100%"}
+```{r fig-tree-overview-map, fig.cap="A plot of random numbers",fig.width = 15, fig.height = 8, out.width="100%", include=TRUE, eval=TRUE}
 
 # loadd(full_data_set_clean)
 # loadd(plot_overview_map)
 # print(class(full_data_set_clean))
-readd(plot_tree_sums_bar)
+
+
+# knitr::include_graphics(drake::file_in("./analysis/figures/map_01_overview.png"))
+
+
+loadd(plot_overview_map)
+knitr::include_graphics(file.path(here::here(), "analysis", "figures", "map_01_overview.png"))
+# knitr::include_graphics("../figures/map_01_overview.png")
+# print(dir(path = "./analysis/figures"  ))
+# readd(plot_overview_map) + 
+#      +
+#     labs(caption = NULL)
+
 # plot_overview_map
 
 ```
 
 
-```{r fig-tree-overview-map, fig.cap="A plot of random numbers",fig.width = 15, fig.height = 8, out.width="100%"}
+```{r fig-uhi, fig.cap="A plot of random numbers",fig.width = 15, fig.height = 8, out.width="100%", include=TRUE, eval=TRUE}
 
-# loadd(full_data_set_clean)
-# loadd(plot_overview_map)
-# print(class(full_data_set_clean))
-readd(plot_overview_map)
-# plot_overview_map
+loadd(plot_uhi_map)
+knitr::include_graphics(file.path(here::here(),
+                                                 "analysis", 
+                                                 "figures", 
+                                                 "map_03_uhi.png"))
+# knitr::include_graphics(drake::file_in(file.path(here::here(),
+#                                                  "analysis", 
+#                                                  "figures", 
+#                                                  "map_03_uhi.png")))
 
 ```
 
 
-```{r fig-tree-count-map, fig.cap="A plot of random numbers",fig.width = 12, fig.height = 12, out.width="100%"}
-readd(plot_count_map)
+
+
+```{r fig-tree-count-map, fig.cap="A plot of random numbers",fig.width = 12, fig.height = 14, out.width="100%"}
+
+
+loadd(plot_count_map)
+knitr::include_graphics(file.path(here::here(), "analysis", "figures", "map_02_tree_sums_standardized.png"))
+
+
+# readd(plot_count_map) + 
+#   labs(caption = NULL) +
+#   theme(legend.position = c(0.65, 0.1),
+#         legend.key.width = unit(3, units = "cm")) +
+#   guides(color = guide_colorbar(title.position = "top"))
+  
+
 # plot_count_map
 
 # plot(1:10)
@@ -103,9 +136,18 @@ readd(plot_count_map)
 
 
 
+```{r fig-count-bars, fig.cap="A plot of random numbers",fig.width = 6, fig.height = 6, out.width="50%", include = FALSE, eval = FALSE}
+loadd(plot_tree_sums_bar)
+knitr::include_graphics(file.path(here::here(), "analysis", "figures", "plot_01_tree_sums_bar.png"))
+
+
+# plot(1:10)
+```
+
 ```{r fig-density, fig.cap="A plot of random numbers",fig.width = 12, fig.height = 12, out.width="100%"}
-readd(plot_density)
-# plot_count_map
+loadd(plot_density)
+knitr::include_graphics(file.path(here::here(), "analysis", "figures", "plot_02_genus_UHI_dens.png"))
+
 
 # plot(1:10)
 ```
@@ -115,8 +157,8 @@ readd(plot_density)
 
 
 ```{r fig-lmestat, fig.cap="A plot of random numbers",fig.width = 20, fig.height = 12, out.width="100%"}
-readd(plot_LME_age)
-# plot_count_map
+loadd(plot_LME_age)
+knitr::include_graphics(file.path(here::here(), "analysis", "figures", "plot_03_ranef_species_dbh_uhi.png"))
 
 # plot(1:10)
 ```

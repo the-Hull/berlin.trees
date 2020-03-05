@@ -34,7 +34,9 @@ Imports:
     raster,
     lme4,
     rlang,
-    stats
+    stats,
+    stars,
+    scales
 Suggests: devtools,
     git2r
 RoxygenNote: 7.0.2
