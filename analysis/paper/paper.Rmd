@@ -13,6 +13,12 @@ output:
       - --lua-filter=../templates/scholarly-metadata.lua
       - --lua-filter=../templates/author-info-blocks.lua
       - --lua-filter=../templates/pagebreak.lua
+    bookdown::html_document2:
+      fig_caption: yes
+      toc: yes
+    bookdown::pdf_document2:
+      fig_caption: yes
+      toc: yes
 bibliography: uhi_references.bib
 csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
 abstract: |
@@ -23,12 +29,6 @@ highlights: |
   We will see. 
 ---
 
-<!--     bookdown::html_document2: -->
-<!--       fig_caption: yes -->
-<!--       toc: yes -->
-<!--     bookdown::pdf_document2: -->
-<!--       fig_caption: yes -->
-<!--       toc: yes -->
 
 
 <!-- This is the format for text comments that will be ignored during renderings. Do not put R code in these comments because it will not be ignored. -->
@@ -65,8 +65,8 @@ library(drake)
 
 # Introduction
 
-Berlin is subject to the most intense Urban Heat Island in Germany due to its large extent and development intensity.
-Here, substantially higher temperatures have been observed for urban as compared to rural areas, with differences of up to 12 K during day-time and 6 K on average for night-time temperatures (2001-2010).
+Berlin is subject to the most intense Urban Heat Island in Germany due to its large extent and development intensity [@kuttler2015].
+Here, substantially higher temperatures have been observed for urban as compared to rural areas, with differences of up to 12 K during day-time and 6 K on average for night-time temperatures [2001-2010, @fenner2014].
 
 Consequently, urban green (infrastructure) systems are  subjected to increased heat more frequently than rural ecosystems, potentially affecting  their process dynamics positively or adversely. 
 Their performance and health, however, is closely tied to local energy budgets [@grimmond1996 ; @hertel2019], which in turn are decisive for controlling human wellbeing [e.g. @maras2016a], amongst other factors.
@@ -81,9 +81,11 @@ Similarly, @moser-reischl2019a showed positive associations between air temperat
 By contrast, @gillner2014 highlight decreased growth for *Acer* species  (*A. platanoides* and *pseudoplatanus*), *Platanus x hispanica* and *Quercus rubra* with higher summer temperatures of the preceding year, especially when compounded with drought, in another German metropolis (Dresden). 
 
 These results indicate a high degree of complexity in effect sizes and directions specific to species and locality.
-Tree growth in urban settings is affected by myriad processes and factors, such as water availability, pollution and road-salt loading, structural impedance through infrastructure or management, etc. [@pauleit2002].
-Therefore, studies reliant on labor-intensive sampling (e.g. based on increment cores; dendroecological methods), must carefully address confounding factors to ensure effect sizes are estimated adequately.
-While multiple (locally) important species have been assessed along urban and UHI gradients, studies are  limited logistically by sampling effort, reducing sample size and coverage (i.e. genera and/or species, and space), which typically hinders highly-resolved predictions of effect sizes across entire urban areas and tree stocks. 
+Tree growth in urban settings is affected by myriad processes and factors, such as water availability, pollution and road-salt loading, structural impedance through infrastructure or management, etc. [@quigley2004; @randrup2001; @pauleit2002].
+While multiple (locally) important species have been assessed along urban and UHI gradients reflecting a range of conditions, studies reliant on labour-intensive methods are limited logistically by sampling effort, reducing sample size and coverage (i.e. genera and/or species, and space).
+This typically hinders the extrapolation from individual sampling sites toward prediction of effect sizes across entire urban areas and tree stocks. 
+<!-- Therefore, studies reliant on labor-intensive sampling, must carefully address confounding factors to ensure effect sizes are estimated adequately. -->
+
 To complement detailed dendroecological analyses in Berlin for key species, we propose inferring growth modulation from a large data set in excess of 650000 individual trees provided by the Berlin Senate Administration (Senatsverwaltung). 
 This data set contains information on location, species, trunk diameter (at breast height; DBH), and height, amongst others. 
 In a space-for-time substitution, the absolute growth potential of species can assessed across the entire urban area, and related to effects of the UHI, as well as other location-specific factors, such as road type, development intensity, available soil volume, etc. 
