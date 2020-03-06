@@ -1,25 +1,18 @@
 ---
 title: "Species-specific effects of the Urban Heat Island on tree growth across Berlin"
 author:
-  - Alexander Hurley:
-      email: hurley@gfz-potsdam.de
-      institute: [GFZ]
-      correspondence: true
-  - Ingo Heinrich:
-      email: heinrich@gfz-potsdam.de
-      institute: [GFZ]
-      correspondence: false
-institute:
-  - GFZ: Geoforschungszentrum Potsdam
+  - Alexander G. Hurley$^{a *}$, Ingo Heinrich$^a$
+  - $^a$ *Joint Geoforschungszentrum Potsdam, Section 4.3, Germany*
+  - "* Corresponding author: hurley@gfz-potsdam.de"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
-    bookdown::html_document2:
+    bookdown::word_document2:
       fig_caption: yes
-      toc: yes
-    bookdown::pdf_document2:
-      fig_caption: yes
-      toc: yes
-
+      reference_docx: "../templates/template.docx" # Insert path for the DOCX file
+      pandoc_args:
+      - --lua-filter=../templates/scholarly-metadata.lua
+      - --lua-filter=../templates/author-info-blocks.lua
+      - --lua-filter=../templates/pagebreak.lua
 bibliography: uhi_references.bib
 csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
 abstract: |
@@ -30,20 +23,19 @@ highlights: |
   We will see. 
 ---
 
-
-<!--     bookdown::word_document2: -->
+<!--     bookdown::html_document2: -->
 <!--       fig_caption: yes -->
-<!--       reference_docx: "../templates/template.docx" # Insert path for the DOCX file -->
-<!--       pandoc_args: -->
-<!--       - --lua-filter=../templates/scholarly-metadata.lua -->
-<!--       - --lua-filter=../templates/author-info-blocks.lua -->
-<!--       - --lua-filter=../templates/pagebreak.lua -->
+<!--       toc: yes -->
+<!--     bookdown::pdf_document2: -->
+<!--       fig_caption: yes -->
+<!--       toc: yes -->
 
 
 <!-- This is the format for text comments that will be ignored during renderings. Do not put R code in these comments because it will not be ignored. -->
 
 ```{r setup, echo = FALSE, cache = FALSE, include = FALSE}
-knitr::opts_knit$set(root.dir = here::here())
+knitr::opts_knit$set(root.dir = here::here(),
+                     base.dir = here::here())
 
 knitr::opts_chunk$set(
   fig.align = "center",
@@ -57,15 +49,49 @@ knitr::opts_chunk$set(
   dpi = 300
 )
 
+pgbreak <- function() {
+  if (grepl("docx", out_format)) {
+    return("##### pagebreak")
+  } else if (is_latex_output()) {
+    return("\\newpage")
+  }
+}
+
 
 library(drake)
-library(ggplot2)
-library(patchwork)
+# library(ggplot2)
+# library(patchwork)
 ```
 
 # Introduction
 
-Here is a citation [@Marwick2017]
+Berlin is subject to the most intense Urban Heat Island in Germany due to its large extent and development intensity.
+Here, substantially higher temperatures have been observed for urban as compared to rural areas, with differences of up to 12 K during day-time and 6 K on average for night-time temperatures (2001-2010).
+
+Consequently, urban green (infrastructure) systems are  subjected to increased heat more frequently than rural ecosystems, potentially affecting  their process dynamics positively or adversely. 
+Their performance and health, however, is closely tied to local energy budgets [@grimmond1996 ; @hertel2019], which in turn are decisive for controlling human wellbeing [e.g. @maras2016a], amongst other factors.
+Assessing the effect of increased temperatures on green infrastructure, as part of the urban landscape, is therefore instrumental for understanding, and ultimately mitigating, the potential impact of future warming and (continued) development  on increasingly urban societies [@norton2015]. 
+
+Trees, in particular, provide shading as well as transpirative cooling in their vicinity [e.g. @oke1982], and therefore can reduce ambient temperatures, infrastructure power-consumption and (human) thermal discomfort  [e.g. @gulyas2006; @akbari2001; @mayer1987; @hoyano1988]; simultaneously, they provide numerous other environmental, cultural and psychological services and/or benefits [see @tzoulas2007 for review].
+
+Tree growth dynamics in urban areas are modulated by air temperature, amongst other factors, with a tendency for enhanced growth rates (compared to rural individuals) as reported by @pretzsch2017. 
+Hence,  temperature increases may also allow using recent tree growth dynamics and trajectories as a proxy for on-going and future warming, providing an additional line of evidence to support the growing knowledge base on future climate-vegetation dynamics.
+For Berlin, @dahlhausen2018, showed divergent patterns for young and old trees dependent on urban development intensity for *Tilia cordata* Mill, the most abundant tree of the city, but overall reported an increased growth rate which they attributed to the urban heat island effect (UHI).
+Similarly, @moser-reischl2019a showed positive associations between air temperature and radial growth for two species commonly selected by urban planners (*T. cordata*, *Rubinia pseudoacacia*) in Munich.
+By contrast, @gillner2014 highlight decreased growth for *Acer* species  (*A. platanoides* and *pseudoplatanus*), *Platanus x hispanica* and *Quercus rubra* with higher summer temperatures of the preceding year, especially when compounded with drought, in another German metropolis (Dresden). 
+
+These results indicate a high degree of complexity in effect sizes and directions specific to species and locality.
+Tree growth in urban settings is affected by myriad processes and factors, such as water availability, pollution and road-salt loading, structural impedance through infrastructure or management, etc. [@pauleit2002].
+Therefore, studies reliant on labor-intensive sampling (e.g. based on increment cores; dendroecological methods), must carefully address confounding factors to ensure effect sizes are estimated adequately.
+While multiple (locally) important species have been assessed along urban and UHI gradients, studies are  limited logistically by sampling effort, reducing sample size and coverage (i.e. genera and/or species, and space), which typically hinders highly-resolved predictions of effect sizes across entire urban areas and tree stocks. 
+To complement detailed dendroecological analyses in Berlin for key species, we propose inferring growth modulation from a large data set in excess of 650000 individual trees provided by the Berlin Senate Administration (Senatsverwaltung). 
+This data set contains information on location, species, trunk diameter (at breast height; DBH), and height, amongst others. 
+In a space-for-time substitution, the absolute growth potential of species can assessed across the entire urban area, and related to effects of the UHI, as well as other location-specific factors, such as road type, development intensity, available soil volume, etc. 
+
+
+
+
+
 
 # Background
 
@@ -75,6 +101,15 @@ Here is a citation [@Marwick2017]
 
 Some results
 
+
+
+<!-- ```{r fig-bar-tree, fig.cap="A plot of random numbers",fig.width = 15, fig.height = 8, out.width="100%", include=FALSE, eval=FALSE} -->
+
+<!-- readd(plot_tree_sums_bar) -->
+
+<!-- ``` -->
+
+
 ```{r fig-tree-overview-map, fig.cap="A plot of random numbers",fig.width = 15, fig.height = 8, out.width="100%", include=TRUE, eval=TRUE}
 
 # loadd(full_data_set_clean)
@@ -82,13 +117,8 @@ Some results
 # print(class(full_data_set_clean))
 
 
-# knitr::include_graphics(drake::file_in("./analysis/figures/map_01_overview.png"))
+knitr::include_graphics(here::here("analysis/figures/map_01_overview.png"))
 
-
-loadd(plot_overview_map)
-knitr::include_graphics(file.path(here::here(), "analysis", "figures", "map_01_overview.png"))
-# knitr::include_graphics("../figures/map_01_overview.png")
-# print(dir(path = "./analysis/figures"  ))
 # readd(plot_overview_map) + 
 #      +
 #     labs(caption = NULL)
@@ -98,35 +128,28 @@ knitr::include_graphics(file.path(here::here(), "analysis", "figures", "map_01_o
 ```
 
 
-```{r fig-uhi, fig.cap="A plot of random numbers",fig.width = 15, fig.height = 8, out.width="100%", include=TRUE, eval=TRUE}
-
-loadd(plot_uhi_map)
-knitr::include_graphics(file.path(here::here(),
-                                                 "analysis", 
-                                                 "figures", 
-                                                 "map_03_uhi.png"))
-# knitr::include_graphics(drake::file_in(file.path(here::here(),
-#                                                  "analysis", 
-#                                                  "figures", 
-#                                                  "map_03_uhi.png")))
-
-```
-
-
-
-
 ```{r fig-tree-count-map, fig.cap="A plot of random numbers",fig.width = 12, fig.height = 14, out.width="100%"}
 
 
-loadd(plot_count_map)
-knitr::include_graphics(file.path(here::here(), "analysis", "figures", "map_02_tree_sums_standardized.png"))
 
 
-# readd(plot_count_map) + 
-#   labs(caption = NULL) +
-#   theme(legend.position = c(0.65, 0.1),
-#         legend.key.width = unit(3, units = "cm")) +
-#   guides(color = guide_colorbar(title.position = "top"))
+knitr::include_graphics(here::here("analysis/figures/map_02_tree_sums_standardized.png"))
+
+  
+
+# plot_count_map
+
+# plot(1:10)
+```
+
+
+```{r fig-uhi-map, fig.cap="A plot of random numbers",fig.width = 12, fig.height = 14, out.width="50%"}
+
+
+
+
+knitr::include_graphics(here::here("analysis/figures/map_03_uhi.png"))
+
   
 
 # plot_count_map
@@ -136,18 +159,12 @@ knitr::include_graphics(file.path(here::here(), "analysis", "figures", "map_02_t
 
 
 
-```{r fig-count-bars, fig.cap="A plot of random numbers",fig.width = 6, fig.height = 6, out.width="50%", include = FALSE, eval = FALSE}
-loadd(plot_tree_sums_bar)
-knitr::include_graphics(file.path(here::here(), "analysis", "figures", "plot_01_tree_sums_bar.png"))
-
-
-# plot(1:10)
-```
-
 ```{r fig-density, fig.cap="A plot of random numbers",fig.width = 12, fig.height = 12, out.width="100%"}
-loadd(plot_density)
-knitr::include_graphics(file.path(here::here(), "analysis", "figures", "plot_02_genus_UHI_dens.png"))
+knitr::include_graphics(here::here("analysis/figures/plot_02_genus_UHI_dens.png"))
 
+
+
+# plot_count_map
 
 # plot(1:10)
 ```
@@ -157,15 +174,15 @@ knitr::include_graphics(file.path(here::here(), "analysis", "figures", "plot_02_
 
 
 ```{r fig-lmestat, fig.cap="A plot of random numbers",fig.width = 20, fig.height = 12, out.width="100%"}
-loadd(plot_LME_age)
-knitr::include_graphics(file.path(here::here(), "analysis", "figures", "plot_03_ranef_species_dbh_uhi.png"))
+knitr::include_graphics(here::here("analysis/figures/plot_03_ranef_species_dbh_uhi.png"))
+# plot_count_map
 
 # plot(1:10)
 ```
 
 
 
-<!-- Figure \@ref(fig:demo-plot) shows how we can have a caption and cross-reference for a plot -->
+Figure \@ref(fig:lmestat) shows how we can have a caption and cross-reference for a plot
 
 # Discussion
 

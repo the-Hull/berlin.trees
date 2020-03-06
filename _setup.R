@@ -1,4 +1,5 @@
 
+usethis::use_package("rgdal")
 # usethis::use_package("ckanr")
 # usethis::use_package("ggplot2")
 # usethis::use_package("dplyr")
@@ -42,3 +43,4 @@ drake::r_make()
 
 source("R/plan.R")      # Create your drake plan.
 drake::vis_drake_graph(plan, targets_only = TRUE)
+drake::sankey_drake_graph(plan, targets_only = TRUE)

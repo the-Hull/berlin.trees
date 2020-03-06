@@ -36,7 +36,8 @@ Imports:
     rlang,
     stats,
     stars,
-    scales
+    scales,
+    rgdal
 Suggests: devtools,
     git2r
 RoxygenNote: 7.0.2

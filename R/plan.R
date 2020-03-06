@@ -57,20 +57,20 @@ plan <- drake_plan(
         # heat_RIspecies_provenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + (1 | ART_BOT) + provenance , data = x) ,
         # heat_RIspecies_RSspecies = function(x) lme4::lmer(dbh_cm ~ day_2007 + (1 + day_2007 | ART_BOT) , data = x)  ,
         # heat_RIspecies_RSspecies_provenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + (1 + day_2007 | ART_BOT) + provenance , data = x)  ,
-        heat_RIspecies_RSspecies_RIprovenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + provenance + (1 + day_2007 | provenance : ART_BOT)  , data = x)  ,
+        # heat_RIspecies_RSspecies_RIprovenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + provenance + (1 + day_2007 | provenance : ART_BOT)  , data = x)  ,
         # heat_age = function(x) lme4::lmer(dbh_cm ~ day_2007 + STANDALTER, data = x)  ,
         # heat_age_species = function(x) lme4::lmer(dbh_cm ~ day_2007 + STANDALTER + ART_BOT, data = x)  ,
         # heat_age_RIspecies = function(x) lme4::lmer(dbh_cm ~ day_2007 + STANDALTER + (1 | ART_BOT), data = x)  ,
         # heat_age_RIspecies_provenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + STANDALTER + (1 | ART_BOT) + provenance, data = x)  ,
         # heat_age_RIspecies_RSspecies = function(x) lme4::lmer(dbh_cm ~ day_2007 + STANDALTER + (1 + day_2007 | ART_BOT), data = x)  ,
-        heat_age_RIspecies_RSspecies_provenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + STANDALTER + provenance + (1 + day_2007 | ART_BOT), data = x)  ,
-        heat_age_RIspecies_RSspecies_RIprovenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + STANDALTER + provenance + (1 + day_2007 | provenance : ART_BOT), data = x, control = lme4::lmerControl(optimizer ="Nelder_Mead"))  ,
+        heat_age_RIspecies_RSspecies_provenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + STANDALTER + provenance + (1 + day_2007 | ART_BOT), data = x, control = lme4::lmerControl(optimizer ="Nelder_Mead"))  ,
+        heat_age_RIspecies_RSspecies_RIprovenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + STANDALTER + provenance + (1 + day_2007 | provenance : ART_BOT), data = x, control = lme4::lmerControl(optimizer ="Nelder_Mead"))
         # age_only = function(x) lme4::lmer(dbh_cm ~ STANDALTER, data = x),
         # age_RIspecies = function(x) lme4::lmer(dbh_cm ~ STANDALTER + (1 | ART_BOT), data = x),
         # age_RIspecies_provenance = function(x) lme4::lmer(dbh_cm ~ STANDALTER + (1 | ART_BOT) + provenance, data = x),
         # age_RIspecies_RSspecies = function(x) lme4::lmer(dbh_cm ~ STANDALTER + (1  + day_2007 | ART_BOT), data = x),
-        age_RIspecies_RSspecies_provenance = function(x) lme4::lmer(dbh_cm ~ STANDALTER + (1  + day_2007 | ART_BOT) + provenance, data = x),
-        age_RIspecies_RSspecies_RIprovenance = function(x) lme4::lmer(dbh_cm ~ STANDALTER + (1  + day_2007 | provenance : ART_BOT), data = x)
+        # age_RIspecies_RSspecies_provenance = function(x) lme4::lmer(dbh_cm ~ STANDALTER + (1  + day_2007 | ART_BOT) + provenance, data = x),
+        # age_RIspecies_RSspecies_RIprovenance = function(x) lme4::lmer(dbh_cm ~ STANDALTER + (1  + day_2007 | provenance : ART_BOT), data = x)
         # species_only = function(x) lme4::lmer(dbh_cm ~ ART_BOT, data = x)
     ),
 
@@ -97,9 +97,10 @@ plan <- drake_plan(
     plot_overview_map = berlin.trees::make_overview_map(full_data_set_clean,
                                                         berlin_polygons,
                                                         file = drake::file_out("./analysis/figures/map_01_overview.png"),
-                                                        height = 4,
-                                                        width = 12,
+                                                        height = 3.5,
+                                                        width = 10.5,
                                                         dpi = 300),
+
 
 
     plot_count_map = berlin.trees::tree_count_map(full_data_set_clean,
@@ -164,11 +165,25 @@ plan <- drake_plan(
 
 
     # Reporting
-    paper = rmarkdown::render(
+    paper_html = rmarkdown::render(
         knitr_in("./analysis/paper/paper.Rmd"),
         output_file = file_out(file.path(here::here(), "paper_knit.html")),
         # output_file = file_out(file.path("./paper_knit.html")),
         output_format = bookdown::html_document2(),
+        quiet = TRUE
+    ),
+    paper_word = rmarkdown::render(
+        knitr_in("./analysis/paper/paper.Rmd"),
+        output_file = file_out(file.path(here::here(), "paper_knit.docx")),
+        # output_file = file_out(file.path("./paper_knit.html")),
+        output_format = bookdown::word_document2(),
+        quiet = TRUE
+    ),
+    paper_pdf = rmarkdown::render(
+        knitr_in("./analysis/paper/paper.Rmd"),
+        output_file = file_out(file.path(here::here(), "paper_knit.pdf")),
+        # output_file = file_out(file.path("./paper_knit.html")),
+        output_format = bookdown::pdf_document2(),
         quiet = TRUE
     )
 

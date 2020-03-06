@@ -935,15 +935,16 @@ tree_count_map <- function(sf_data,
             scale_x_continuous(breaks = seq(13, 14, 0.2)) +
             scale_y_continuous(breaks = seq(52.3, 53.7, 0.1)) +
             scale_fill_viridis_c() +
-            guides(fill = guide_colorbar(barwidth = grid::unit(10, units = "cm"),
-                                         barheight = grid::unit(.45, units = "cm"))) +
+            guides(fill = guide_colorbar(barwidth = grid::unit(6, units = "cm"),
+                                         barheight = grid::unit(.45, units = "cm"),
+                                         ticks.colour = "gray80")) +
 
 
             theme_minimal(base_size = base_size, base_family = "Roboto Condensed") +
 
             theme(axis.title = element_blank(),
                   strip.text = element_text(face = c("bold.italic")),
-                  legend.position = "bottom",
+                  legend.position = c(0.6, 0.11),
                   legend.direction = "horizontal",
                   legend.title = element_text(vjust = 1))
 
@@ -1021,7 +1022,8 @@ make_uhi_plot <- function(uhi_stacks,
                                       rescaler = mid_rescaler(),
                                       na.value = "transparent")   +
 
-        ggplot2::labs(fill = expression(Summer~day-time~UHI~(degree*C)),
+        ggplot2::labs(fill = expression(atop(Summer~day-time,
+                                             UHI~(degree*C))),
                       x = NULL,
                       # title = "Estimate of Urban Heat Loading",
                       y = NULL) +
@@ -1030,9 +1032,10 @@ make_uhi_plot <- function(uhi_stacks,
         ggplot2::theme_minimal(base_family = "Roboto Condensed",
                                base_size = base_size) +
         ggplot2::theme(legend.direction = "horizontal",
-                       legend.position = c(0.8, 0.95)) +
-        ggplot2::guides(fill = guide_colorbar(barwidth = unit(5, "cm"),
-                                              title.vjust = 1))
+                       legend.position = c(0.6, 0.95)) +
+        ggplot2::guides(fill = guide_colorbar(barwidth = unit(3.5, "cm"),
+                                              title.vjust = 1,
+                                              ticks.colour = "gray30"))
 
 
     ggplot2::ggsave(filename = file,
