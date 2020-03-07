@@ -79,14 +79,14 @@ simultaneously, they provide numerous other environmental, cultural and psycholo
 Further, recent tree growth dynamics as a proxy for on-going and future warming may provide an additional line of evidence to support the growing knowledge base on future climate-vegetation dynamics [@zhao2016] and may aid in mitigation and adaptation efforts [@pretzsch2017;@brune2016].
 
 
-Trees and green infrastructure in urban areas show a tendency for enhanced growth rates and/or productivity compared to rural counterparts [@jia2018; @pretzsch2017], yet feature a broad range of effect size ranges and, in some cases, directions specific to species and locality.
+Trees and green infrastructure in urban areas show a tendency for enhanced growth rates and/or productivity compared to rural counterparts [@jia2018; @pretzsch2017], yet feature a broad range of effect size ranges and, in some cases, signs specific to species and locality.
 @zhao2016 showed that growth rates increased within urban clusters as urbanization intensifies using remotely sensed vegetation indices.
-Similarly, for Berlin, @dahlhausen2018, identified positive growth modulation in highly urbanized environments for *Tilia cordata* Mill (using growth increments), the most abundant tree of the city, which they attributed to the UHI effect, while intermiedate development intensity showed indications of being least favorable for tree growth.
+Similarly, for Berlin, @dahlhausen2018, identified positive growth modulation in highly urbanized environments for *Tilia cordata* Mill (using growth increments), the most abundant tree of the city, which they attributed to the UHI effect, while intermediate development intensity showed indications of being least favorable for tree growth.
 <!-- For Berlin, @dahlhausen2018, showed divergent patterns for young and old trees dependent on urban development intensity for *Tilia cordata* Mill, the most abundant tree of the city, but overall reported an increased growth rate which they attributed to the UHI effect. -->
 Further, @moser-reischl2019a identified positive associations between air temperature and radial growth for two species commonly selected by urban planners (*T. cordata*, *Rubinia pseudoacacia*) in Munich.
 By contrast, @gillner2014 highlight decreased growth for *Acer* species  (*A. platanoides* and *pseudoplatanus*), *Platanus x hispanica* and *Quercus rubra* with higher summer temperatures of the preceding year, especially when compounded with drought, in another German metropolis (Dresden). 
 Differences in growth trends may result from contrasting intrinsic inter- and intra-specific characteristics, but are indeed affected by other processes and factors, such as water availability, pollution and road-salt loading, structural impedance through infrastructure or management, etc. [@rhoades1999; @quigley2004; @randrup2001; @pauleit2002].
-Under climate change, atmospheric drought will likely be compounded with high temperatures more frequently, adding further stress to current urban disturbance regimes [@roloff2009].
+Under climate change, atmospheric drought will likely be compounded with high temperatures - and intensified UHIs - more frequently, adding further stress to current urban disturbance regimes [@roloff2009].
 
 
 Conditions affecting tree growth can vary greatly within urban areas or regions, and need to be accounted for when establishing relationships with pertinent drivers, such as the UHI effect.
@@ -98,30 +98,29 @@ This is especially the case for studies reliant on labour-intensive methods whic
 <!-- While multiple (locally) important species have been assessed along urban and UHI gradients reflecting a range of conditions, studies reliant on labour-intensive methods are limited logistically by sampling effort, reducing sample size and coverage (i.e. genera and/or species, and space). -->
 <!-- This typically hinders the extrapolation from individual sampling sites toward prediction of effect sizes across entire urban areas and tree stocks.  -->
 <!-- Therefore, studies reliant on labor-intensive sampling, must carefully address confounding factors to ensure effect sizes are estimated adequately. -->
-
 To complement detailed dendroecological analyses of climate-growth relationships in Berlin for key species, we propose inferring growth modulation from a large data set in excess of 650000 individuals provided by the Berlin Senate Administration (Senatsverwaltung). 
 This data set contains information on location, species, trunk diameter (at breast height; $DBH$), and height, amongst other variables for street and park trees.
 In a space-for-time substitution, growth of individual species can be assessed across the entire cite of Berlin, and related to effects of the UHI, while accounting for other location-specific factors, such as street characteristics, development intensity, available soil volume, etc.
 Similar applications are found in @quigley2004, who inferred absolute growth potential for species across successional groups, and between rural and urban species, yet lacked spatially-explicit effect size estimates or predictions of maximum potential.
-Similarly, @pretzscho2017 applied linear hierarchical models to infer growth modulation for different cities, time periods and locations (urban $vs.$ rural).
-By contrast, we propose applying a statistical model (see Section$~$\@ref(sec:methods)) that is spatially explicite, while allowing to account for the nested nature of the data set.
-That is, 
-This also allows to infer the absolute growth potential of species given, for example, a specific location or UHI magnitude, as 
+Similarly, @pretzsch2017 applied linear hierarchical models to infer growth modulation for different cities, time periods and locations (urban $vs.$ rural).
+By contrast, we propose applying a statistical model that is spatially explicit, while also allowing to account for the nested nature of the data set (e.g. streets and districts) as well as other pertinent factors (hierarchical, generalized additive model, see Section$~$\@ref(sec:methods)).
+This also allows to infer the absolute growth potential of species given, for example, a specific location, age or UHI magnitude.
 
 
 
 
 We acknolwedge results from [@gregg2003], which indicated impeded growth adjacent to intense urban clusters, rather than enhancement within them.
-However
 
 
 
+# Proposed methods and data requirements 
+\label{sec:methods}
+
+The proposed statistical method is from the class of hierarchical, generalized additive models (GAM, or GAMM for mixed models/hierarchical models).
+In these models combinations of continuous and categorical predictor variables can be summed to estimate a response. 
+In particular, continuous variables that are linear, as well as non-linearly related to the response can be represented by applying a transfer function, typically termed "smoothing function" [@wood2017]; these are constructed using a number of base functions of varying complexity and form, which provides a high degree of flexibility, ideal for fitting ecosystem dynamics which are rarely linear [@pedersen2019], or correctly represented with deterministic functional forms (e.g. quadratic equations).
 
 
-
-# Background
-
-# Proposed methods and data requirements
 
 # Preliminary results
 
