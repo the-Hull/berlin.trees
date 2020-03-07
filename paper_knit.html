@@ -399,11 +399,11 @@ simultaneously, they provide numerous other environmental, cultural and psycholo
 Further, recent tree growth dynamics as a proxy for on-going and future warming may provide an additional line of evidence to support the growing knowledge base on future climate-vegetation dynamics <span class="citation">(Zhao et al., 2016)</span> and may aid in mitigation and adaptation efforts <span class="citation">(Brune, 2016; Pretzsch et al., 2017)</span>.</p>
 <p>Trees and green infrastructure in urban areas show a tendency for enhanced growth rates and/or productivity compared to rural counterparts <span class="citation">(Jia et al., 2018; Pretzsch et al., 2017)</span>, yet feature a broad range of effect size ranges and, in some cases, signs specific to species and locality.
 <span class="citation">Zhao et al. (2016)</span> showed that growth rates increased within urban clusters as urbanization intensifies using remotely sensed vegetation indices.
-Similarly, for Berlin, <span class="citation">Dahlhausen et al. (2018)</span>, identified positive growth modulation in highly urbanized environments for <em>Tilia cordata</em> Mill (using growth increments), the most abundant tree of the city, which they attributed to the UHI effect, while intermediate development intensity showed indications of being least favorable for tree growth.
+Similarly, for Berlin, <span class="citation">Dahlhausen et al. (2018)</span>, identified positive growth modulation in highly urbanized environments (using growth increments) for <em>Tilia cordata</em> Mill, the most abundant tree of the city, which they attributed to the UHI effect, while intermediate development intensity showed indications of being least favorable for tree growth.
 <!-- For Berlin, @dahlhausen2018, showed divergent patterns for young and old trees dependent on urban development intensity for *Tilia cordata* Mill, the most abundant tree of the city, but overall reported an increased growth rate which they attributed to the UHI effect. -->
 Further, <span class="citation">Moser-Reischl et al. (2019)</span> identified positive associations between air temperature and radial growth for two species commonly selected by urban planners (<em>T. cordata</em>, <em>Rubinia pseudoacacia</em>) in Munich.
 By contrast, <span class="citation">Gillner et al. (2014)</span> highlight decreased growth for <em>Acer</em> species (<em>A. platanoides</em> and <em>pseudoplatanus</em>), <em>Platanus x hispanica</em> and <em>Quercus rubra</em> with higher summer temperatures of the preceding year, especially when compounded with drought, in another German metropolis (Dresden).
-Differences in growth trends may result from contrasting intrinsic inter- and intra-specific characteristics, but are indeed affected by other processes and factors, such as water availability, pollution and road-salt loading, structural impedance through infrastructure or management, etc. <span class="citation">(Pauleit et al., 2002; Quigley, 2004; Randrup et al., 2001; Rhoades and Stipes, 1999)</span>.
+Differences in growth trends may result from contrasting species-specific characteristics, but are indeed affected by other processes and factors, such as water availability, pollution and road-salt loading, structural impedance through infrastructure or management, etc. <span class="citation">(Pauleit et al., 2002; Quigley, 2004; Randrup et al., 2001; Rhoades and Stipes, 1999)</span>.
 Under climate change, atmospheric drought will likely be compounded with high temperatures - and intensified UHIs - more frequently, adding further stress to current urban disturbance regimes <span class="citation">(Roloff et al., 2009)</span>.</p>
 <p>Conditions affecting tree growth can vary greatly within urban areas or regions, and need to be accounted for when establishing relationships with pertinent drivers, such as the UHI effect.
 This typically complicates the extrapolation from individual sampling sites toward predicting effect sizes across entire urban areas and tree stocks.
@@ -419,12 +419,16 @@ This data set contains information on location, species, trunk diameter (at brea
 In a space-for-time substitution, growth of individual species can be assessed across the entire cite of Berlin, and related to effects of the UHI, while accounting for other location-specific factors, such as street characteristics, development intensity, available soil volume, etc.
 Similar applications are found in <span class="citation">Quigley (2004)</span>, who inferred absolute growth potential for species across successional groups, and between rural and urban species, yet lacked spatially-explicit effect size estimates or predictions of maximum potential.
 Similarly, <span class="citation">Pretzsch et al. (2017)</span> applied linear hierarchical models to infer growth modulation for different cities, time periods and locations (urban <span class="math inline">\(vs.\)</span> rural).
-By contrast, we propose applying a statistical model (see Section<span class="math inline">\(~\)</span><a href="#sec:methods"><strong>??</strong></a>) that is spatially explicit, while also allowing to account for the nested nature of the data set (e.g. streets and districts) as well as other pertinent factors.
+By contrast, we propose applying a statistical model that is spatially explicit, while also allowing to account for the nested nature of the data set (e.g. streets and districts) as well as other pertinent factors (hierarchical, generalized additive model, see Section<span class="math inline">\(~\)</span><a href="#sec:methods"><strong>??</strong></a>).
 This also allows to infer the absolute growth potential of species given, for example, a specific location, age or UHI magnitude.</p>
 <p>We acknolwedge results from <span class="citation">(Gregg et al., 2003)</span>, which indicated impeded growth adjacent to intense urban clusters, rather than enhancement within them.</p>
 </div>
 <div id="proposed-methods-and-data-requirements" class="section level1">
 <h1><span class="header-section-number">2</span> Proposed methods and data requirements</h1>
+<p></p>
+<p>The proposed statistical method is from the class of hierarchical, generalized additive models (GAM, or GAMM for mixed models/hierarchical models).
+In these models combinations of continuous and categorical predictor variables can be summed to estimate a response.
+In particular, continuous variables that are linearly, as well as non-linearly related to the response can be represented by applying a transfer function, typically termed “smoothing function” <span class="citation">(Wood, 2017)</span>; these are constructed using a number of base functions of varying complexity and form, which provides a high degree of flexibility, ideal for fitting ecosystem dynamics which are rarely linear <span class="citation">(Pedersen et al., 2019)</span>, or correctly represented with deterministic functional forms (e.g. quadratic equations).</p>
 </div>
 <div id="preliminary-results" class="section level1">
 <h1><span class="header-section-number">3</span> Preliminary results</h1>
@@ -535,6 +539,9 @@ Figure 3.5: A plot of random numbers
 <div id="ref-pauleit2002">
 <p>Pauleit, S., Jones, N., Garcia-Martin, G., Garcia-Valdecantos, J.L., Rivière, L.M., Vidal-Beaudet, L., Bodson, M., Randrup, T.B., 2002. Tree establishment practice in towns and cities – Results from a European survey. Urban Forestry &amp; Urban Greening 1, 83–96. <a href="https://doi.org/10.1078/1618-8667-00009">https://doi.org/10.1078/1618-8667-00009</a></p>
 </div>
+<div id="ref-pedersen2019">
+<p>Pedersen, E.J., Miller, D.L., Simpson, G.L., Ross, N., 2019. Hierarchical generalized additive models in ecology: An introduction with mgcv. PeerJ 7, e6876. <a href="https://doi.org/10.7717/peerj.6876">https://doi.org/10.7717/peerj.6876</a></p>
+</div>
 <div id="ref-pretzsch2017">
 <p>Pretzsch, H., Biber, P., Uhl, E., Dahlhausen, J., Schütze, G., Perkins, D., Rötzer, T., Caldentey, J., Koike, T., Con, T. van, Chavanne, A., Toit, B. du, Foster, K., Lefer, B., 2017. Climate change accelerates growth of urban trees in metropolises worldwide. Scientific Reports 7, 1–10. <a href="https://doi.org/10.1038/s41598-017-14831-w">https://doi.org/10.1038/s41598-017-14831-w</a></p>
 </div>
@@ -553,13 +560,16 @@ Figure 3.5: A plot of random numbers
 <div id="ref-tzoulas2007">
 <p>Tzoulas, K., Korpela, K., Venn, S., Yli-Pelkonen, V., Kaźmierczak, A., Niemela, J., James, P., 2007. Promoting ecosystem and human health in urban areas using Green Infrastructure: A literature review. Landscape and Urban Planning 81, 167–178. <a href="https://doi.org/10.1016/j.landurbplan.2007.02.001">https://doi.org/10.1016/j.landurbplan.2007.02.001</a></p>
 </div>
+<div id="ref-wood2017">
+<p>Wood, S.N., 2017. Generalized additive models: An introduction with R. CRC press.</p>
+</div>
 <div id="ref-zhao2016">
 <p>Zhao, S., Liu, S., Zhou, D., 2016. Prevalent vegetation growth enhancement in urban environment. PNAS 113, 6313–6318. <a href="https://doi.org/10.1073/pnas.1602312113">https://doi.org/10.1073/pnas.1602312113</a></p>
 </div>
 </div>
 <div id="colophon" class="section level3">
 <h3><span class="header-section-number">6.0.1</span> Colophon</h3>
-<p>This report was generated on 2020-03-07 22:02:44 using the following computational environment and dependencies:</p>
+<p>This report was generated on 2020-03-07 23:37:38 using the following computational environment and dependencies:</p>
 <pre><code>#&gt; - Session info ---------------------------------------------------------------
 #&gt;  setting  value                       
 #&gt;  version  R version 3.6.3 (2020-02-29)
@@ -670,7 +680,7 @@ Figure 3.5: A plot of random numbers
 <p>The current Git commit details are:</p>
 <pre><code>#&gt; Local:    master C:/Users/ahurl/Documents/_work/p024_gfz_berlin-trees/berlin.trees
 #&gt; Remote:   master @ origin (https://github.com/the-Hull/berlin.trees.git)
-#&gt; Head:     [3c71b43] 2020-03-07: cont writing</code></pre>
+#&gt; Head:     [3005f73] 2020-03-07: methods section</code></pre>
 </div>
 </div>
 

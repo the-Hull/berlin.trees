@@ -81,11 +81,11 @@ Further, recent tree growth dynamics as a proxy for on-going and future warming 
 
 Trees and green infrastructure in urban areas show a tendency for enhanced growth rates and/or productivity compared to rural counterparts [@jia2018; @pretzsch2017], yet feature a broad range of effect size ranges and, in some cases, signs specific to species and locality.
 @zhao2016 showed that growth rates increased within urban clusters as urbanization intensifies using remotely sensed vegetation indices.
-Similarly, for Berlin, @dahlhausen2018, identified positive growth modulation in highly urbanized environments for *Tilia cordata* Mill (using growth increments), the most abundant tree of the city, which they attributed to the UHI effect, while intermediate development intensity showed indications of being least favorable for tree growth.
+Similarly, for Berlin, @dahlhausen2018, identified positive growth modulation in highly urbanized environments (using growth increments) for *Tilia cordata* Mill, the most abundant tree of the city, which they attributed to the UHI effect, while intermediate development intensity showed indications of being least favorable for tree growth.
 <!-- For Berlin, @dahlhausen2018, showed divergent patterns for young and old trees dependent on urban development intensity for *Tilia cordata* Mill, the most abundant tree of the city, but overall reported an increased growth rate which they attributed to the UHI effect. -->
 Further, @moser-reischl2019a identified positive associations between air temperature and radial growth for two species commonly selected by urban planners (*T. cordata*, *Rubinia pseudoacacia*) in Munich.
 By contrast, @gillner2014 highlight decreased growth for *Acer* species  (*A. platanoides* and *pseudoplatanus*), *Platanus x hispanica* and *Quercus rubra* with higher summer temperatures of the preceding year, especially when compounded with drought, in another German metropolis (Dresden). 
-Differences in growth trends may result from contrasting intrinsic inter- and intra-specific characteristics, but are indeed affected by other processes and factors, such as water availability, pollution and road-salt loading, structural impedance through infrastructure or management, etc. [@rhoades1999; @quigley2004; @randrup2001; @pauleit2002].
+Differences in growth trends may result from contrasting species-specific characteristics, but are indeed affected by other processes and factors, such as water availability, pollution and road-salt loading, structural impedance through infrastructure or management, etc. [@rhoades1999; @quigley2004; @randrup2001; @pauleit2002].
 Under climate change, atmospheric drought will likely be compounded with high temperatures - and intensified UHIs - more frequently, adding further stress to current urban disturbance regimes [@roloff2009].
 
 
@@ -118,7 +118,7 @@ We acknolwedge results from [@gregg2003], which indicated impeded growth adjacen
 
 The proposed statistical method is from the class of hierarchical, generalized additive models (GAM, or GAMM for mixed models/hierarchical models).
 In these models combinations of continuous and categorical predictor variables can be summed to estimate a response. 
-In particular, continuous variables that are linear, as well as non-linearly related to the response can be represented by applying a transfer function, typically termed "smoothing function" [@wood2017]; these are constructed using a number of base functions of varying complexity and form, which provides a high degree of flexibility, ideal for fitting ecosystem dynamics which are rarely linear [@pedersen2019], or correctly represented with deterministic functional forms (e.g. quadratic equations).
+In particular, continuous variables that are linearly, as well as non-linearly related to the response can be represented by applying a transfer function, typically termed "smoothing function" [@wood2017]; these are constructed using a number of base functions of varying complexity and form, which provides a high degree of flexibility, ideal for fitting ecosystem dynamics which are rarely linear [@pedersen2019], or correctly represented with deterministic functional forms (e.g. quadratic equations).
 
 
 
