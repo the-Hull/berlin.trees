@@ -10,7 +10,7 @@
 
 
 <meta name="author" content="Alexander G. Hurley^{a *}, Ingo Heinrich^a" />
-<meta name="author" content="^a Joint Geoforschungszentrum Potsdam, Section 4.3, Germany" />
+<meta name="author" content="^a Geoforschungszentrum Potsdam, Section 4.3, Germany" />
 <meta name="author" content="* Corresponding author: hurley@gfz-potsdam.de" />
 
 
@@ -376,7 +376,7 @@ summary {
 
 <h1 class="title toc-ignore">Species-specific effects of the Urban Heat Island on tree growth across Berlin</h1>
 <h4 class="author">Alexander G. Hurley<span class="math inline">\(^{a *}\)</span>, Ingo Heinrich<span class="math inline">\(^a\)</span></h4>
-<h4 class="author"><span class="math inline">\(^a\)</span> <em>Joint Geoforschungszentrum Potsdam, Section 4.3, Germany</em></h4>
+<h4 class="author"><span class="math inline">\(^a\)</span> <em>Geoforschungszentrum Potsdam, Section 4.3, Germany</em></h4>
 <h4 class="author">* Corresponding author: <a href="mailto:hurley@gfz-potsdam.de" class="email">hurley@gfz-potsdam.de</a></h4>
 <h4 class="date">07 March, 2020</h4>
 <div class="abstract">
@@ -390,38 +390,44 @@ summary {
 <!-- This is the format for text comments that will be ignored during renderings. Do not put R code in these comments because it will not be ignored. -->
 <div id="introduction" class="section level1">
 <h1><span class="header-section-number">1</span> Introduction</h1>
-<p>Berlin is subject to the most intense Urban Heat Island in Germany due to its large extent and development intensity <span class="citation">(Kuttler et al., 2015)</span>.
-Here, substantially higher temperatures have been observed for urban as compared to rural areas, with differences of up to 12 K during day-time and 6 K on average for night-time temperatures <span class="citation">(2001-2010, Fenner et al., 2014)</span>.</p>
-<p>Consequently, urban green (infrastructure) systems are subjected to increased heat more frequently than rural ecosystems, potentially affecting their process dynamics positively or adversely.
+<p>Berlin features the most intense Urban Heat Island (UHI) in Germany due to its large extent and development intensity <span class="citation">(Kuttler et al., 2015)</span>, with temperature increases of up to <span class="math inline">\(12~K\)</span> during day-time and <span class="math inline">\(6~K\)</span> on average for night-times <span class="citation">(2001-2010, Fenner et al., 2014)</span> in urban <span class="math inline">\(vs.\)</span> rural areas.
+Consequently, urban green (infrastructure) systems are subjected to increased heat more frequently, potentially affecting their process dynamics - either positively or adversely.
 Their performance and health, however, is closely tied to local energy budgets <span class="citation">(Grimmond et al., 1996 ; Hertel and Schlink, 2019)</span>, which in turn are decisive for controlling human wellbeing <span class="citation">(e.g. Maras et al., 2016)</span>, amongst other factors.
-Assessing the effect of increased temperatures on green infrastructure, as part of the urban landscape, is therefore instrumental for understanding, and ultimately mitigating, the potential impact of future warming and (continued) development on increasingly urban societies <span class="citation">(Norton et al., 2015 )</span>.</p>
-<p>Trees, in particular, provide shading as well as transpirative cooling in their vicinity <span class="citation">(Gillner et al., 2015; Oke, 1982)</span>, and therefore can reduce ambient temperatures, infrastructure power-consumption and (human) thermal discomfort <span class="citation">(e.g. Gulyás et al., 2006; Akbari et al., 2001; Hoyano, 1988; Mayer and Höppe, 1987)</span>; simultaneously, they provide numerous other environmental, cultural and psychological services and/or benefits <span class="citation">(see Tzoulas et al., 2007 for review)</span>.</p>
-<p>Tree growth dynamics in urban areas are modulated by air temperature, amongst other factors, with a tendency for enhanced growth rates (compared to rural individuals) as reported by <span class="citation">Zhao et al. (2016)</span> and <span class="citation">Pretzsch et al. (2017)</span>.
-Hence, temperature increases may also allow using recent tree growth dynamics and trajectories as a proxy for on-going and future warming, providing an additional line of evidence to support the growing knowledge base on future climate- and human-vegetation and dynamics <span class="citation">(Zhao et al., 2016)</span>.
-For Berlin, <span class="citation">Dahlhausen et al. (2018)</span>, showed divergent patterns for young and old trees dependent on urban development intensity for <em>Tilia cordata</em> Mill, the most abundant tree of the city, but overall reported an increased growth rate which they attributed to the urban heat island effect (UHI).
+Assessing the effect of increased temperatures on green infrastructure, as part of the urban landscape, is therefore instrumental for understanding, and ultimately mitigating, the potential impact of future warming on increasingly urban societies <span class="citation">(Norton et al., 2015)</span>.</p>
+<p>Trees, in particular, provide shading as well as transpirative cooling in their vicinity <span class="citation">(Endlicher et al., 2016; Gillner et al., 2015; Oke, 1982)</span>, and therefore can reduce ambient temperatures, infrastructure power-consumption and (human) thermal discomfort <span class="citation">(e.g. Gulyás et al., 2006; Akbari et al., 2001; Hoyano, 1988; Mayer and Höppe, 1987)</span>;
+simultaneously, they provide numerous other environmental, cultural and psychological services and/or benefits <span class="citation">(see Tzoulas et al., 2007 for review)</span>.
+Further, recent tree growth dynamics as a proxy for on-going and future warming may provide an additional line of evidence to support the growing knowledge base on future climate-vegetation and dynamics <span class="citation">(Zhao et al., 2016)</span> and may aid in mitigation and adaptation efforts <span class="citation">(Pretzsch et al., 2017)</span>.</p>
+<p>Trees and green infrastructure in urban areas show a tendency for enhanced growth rates and/or productivity compared to rural counterparts <span class="citation">(Jia et al., 2018; Pretzsch et al., 2017)</span>, yet feature a broad range of effect size ranges and, in some cases, directions specific to species and locality.
+<span class="citation">Zhao et al. (2016)</span> .. remote sensing.. increased growth rates with higher degree of urbanity for X Chinese cities.
+For Berlin, <span class="citation">Dahlhausen et al. (2018)</span>, showed divergent patterns for intermiedate and highly urbanized environments for <em>Tilia cordata</em> Mill (using growth increments), the most abundant tree of the city, with increased growth rates in the more intensely developed areas and attributed this to the UHI effect.
+<!-- For Berlin, @dahlhausen2018, showed divergent patterns for young and old trees dependent on urban development intensity for *Tilia cordata* Mill, the most abundant tree of the city, but overall reported an increased growth rate which they attributed to the UHI effect. -->
 Similarly, <span class="citation">Moser-Reischl et al. (2019)</span> showed positive associations between air temperature and radial growth for two species commonly selected by urban planners (<em>T. cordata</em>, <em>Rubinia pseudoacacia</em>) in Munich.
 By contrast, <span class="citation">Gillner et al. (2014)</span> highlight decreased growth for <em>Acer</em> species (<em>A. platanoides</em> and <em>pseudoplatanus</em>), <em>Platanus x hispanica</em> and <em>Quercus rubra</em> with higher summer temperatures of the preceding year, especially when compounded with drought, in another German metropolis (Dresden).
+Differences in growth trends may result from contrasting intrinsic inter- and intra-specific characteristics, but are indeed affected by other processes and factors, such as water availability, pollution and road-salt loading, structural impedance through infrastructure or management, etc. <span class="citation">(Pauleit et al., 2002; Quigley, 2004; Randrup et al., 2001; Rhoades and Stipes, 1999)</span>.
 <strong>In the future.. drought, both soil moisture and atmospheric drought.. potential issue for street trees .. <span class="citation">(Brune, 2016)</span>
-??</strong>
-<span class="citation">(Zhao et al., 2016)</span> and <span class="citation">(Jia et al., 2018)</span> direction…..</p>
-<p>These results indicate a high degree of complexity in effect sizes and directions specific to species and locality.
-Tree growth in urban settings is affected by other processes and factors, such as water availability, pollution and road-salt loading, structural impedance through infrastructure or management, etc. <span class="citation">(Pauleit et al., 2002; Quigley, 2004; Randrup et al., 2001; Rhoades and Stipes, 1999)</span>.
-While multiple (locally) important species have been assessed along urban and UHI gradients reflecting a range of conditions, studies reliant on labour-intensive methods are limited logistically by sampling effort, reducing sample size and coverage (i.e. genera and/or species, and space).
-This typically hinders the extrapolation from individual sampling sites toward prediction of effect sizes across entire urban areas and tree stocks.
-<!-- Therefore, studies reliant on labor-intensive sampling, must carefully address confounding factors to ensure effect sizes are estimated adequately. --></p>
-<p>To complement detailed dendroecological analyses in Berlin for key species, we propose inferring growth modulation from a large data set in excess of 650000 individual trees provided by the Berlin Senate Administration (Senatsverwaltung).
-This data set contains information on location, species, trunk diameter (at breast height; DBH), and height, amongst other variables.
-In a space-for-time substitution, the absolute growth potential of species can be assessed across the entire urban area, and related to effects of the UHI, while accounting for other location-specific factors, such as street characteristics, development intensity, available soil volume, etc.
-<span class="citation">(Quigley, 2004)</span> .. inferred absolute growth potential for species across demographic strata</p>
+??</strong></p>
+<p>Conditions affecting tree growth can vary greatly within urban areas or regions, and need to be accounted for when establishing relationships with pertinent drivers, such as the UHI effect.
+This typically complicates the extrapolation from individual sampling sites toward predicting effect sizes across entire urban areas and tree stocks, especially for studies reliant on labour-intensive methods limited logistically by sampling effort (reduced sample size, species and spatial coverage).
+<!-- While multiple (locally) important species have been assessed along urban and UHI gradients reflecting a range of conditions, studies reliant on labour-intensive methods are limited logistically by sampling effort, reducing sample size and coverage (i.e. genera and/or species, and space). -->
+<!-- However, urban tree growth in urban settings is affected by various processes, which  -->
+<!-- However, growth in urban settings is affected by other processes and factors, such as water availability, pollution and road-salt loading, structural impedance through infrastructure or management, etc. [@rhoades1999; @quigley2004; @randrup2001; @pauleit2002]. -->
+<!-- While multiple (locally) important species have been assessed along urban and UHI gradients reflecting a range of conditions, studies reliant on labour-intensive methods are limited logistically by sampling effort, reducing sample size and coverage (i.e. genera and/or species, and space). -->
+<!-- This typically hinders the extrapolation from individual sampling sites toward prediction of effect sizes across entire urban areas and tree stocks.  -->
+<!-- Therefore, studies reliant on labor-intensive sampling, must carefully address confounding factors to ensure effect sizes are estimated adequately. -->
+To complement detailed dendroecological analyses in Berlin for key species, we propose inferring growth modulation from a large data set in excess of 650000 individual trees provided by the Berlin Senate Administration (Senatsverwaltung).
+This data set contains information on location, species, trunk diameter (at breast height; <span class="math inline">\(DBH\)</span>), and height, amongst other variables.
+In a space-for-time substitution, the absolute growth potential of species can be assessed across the entire urban area, and related to effects of the UHI, while accounting for other location-specific factors, such as street characteristics, development intensity, available soil volume, etc.</p>
+<p><span class="citation">(Quigley, 2004)</span> .. inferred absolute growth potential for species across demographic strata</p>
+<p>Note <span class="citation">(Gregg et al., 2003)</span>.. rather impeded growth adjacent to intense urban clusters; but, here focused on intra-city patterns.</p>
 </div>
 <div id="background" class="section level1">
 <h1><span class="header-section-number">2</span> Background</h1>
 </div>
-<div id="methods" class="section level1">
-<h1><span class="header-section-number">3</span> Methods</h1>
+<div id="proposed-methods-and-data-requirements" class="section level1">
+<h1><span class="header-section-number">3</span> Proposed methods and data requirements</h1>
 </div>
-<div id="results" class="section level1">
-<h1><span class="header-section-number">4</span> Results</h1>
+<div id="preliminary-results" class="section level1">
+<h1><span class="header-section-number">4</span> Preliminary results</h1>
 <p>Some results</p>
 <!-- ```{r fig-bar-tree, fig.cap="A plot of random numbers",fig.width = 15, fig.height = 8, out.width="100%", include=FALSE, eval=FALSE} -->
 <!-- readd(plot_tree_sums_bar) -->
@@ -458,19 +464,15 @@ Figure 4.5: A plot of random numbers
 </div>
 <p>Figure <a href="#fig:lmestat"><strong>??</strong></a> shows how we can have a caption and cross-reference for a plot</p>
 </div>
-<div id="discussion" class="section level1">
-<h1><span class="header-section-number">5</span> Discussion</h1>
-</div>
-<div id="conclusion" class="section level1">
-<h1><span class="header-section-number">6</span> Conclusion</h1>
+<div id="outlook" class="section level1">
+<h1><span class="header-section-number">5</span> Outlook</h1>
 </div>
 <div id="acknowledgements" class="section level1">
-<h1><span class="header-section-number">7</span> Acknowledgements</h1>
+<h1><span class="header-section-number">6</span> Acknowledgements</h1>
 <!-- The following line inserts a page break  -->
-<div style="page-break-after: always;"></div>
 </div>
 <div id="references" class="section level1">
-<h1><span class="header-section-number">8</span> References</h1>
+<h1><span class="header-section-number">7</span> References</h1>
 <!-- The following line ensures the references appear here for the MS Word or HTML output files, rather than right at the end of the document (this will not work for PDF files):  -->
 <div id="refs">
 <div id="ref-akbari2001">
@@ -482,6 +484,9 @@ Figure 4.5: A plot of random numbers
 <div id="ref-dahlhausen2018">
 <p>Dahlhausen, J., Rötzer, T., Biber, P., Uhl, E., Pretzsch, H., 2018. Urban climate modifies tree growth in Berlin. Int J Biometeorol 62, 795–808. <a href="https://doi.org/10.1007/s00484-017-1481-3">https://doi.org/10.1007/s00484-017-1481-3</a></p>
 </div>
+<div id="ref-endlicher2016">
+<p>Endlicher, W., Scherer, D., Büter, B., Kuttler, W., Mathey, J., Schneider, C., 2016. Stadtnatur fördert gutes Stadtklima, in: Ökosystemleistungen in Der Stadt – Gesundheit Schützen Und Lebensqualität Erhöhen, 3.1. TEEB DE. TU Berlin, UFZ Leipzig, Berlin, Leipzig, pp. 51–63.</p>
+</div>
 <div id="ref-fenner2014">
 <p>Fenner, D., Meier, F., Scherer, D., Polze, A., 2014. Spatial and temporal air temperature variability in Berlin, Germany, during the years 2001–2010. Urban Climate, ICUC8: The 8th International Conference on Urban Climate and the 10th Symposium on the Urban Environment 10, 308–331. <a href="https://doi.org/10.1016/j.uclim.2014.02.004">https://doi.org/10.1016/j.uclim.2014.02.004</a></p>
 </div>
@@ -490,6 +495,9 @@ Figure 4.5: A plot of random numbers
 </div>
 <div id="ref-gillner2015">
 <p>Gillner, S., Vogt, J., Tharang, A., Dettmann, S., Roloff, A., 2015. Role of street trees in mitigating effects of heat and drought at highly sealed urban sites. Landscape and Urban Planning 143, 33–42. <a href="https://doi.org/10.1016/j.landurbplan.2015.06.005">https://doi.org/10.1016/j.landurbplan.2015.06.005</a></p>
+</div>
+<div id="ref-gregg2003">
+<p>Gregg, J.W., Jones, C.G., Dawson, T.E., 2003. Urbanization effects on tree growth in the vicinity of New York City. Nature 424, 183–187. <a href="https://doi.org/10.1038/nature01728">https://doi.org/10.1038/nature01728</a></p>
 </div>
 <div id="ref-grimmond1996">
 <p>Grimmond, C., Souch, C., Hubble, M., 1996. Influence of tree cover on summertime surface energy balance fluxes, San Gabriel Valley, Los Angeles. Clim. Res. 6, 45–57. <a href="https://doi.org/10.3354/cr006045">https://doi.org/10.3354/cr006045</a></p>
@@ -546,10 +554,9 @@ Figure 4.5: A plot of random numbers
 <p>Zhao, S., Liu, S., Zhou, D., 2016. Prevalent vegetation growth enhancement in urban environment. PNAS 113, 6313–6318. <a href="https://doi.org/10.1073/pnas.1602312113">https://doi.org/10.1073/pnas.1602312113</a></p>
 </div>
 </div>
-<div style="page-break-after: always;"></div>
 <div id="colophon" class="section level3">
-<h3><span class="header-section-number">8.0.1</span> Colophon</h3>
-<p>This report was generated on 2020-03-07 00:03:06 using the following computational environment and dependencies:</p>
+<h3><span class="header-section-number">7.0.1</span> Colophon</h3>
+<p>This report was generated on 2020-03-07 13:34:45 using the following computational environment and dependencies:</p>
 <pre><code>#&gt; - Session info ---------------------------------------------------------------
 #&gt;  setting  value                       
 #&gt;  version  R version 3.6.3 (2020-02-29)
@@ -660,7 +667,7 @@ Figure 4.5: A plot of random numbers
 <p>The current Git commit details are:</p>
 <pre><code>#&gt; Local:    master C:/Users/ahurl/Documents/_work/p024_gfz_berlin-trees/berlin.trees
 #&gt; Remote:   master @ origin (https://github.com/the-Hull/berlin.trees.git)
-#&gt; Head:     [08c99ea] 2020-03-06: need to update bib</code></pre>
+#&gt; Head:     [e5d084b] 2020-03-07: start of day</code></pre>
 </div>
 </div>
 
