@@ -15,7 +15,7 @@ output:
       - --lua-filter=../templates/pagebreak.lua
     bookdown::html_document2:
       fig_caption: yes
-      toc: yes
+      toc: true
     bookdown::pdf_document2:
       fig_caption: yes
       toc: yes
@@ -62,6 +62,7 @@ pgbreak <- function() {
 
 
 library(drake)
+library(kableExtra)
 # library(ggplot2)
 # library(patchwork)
 ```
@@ -101,24 +102,121 @@ This is especially the case for studies reliant on labour-intensive methods whic
 To complement detailed dendroecological analyses of climate-growth relationships in Berlin for key species, we propose inferring growth modulation from a large data set in excess of 650000 individuals provided by the Berlin Senate Administration (Senatsverwaltung). 
 This data set contains information on location, species, trunk diameter (at breast height; $DBH$), and height, amongst other variables for street and park trees.
 In a space-for-time substitution, growth of individual species can be assessed across the entire cite of Berlin, and related to effects of the UHI, while accounting for other location-specific factors, such as street characteristics, development intensity, available soil volume, etc.
-Similar applications are found in @quigley2004, who inferred absolute growth potential for species across successional groups, and between rural and urban species, yet lacked spatially-explicit effect size estimates or predictions of maximum potential.
-Similarly, @pretzsch2017 applied linear hierarchical models to infer growth modulation for different cities, time periods and locations (urban $vs.$ rural).
-By contrast, we propose applying a statistical model that is spatially explicit, while also allowing to account for the nested nature of the data set (e.g. streets and districts) as well as other pertinent factors (hierarchical, generalized additive model, see Section$~$\@ref(sec:methods)).
-This also allows to infer the absolute growth potential of species given, for example, a specific location, age or UHI magnitude.
+Comparable applications are found, for example, in @quigley2004 and @pretzsch2017.
+The former  inferred absolute growth potential for species across successional groups, and between rural and urban species, yet lacked spatially-explicit effect size estimates or predictions of maximum potential;
+@pretzsch2017 applied linear hierarchical models to infer growth modulation for different cities, time periods and locations (urban $vs.$ rural).
+
+
+**By contrast, we propose applying a statistical model that is spatially explicit, while also allowing to account for the nested nature of the data set (e.g. streets and districts) as well as other pertinent factors (hierarchical, generalized additive model, see Section$~$\@ref(sec:methods)).
+This also allows to infer the absolute growth potential of species given, for example, a specific location, age or UHI magnitude.**
+
+<!-- We acknolwedge results from [@gregg2003], which indicated impeded growth adjacent to intense urban clusters, rather than enhancement within them. -->
 
 
 
 
-We acknolwedge results from [@gregg2003], which indicated impeded growth adjacent to intense urban clusters, rather than enhancement within them.
 
 
+# Proposed methods and data requirements {#sec:methods}
 
-# Proposed methods and data requirements 
-\label{sec:methods}
+## General analyses
 
 The proposed statistical method is from the class of hierarchical, generalized additive models (GAM, or GAMM for mixed models/hierarchical models).
 In these models combinations of continuous and categorical predictor variables can be summed to estimate a response. 
-In particular, continuous variables that are linearly, as well as non-linearly related to the response can be represented by applying a transfer function, typically termed "smoothing function" [@wood2017]; these are constructed using a number of base functions of varying complexity and form, which provides a high degree of flexibility, ideal for fitting ecosystem dynamics which are rarely linear [@pedersen2019], or correctly represented with deterministic functional forms (e.g. quadratic equations).
+In particular, continuous variables that are linearly, as well as non-linearly related to the response can be represented by applying a transfer function, typically termed "smoothing function" [@wood2017]; these are constructed using a number of base functions of varying complexity and form, which provides a high degree of flexibility, ideal for fitting ecosystem dynamics which are rarely linear [@pedersen2019], or correctly represented with deterministic functional forms (e.g. quadratic equations). 
+In general, a GAM can be written as:
+
+\begin{equation}
+E (Y)~=~g^{-1}\left( \beta_0 + \sum_{i = 1}^{n} f_i (x_i) \right),
+\end{equation}
+
+and
+
+\begin{equation}
+y~=~E (Y) + \epsilon,
+\end{equation}
+
+where $Y$ is taken from an appropriate distribution and corresponding link function $g$, $\beta_0$ is the intercept and $f_i$ represents a smooth function of a predictor [@pedersen2019], and $\epsilon \sim \mathcal{N}(0, \sigma ^2)$. 
+Note, that $f_i$ consists of a smooth (e.g. spline) constructed via basis functions of different form and complexity, multiplied by a coeffecient:
+
+\begin{equation}
+f_i(x_i)~=~\sum_{k = 1}^{K} \beta_{i, k} b_{i,k}(x_i).
+\end{equation}
+
+Nested data structures (e.g. due to similar road [type]) can be accounted for by introducing random effects [@wood2017], while spatial dependence between observations can be included by constructing smoothing functions with e.g. northings and eastings, as for example done in [@augustin2009].
+Ultimately, the implementation of a such a GAMM will alow for establishing continuous prediction surfaces of growth potential (approximated via $DBH$) for individual species across urban areas (including parks) of Berlin.
+
+Currently, $DBH$ has been modelled using a hierarchical linear model (linear mixed effects model) with `lme4` [@bates2015] in @rcoreteam2020.
+The general form of this model is:
+
+\begin{equation}
+Y_{i,j} = (\beta_0 + b_{0,i,j}) + (\beta_1 + b_{1,i,j}) \cdot x_i  + \epsilon_{i,j},
+\end{equation}
+where $\beta_0$ is the intercept with its random component $b_0$, and $\beta_1$ the slope with its random component $b_1$.
+The random errors are assumed i.i.d. and distributed as $b \sim \mathcal{N}(0, \tau ^2)$. 
+The model for which results are presented in Figure$~$\@ref(fig:fig-lmestat) estimates $DBH$ from tree age and the local UHI intensity as continuous covariates with random slopes and intercepts for each species;
+note, that for computational efficiency each genera was modelled seperately.
+Further, models were only established for species with at least 150 individuals.
+
+## Available and required data
+
+Table$~$\@ref(tab:tab-data-req) provides a list with currently accessible/available data, including information on (desired) resolution, and sources.
+
+
+
+
+```{r tab-data-req,echo=FALSE}
+
+dat_req <- read.csv(here::here("analysis", "data", "tables", "01_data_requirements.csv"), header = TRUE)
+
+
+
+
+if (grepl("docx", out_format) ||
+    knitr::is_latex_output() ) {
+  table_dat_req <- dat_req %>% 
+  select(-owned) %>% 
+  knitr::kable(booktabs = TRUE,
+              
+             caption = "Data requirements for analysis, including currently available/accessed and required/desired data.",
+             caption.short = "Data requirements for analysis",
+             col.names = c("Subject/Relevance",
+                          "Desc.",
+                          "Type",
+                          "Obsv. (n)",
+                          "Resolution (m)",
+                          "Source")) %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 10) %>% 
+  kableExtra::row_spec(0, bold = TRUE) %>% 
+  kableExtra::pack_rows("available or accessed", 1, 4) %>%
+  kableExtra::pack_rows("required and/or desired", 5, 8) %>% kableExtra::landscape()
+  
+} else {
+  table_dat_req <- dat_req %>% 
+  select(-owned) %>% 
+  knitr::kable(booktabs = TRUE,
+               format = "html",
+               caption = "Data requirements for analysis, including currently available/accessed and required/desired data.",
+             caption.short = "Data requirements for analysis",
+             col.names = c("Subject/Relevance",
+                          "Desc.",
+                          "Type",
+                          "Obsv. (n)",
+                          "Resolution (m)",
+                          "Source")) %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 10) %>% 
+  kableExtra::row_spec(0, bold = TRUE) %>% 
+  kableExtra::pack_rows("available or accessed", 1, 4) %>%
+  kableExtra::pack_rows("required and/or desired", 5, 8)
+  
+}
+
+ table_dat_req
+
+
+```
 
 
 
@@ -135,7 +233,7 @@ Some results
 <!-- ``` -->
 
 
-```{r fig-tree-overview-map, fig.cap="A plot of random numbers",fig.width = 15, fig.height = 8, out.width="100%", include=TRUE, eval=TRUE}
+```{r fig-tree-overview-map, fig.cap="Individual tree locations for three categories available in Berlin Senate urban tree data set. Note, that for each category 7000 observations were subsampled from the available pool to facilitate visualization.",fig.width = 15, fig.height = 8, out.width="100%", include=TRUE, eval=TRUE}
 
 # loadd(full_data_set_clean)
 # loadd(plot_overview_map)
@@ -153,7 +251,7 @@ knitr::include_graphics(here::here("analysis/figures/map_01_overview.png"))
 ```
 
 
-```{r fig-tree-count-map, fig.cap="A plot of random numbers",fig.width = 12, fig.height = 14, out.width="100%"}
+```{r fig-tree-count-map, fig.cap="Gridded counts for the 11 most frequent genera, as well as *Pinus* and remaining genera. Note, that counts are standardized to unity for individual genera.",fig.width = 12, fig.height = 14, out.width="100%"}
 
 
 
@@ -167,8 +265,10 @@ knitr::include_graphics(here::here("analysis/figures/map_02_tree_sums_standardiz
 # plot(1:10)
 ```
 
+(ref:chakraborty2019) [@chakraborty2019]
 
-```{r fig-uhi-map, fig.cap="A plot of random numbers",fig.width = 12, fig.height = 14, out.width="50%"}
+
+```{r fig-uhi-map, fig.cap="Estimate of UHI intensity based on the algorithm in (ref:chakraborty2019), comparing urban with rural pixels within the greater metropolitan cluster. Presented values are averaged over the summer of 2007.",fig.width = 12, fig.height = 14, out.width="50%"}
 
 
 
@@ -184,7 +284,7 @@ knitr::include_graphics(here::here("analysis/figures/map_03_uhi.png"))
 
 
 
-```{r fig-density, fig.cap="A plot of random numbers",fig.width = 12, fig.height = 12, out.width="100%"}
+```{r fig-density, fig.cap="Empirical density distribution of all individuals within the presented genera along the UHI continuum. UHI intensities were extracted for each tree location, and the distribution hence represents the first detailed overview of the exposure of Berlin's trees to urban heat loading. Insets represent corresponding tree totals.",fig.width = 12, fig.height = 12, out.width="100%"}
 knitr::include_graphics(here::here("analysis/figures/plot_02_genus_UHI_dens.png"))
 
 
@@ -198,7 +298,7 @@ knitr::include_graphics(here::here("analysis/figures/plot_02_genus_UHI_dens.png"
 
 
 
-```{r fig-lmestat, fig.cap="A plot of random numbers",fig.width = 20, fig.height = 12, out.width="100%"}
+```{r fig-lmestat, fig.cap="Impact of UHI loading on tree diameter (\\(DBH\\)), accounting for age and inter-specific differences from the linear mixed model (via random slopes and intercepts). Line-ranges are standard errors of predicted effect sizes (i.e. slopes). Differences between street and park trees are considerable for some species, and may be due to local clustering and/or spatial under-representation across the UHI continuum. Further investigations need to address the degree of spatial autocorrelation and account for it where required in linear mixed models, and with smoothing interactions in a GAMM implementation.",fig.width = 20, fig.height = 12, out.width="100%"}
 knitr::include_graphics(here::here("analysis/figures/plot_03_ranef_species_dbh_uhi.png"))
 # plot_count_map
 
@@ -207,9 +307,20 @@ knitr::include_graphics(here::here("analysis/figures/plot_03_ranef_species_dbh_u
 
 
 
-Figure \@ref(fig:lmestat) shows how we can have a caption and cross-reference for a plot
+Figure \@ref(fig:fig-lmestat) shows how we can have a caption and cross-reference for a plot
 
 # Outlook
+
+We seek to build upon and improve the current analysis by: 
+
+- incorporating more pertinent covariates as dependent variables in the linear mixed model
+- testing multiple model structures with formal model selection procedures
+- checking model resiudals for spatial auto-correlation and accounting for it where necessary to ensure unbiased estimates of effect sizes
+- repeating the above with a hierarchical GAM (i.e. GAMM) to allow for:  
+  * estimating continuous prediction surfaces for UHI impacts on individual species' growth (similar to results in Figure$~$\@ref(fig:fig-lmestat)) under recent conditions
+  * estimating absolute, species-specific growth potential under increased temperatures and UHI loading under climate change, ideally based on simulations (otherwise step-wise increases based on RCP scenarios) for the key species.
+  * assess potential age-dependent UHI impacts on individual species.
+  
 
 # Acknowledgements
 

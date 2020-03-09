@@ -1,0 +1,9 @@
+Subject / Relevance,Description,Type,Observations (approx.),Resolution (m),Source,owned
+urban trees,"riparian, street, park; basic mensuration data (not for riparian)","tabular, spatial points",668254,NA,Senatsverwaltung Berlin,TRUE
+UHI Effect,raster data set with summer day/night time (global coverage; Berlin included),raster,NA,200,"UHI Explorer, [@chakraborty2019]",TRUE
+soil coverage (Baumscheibe),available soil area and bounding infrastructure of trees,"tabular, spatial polygons",178576,NA,Senatsverwaltung Berlin,TRUE
+vegetation and building height,data specific for indidivual building (complexes) and vegetation,"tabular, spatial polygons",,,Senatsverwaltung Berlin,TRUE
+UHI Effect,raster data set with summer day/night time (global coverage; Berlin included),raster,NA,< 50,? Landsat / Sentinel,FALSE
+road / street characteristics,orientation and width of streets,tabular,NA,NA,"? Senatsverwaltung, urban planning",FALSE
+street tree density,planting density of trees as proxy for  potential density-dependent inhibition,tabular or raster,,< 50,"? Senatsverwaltung, urban planning",FALSE
+landcover data,providing local development intensity,tabular or raster,,100 - 200,"? Landsat / Sentinel, Senatsverwaltung",FALSE
