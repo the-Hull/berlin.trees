@@ -37,7 +37,8 @@ Imports:
     stats,
     stars,
     scales,
-    rgdal
+    rgdal,
+    data.table
 Suggests: devtools,
     git2r
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.0

@@ -1341,6 +1341,49 @@ make_ranef_plot <- function(model_out,
 }
 
 
+# Tables ------------------------------------------------------------------
+
+#' Generate table of genera age distribution
+#'
+#' @param df Berlin trees data frame
+#' @param max_age numeric, last cut
+#' @param break_interval numeric, size of intervals, note, max_age/break_intervals must be an integer.
+#'
+#' @return
+#' @export
+#'
+#' @import data.table
+#'
+make_age_table <- function(df, max_age = 120, break_interval = 20){
+
+
+    # make df with age breaks
+    age_df <- data.table(df)[ , .(STANDALTER, gattung_short)][
+        , age_group := cut(STANDALTER, breaks = seq(0, max_age, break_interval), right = FALSE)]
+
+    species_totals <- age_df[ ,.(n_total = .N), by = gattung_short]
+
+    cols <- c(1,3:(3+ max_age/break_interval),2)
+
+
+    age_df_class <- dcast(age_df,
+                          gattung_short ~ age_group,
+                          value.var = "STANDALTER",
+                          fun.aggregate = length)[species_totals,
+                                                  on = "gattung_short"][ ,..cols]
+
+    setnames(age_df_class, old = "NA", new = "missing")
+
+
+
+
+    # age_df_perc <- age_df_class[, 2:8 ]/species_totals[,n_total]
+    # age_df_perc[, gattung_short := as.character(age_df$gattung_short)]
+
+    return(age_df_class)
+
+}
+
 
 
 

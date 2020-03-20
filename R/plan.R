@@ -157,6 +157,15 @@ plan <- drake_plan(
                                                  dpi = 300),
 
 
+    # tables
+
+
+    age_tables = berlin.trees::make_age_table(df = model_df,
+                                              max_age = 150,
+                                              break_interval = 30),
+
+
+
 
 
 
@@ -172,13 +181,13 @@ plan <- drake_plan(
         output_format = bookdown::html_document2(),
         quiet = TRUE
     ),
-    paper_word = rmarkdown::render(
-        knitr_in("./analysis/paper/paper.Rmd"),
-        output_file = file_out(file.path(here::here(), "paper_knit.docx")),
-        # output_file = file_out(file.path("./paper_knit.html")),
-        output_format = bookdown::word_document2(),
-        quiet = TRUE
-    ),
+    # paper_word = rmarkdown::render(
+    #     knitr_in("./analysis/paper/paper.Rmd"),
+    #     output_file = file_out(file.path(here::here(), "paper_knit.docx")),
+    #     # output_file = file_out(file.path("./paper_knit.html")),
+    #     output_format = bookdown::word_document2(),
+    #     quiet = TRUE
+    # ),
     paper_pdf = rmarkdown::render(
         knitr_in("./analysis/paper/paper.Rmd"),
         output_file = file_out(file.path(here::here(), "paper_knit.pdf")),

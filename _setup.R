@@ -23,6 +23,7 @@ usethis::use_package("rgdal")
 # usethis::use_package("extrafont")
 # usethis::use_package("scales")
 # usethis::use_package("raster")
+# usethis::use_package("data.table")
 
 ## packages
 
