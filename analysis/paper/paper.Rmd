@@ -22,7 +22,7 @@ output:
 bibliography: uhi_references.bib
 csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
 abstract: |
-  **This document outlines the rational for an analysis tree growth (potential) and its relationship with the Urban Heat Island (UHI) effect in Berlin. It introduces preliminary results and provides an outlook for up-coming and potential work.** .
+  **This document outlines the rationale for an analysis of tree growth (potential) and its relationship with the Urban Heat Island (UHI) effect in Berlin using an extensive, publicly available data set. It introduces preliminary results and provides an outlook for up-coming and potential work.**
 keywords: |
   Uferbaeume; Anlagenbaeume; Strassenbaeume; 
 highlights: |
@@ -169,7 +169,9 @@ Further, models were only established for species with at least 150 individuals.
 
 ## Available and required data
 
-Table$~$\@ref(tab:tab-data-req) provides a list with currently accessible/available data, including information on (desired) resolution, and sources.
+
+Additional remote sensing data for local context, higher resolution UHI data, and most important, temporally-resolved tree growth data are still required and/or would greatly improve the impact and confidence in conclusions.
+See Tab.$~$\@ref(tab:tab-data-req) for details.
 
 
 
@@ -189,7 +191,7 @@ if (grepl("docx", out_format) ||
               
              caption = "Data requirements for analysis, including currently available/accessed and required/desired data.",
              caption.short = "Data requirements for analysis",
-             col.names = c("Subject/Relevance",
+             col.names = c("Subject / Relevance",
                           "Desc.",
                           "Type",
                           "Obsv. (n)",
@@ -406,7 +408,6 @@ knitr::include_graphics(here::here("analysis/figures/plot_03_ranef_species_dbh_u
 
 
 
-Figure \@ref(fig:fig-lmestat) shows how we can have a caption and cross-reference for a plot
 
 # Outlook
 
