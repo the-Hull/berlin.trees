@@ -104,7 +104,7 @@ This is especially the case for studies reliant on labour-intensive methods whic
 <!-- Detailed, but spatially-limited dendroecological analyses of climate-growth relationships in Berlin for key species can be enhanced by inferring growth modulation from a large data set in excess of 650000 individuals provided by the Berlin Senate Administration (Senatsverwaltung). -->
 
 To complement (existing) detailed dendroecological analyses of climate-growth relationships in Berlin for key species, we propose inferring growth modulation from a large data set in excess of 650000 individuals provided by the Berlin Senate Administration (Senatsverwaltung).
-This data set contains information on location, species, trunk diameter (at breast height; $DBH$), and height, amongst other variables for street and park trees.
+This data set contains information on location, species, trunk diameter (at breast height; $DBH$), and height, amongst other variables for street and park trees (.
 In a space-for-time substitution, growth of individual species can be assessed across the entire cite of Berlin, and related to effects of the UHI, while accounting for other location-specific factors, such as street characteristics, development intensity, available soil volume, etc.
 Comparable applications are found, for example, in @quigley2004 and @pretzsch2017.
 The former  inferred absolute growth potential for species across successional groups, and between rural and urban species, yet lacked spatially-explicit effect size estimates or predictions of maximum potential;

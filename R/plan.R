@@ -9,7 +9,7 @@ plan <- drake_plan(
 
 
 
-    ## Spatial Ancillary
+    ## Spatial Ancillary -----------------------------------
 
     ### Berlin districts and BBoxx
     berlin_polygons = target(berlin.trees::get_berlin_polygons_as_sf()),
@@ -19,12 +19,15 @@ plan <- drake_plan(
                                            "greater_berlin",
                                            crs = 4326),
 
-    ### Berlin UHI gridded data
+    ### Berlin UHI gridded data -------------------------------
 
 
 
     uhi_stacks = berlin.trees::get_uhi_rasters(file.path(here::here(), "analysis", "data", "raw_data", "UHI_explorer")),
 
+
+
+    # Berlin trees data -------------------------------------------------------
 
 
 
@@ -46,6 +49,9 @@ plan <- drake_plan(
     extract_uhi_values_to_list = berlin.trees::add_uhi_hist_data(uhi_stack_list = uhi_stacks,
                                                                  sf_data = full_data_set_clean[, ]),
 
+
+
+     # Model -------------------------------------------------------------------
 
 
 
@@ -93,7 +99,7 @@ plan <- drake_plan(
 
 
 
-    # Plotting
+    # Plotting --------------------------------
     plot_overview_map = berlin.trees::make_overview_map(full_data_set_clean,
                                                         berlin_polygons,
                                                         file = drake::file_out("./analysis/figures/map_01_overview.png"),
@@ -157,7 +163,9 @@ plan <- drake_plan(
                                                  dpi = 300),
 
 
-    # tables
+    # tables ------------------------------------------
+
+    overview_table = berlin.trees::make_overview_table(full_data_set_clean),
 
 
     age_tables = berlin.trees::make_age_table(df = model_df,

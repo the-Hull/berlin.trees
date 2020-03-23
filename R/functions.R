@@ -1343,6 +1343,33 @@ make_ranef_plot <- function(model_out,
 
 # Tables ------------------------------------------------------------------
 
+#' Make overview table
+#'
+#' @param df berlin trees df
+#'
+#' @return data frame ready for kabling
+#' @export
+#' @import data.table
+#'
+make_overview_table <- function(df){
+
+    full_data_set_clean <- data.table(df)
+    counts_full <- full_data_set_clean[,.N, by = provenance]
+    counts_with_age_size <- full_data_set_clean[!is.na(dbh_cm) & !is.na(STANDALTER),
+                                                .N,
+                                                by = provenance]
+
+    counts_full <- cbind(counts_full, counts_with_age_size[,2])
+    counts_full[3,3] <- NA
+    counts_full[,1] <- c("Park", "Street", "Riparian")
+    colnames(counts_full) <- c(" ", "N", "N_{age}")
+    counts_full[order(-N)]
+
+    return(counts_full)
+}
+
+
+
 #' Generate table of genera age distribution
 #'
 #' @param df Berlin trees data frame
