@@ -665,7 +665,7 @@ apply_models <- function(df = test_df,
                                    .data = test_set)
 
 
-    return(model_out)
+    return(list(model = model_out, test_data = test_set))
 
 
 
@@ -1355,15 +1355,26 @@ make_overview_table <- function(df){
 
     full_data_set_clean <- data.table(df)
     counts_full <- full_data_set_clean[,.N, by = provenance]
-    counts_with_age_size <- full_data_set_clean[!is.na(dbh_cm) & !is.na(STANDALTER),
-                                                .N,
-                                                by = provenance]
+    # counts_with_age_size <- full_data_set_clean[!is.na(dbh_cm) & !is.na(STANDALTER),
+    #                                             .N,
+    #                                             by = provenance]
+
+
+
+    counts_with_age_size <- full_data_set_clean[,full := {!is.na(STANDALTER) &
+            STANDALTER > 0 &
+            !is.na(dbh_cm)}]
+
+
+    counts_with_age_size <- counts_with_age_size[ , .(n_available = sum(full)), by = provenance]
+
+
+
 
     counts_full <- cbind(counts_full, counts_with_age_size[,2])
-    counts_full[3,3] <- NA
     counts_full[,1] <- c("Park", "Street", "Riparian")
-    colnames(counts_full) <- c(" ", "N", "N_{age}")
-    counts_full[order(-N)]
+    colnames(counts_full) <- c("Category", "n", "n$_{full}$")
+    counts_full[order(-n)]
 
     return(counts_full)
 }
@@ -1386,11 +1397,11 @@ make_age_table <- function(df, max_age = 120, break_interval = 20){
 
     # make df with age breaks
     age_df <- data.table(df)[ , .(STANDALTER, gattung_short)][
-        , age_group := cut(STANDALTER, breaks = seq(0, max_age, break_interval), right = FALSE)]
+        , age_group := cut(STANDALTER, breaks = c(seq(0, max_age, break_interval), max(STANDALTER, na.rm = TRUE)), right = TRUE)]
 
     species_totals <- age_df[ ,.(n_total = .N), by = gattung_short]
 
-    cols <- c(1,3:(3+ max_age/break_interval),2)
+    cols <- c(1,3:(4+ max_age/break_interval),2)
 
 
     age_df_class <- dcast(age_df,

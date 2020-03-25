@@ -91,10 +91,11 @@ plan <- drake_plan(
     model_res = berlin.trees::apply_models(df = model_df %>%
                                                dplyr::filter(STANDALTER < 350 &
                                                                  krone_m < 50 &
-                                                                 dbh_cm < 600),
+                                                                 dbh_cm < 300,
+                                                             dbh_cm > 20),
                                            model_list = model_list,
                                            n_top_species = 3,
-                                           min_individuals = 150),
+                                           min_individuals = 1000),
 
 
 
@@ -152,9 +153,9 @@ plan <- drake_plan(
     #                 ),
 
 
-    plot_LME_age = berlin.trees::make_ranef_plot(model_out = model_res,
+    plot_LME_age = berlin.trees::make_ranef_plot(model_out = model_res$model,
                                                  model_name = "heat_age_RIspecies_RSspecies_RIprovenance",
-                                                 df = full_data_set_clean,
+                                                 df = model_res$test_data,
                                                  n_top_species = 3,
                                                  base_size = 18,
                                                  file = drake::file_out("./analysis/figures/plot_03_ranef_species_dbh_uhi.png"),
@@ -189,13 +190,13 @@ plan <- drake_plan(
         output_format = bookdown::html_document2(),
         quiet = TRUE
     ),
-    # paper_word = rmarkdown::render(
-    #     knitr_in("./analysis/paper/paper.Rmd"),
-    #     output_file = file_out(file.path(here::here(), "paper_knit.docx")),
-    #     # output_file = file_out(file.path("./paper_knit.html")),
-    #     output_format = bookdown::word_document2(),
-    #     quiet = TRUE
-    # ),
+    paper_word = rmarkdown::render(
+        knitr_in("./analysis/paper/paper.Rmd"),
+        output_file = file_out(file.path(here::here(), "paper_knit.docx")),
+        # output_file = file_out(file.path("./paper_knit.html")),
+        output_format = bookdown::word_document2(),
+        quiet = TRUE
+    ),
     paper_pdf = rmarkdown::render(
         knitr_in("./analysis/paper/paper.Rmd"),
         output_file = file_out(file.path(here::here(), "paper_knit.pdf")),

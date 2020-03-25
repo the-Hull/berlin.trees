@@ -1,7 +1,7 @@
 ---
 title: "Species-specific effects of the Urban Heat Island on tree growth across Berlin"
 author:
-  - Alexander G. Hurley$^{a *}$, Ingo Heinrich$^a$
+  - Alexander G. Hurley$^{a *}$, Ingo Heinrich$^a$, ...
   - $^a$ *Geoforschungszentrum Potsdam, Section 4.3, Germany*
   - "* Corresponding author: hurley@gfz-potsdam.de"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
@@ -19,6 +19,17 @@ output:
     bookdown::pdf_document2:
       fig_caption: yes
       toc: yes
+header-includes:
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage[normalem]{ulem}
 bibliography: uhi_references.bib
 csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
 abstract: |
@@ -104,16 +115,67 @@ This is especially the case for studies reliant on labour-intensive methods whic
 <!-- Detailed, but spatially-limited dendroecological analyses of climate-growth relationships in Berlin for key species can be enhanced by inferring growth modulation from a large data set in excess of 650000 individuals provided by the Berlin Senate Administration (Senatsverwaltung). -->
 
 To complement (existing) detailed dendroecological analyses of climate-growth relationships in Berlin for key species, we propose inferring growth modulation from a large data set in excess of 650000 individuals provided by the Berlin Senate Administration (Senatsverwaltung).
-This data set contains information on location, species, trunk diameter (at breast height; $DBH$), and height, amongst other variables for street and park trees (.
+This data set contains information on location, species, trunk diameter (at breast height; $DBH$; see Tab.$~$\@ref(tab:tab-tree-overview)), and height, amongst other variables for street and park trees.
+
+
+```{r tab-tree-overview}
+loadd(overview_table)
+
+
+caption_ov <- "Available records by categoryin entire data set (n), and those with age and $DBH$ entries (n$_{full}$)."
+caption_ov_short <- "Available records in berlin tree database."
+
+
+if (grepl("docx", out_format) ||
+    knitr::is_latex_output() ) {
+  table_ov <- overview_table %>% 
+  knitr::kable(booktabs = TRUE,
+              
+             caption = caption_ov,
+             caption.short = caption_ov_short,
+             format = "latex",
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             escape = FALSE) 
+  
+} else {
+table_ov <- overview_table %>% 
+  knitr::kable(booktabs = TRUE,
+               format = "html",
+               
+             caption = caption_ov,
+             caption.short = caption_ov_short,
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             escape = FALSE) 
+}
+
+
+ table_ov %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 11,
+                            latex_options = c("hold_position")) %>% 
+  kableExtra::row_spec(0, bold = TRUE, font_size = 12) 
+
+```
+
+
 In a space-for-time substitution, growth of individual species can be assessed across the entire cite of Berlin, and related to effects of the UHI, while accounting for other location-specific factors, such as street characteristics, development intensity, available soil volume, etc.
 Comparable applications are found, for example, in @quigley2004 and @pretzsch2017.
 The former  inferred absolute growth potential for species across successional groups, and between rural and urban species, yet lacked spatially-explicit effect size estimates or predictions of maximum potential;
-@pretzsch2017 applied linear hierarchical models to infer growth modulation for different cities, time periods and locations (urban $vs.$ rural).
+@pretzsch2017 applied linear hierarchical models to infer growth modulation for different cities, time periods and urban $vs.$ rural locations while accounting for stand-level variability.
 
-
-**By contrast, we propose applying a statistical model that is spatially explicit, while also allowing to account for the nested nature of the data set (e.g. streets and districts) as well as other pertinent factors (hierarchical, generalized additive model, see Section$~$\@ref(sec:methods)).
-This also allows to infer the absolute growth potential of species given, for example, a specific location, age or UHI magnitude.**
-Tree-level growth data, however, is paramount in validating such relationships, and its inclusion in the model would also allow incorporating effects of varying climate.
+**By contrast, we propose applying a statistical model that is fully spatially explicit, while also allowing to account for the nested nature of the data set (e.g. streets and districts) as well as other pertinent factors using hierarchical, generalized additive models (see Section$~$\@ref(sec:methods).
+This also allows to infer the absolute growth potential of a species given, for example, a specific location, age or UHI magnitude.**
+Tree-level growth data, however, is paramount in validating such relationships, and its inclusion in the model would also allow incorporating effects of varying climate over time.
 
 <!-- We acknolwedge results from [@gregg2003], which indicated impeded growth adjacent to intense urban clusters, rather than enhancement within them. -->
 
@@ -154,7 +216,7 @@ f_i(x_i)~=~\sum_{k = 1}^{K} \beta_{i, k} b_{i,k}(x_i).
 Nested data structures (e.g. due to similar road [type]) can be accounted for by introducing random effects [@wood2017], while spatial dependence between observations can be included by constructing smoothing functions with e.g. northings and eastings, as for example done in [@augustin2009].
 Ultimately, the implementation of a such a GAMM will alow for establishing continuous prediction surfaces of growth potential (approximated via $DBH$) for individual species across urban areas (including parks) of Berlin.
 
-Currently, $DBH$ has been modelled using a hierarchical linear model (linear mixed effects model) with `lme4` [@bates2015] in @rcoreteam2020.
+Currently, $DBH$ has been modelled using a hierarchical linear model (linear mixed effects model) with `lme4` [@bates2015] in @rcoreteam2020 (see Section$~$\@ref(sec:results)).
 The general form of this model is:
 
 \begin{equation}
@@ -165,12 +227,16 @@ where $\beta_0$ is the intercept with its random component $b_0$, and $\beta_1$ 
 The random errors are assumed i.i.d. and distributed as $b \sim \mathcal{N}(0, \tau ^2)$. 
 The model for which results are presented in Figure$~$\@ref(fig:fig-lmestat) estimates $DBH$ from tree age and the local UHI intensity as continuous covariates with random slopes and intercepts for each species;
 note, that for computational efficiency each genera was modelled seperately.
-Further, models were only established for species with at least 150 individuals.
+Further, models were established for the three most abundant species per genera with at least 1000 individuals.
+
+
+We caution, that 1) the presented model results are preliminary, 2) initial diagnostics indicate that modification of the current model structure (e.g. by accounting for individual-level variability) may be required and 3) that further, time-intensive data cleaning is necessary. 
+First tests, however, showed that while the magnitude of effects changes with different model structures, their direction appears stable.
 
 ## Available and required data
 
 
-Additional remote sensing data for local context, higher resolution UHI data, and most important, temporally-resolved tree growth data are still required and/or would greatly improve the impact and confidence in conclusions.
+Additional remote sensing data for local context, higher resolution UHI data, and most important, temporally-resolved tree growth data are still required and/or would greatly improve the impact and confidence in effect size estimates.
 See Tab.$~$\@ref(tab:tab-data-req) for details.
 
 
@@ -182,6 +248,8 @@ dat_req <- read.csv(here::here("analysis", "data", "tables", "01_data_requiremen
 
 
 
+caption_data_req <- "Data requirements for analysis, including currently available/accessed and required/desired data."
+caption_data_req_short <- "Data requirements for analysis."
 
 if (grepl("docx", out_format) ||
     knitr::is_latex_output() ) {
@@ -189,8 +257,9 @@ if (grepl("docx", out_format) ||
   select(-owned) %>% 
   knitr::kable(booktabs = TRUE,
               
-             caption = "Data requirements for analysis, including currently available/accessed and required/desired data.",
-             caption.short = "Data requirements for analysis",
+             caption = caption_data_req,
+             caption.short = caption_data_req_short,
+             format = "latex",
              col.names = c("Subject / Relevance",
                           "Desc.",
                           "Type",
@@ -232,12 +301,12 @@ if (grepl("docx", out_format) ||
 
 
 
-# Preliminary results
+# Preliminary results {#sec:results}
 
 
-Tree locations are clustered and follow spatial structures based on their category, i.e. riparian, street and park trees (Fig.$~$\@ref(fig:fig-tree-overview-map)).
-Planting in space and time shows species specific patterns (by districts), often related to major events, such as the start and end of wars, as well as the German separation (not shown here).
-Table$~$\@ref(tab:tab-age) shows the binned distribution of generae across age classes.
+Tree locations are clustered and structured based on their category, i.e. riparian, street and park trees (Fig.$~$\@ref(fig:fig-tree-overview-map)).
+Planting in space and time shows species-specific patterns (by districts), often related to major events, such as the start and end of armed and/or political conflict.
+Table$~$\@ref(tab:tab-age) shows the binned distribution of genera across age classes.
 
 
 
@@ -247,7 +316,7 @@ loadd(age_tables)
 
 age_tables <- age_tables %>% 
   dplyr::arrange(desc(n_total))
-colnames(age_tables)[c(1,7,8)] <- c("Genera", "Total (n)", "Missing (n)") 
+colnames(age_tables)[c(1,7,8, 9)] <- c("Genera", "150+", "Total (n)", "Missing (n)") 
 
 age_tables <- bind_rows(age_tables[age_tables$Genera!="Other",],
                         age_tables[age_tables$Genera=="Other",])
@@ -261,14 +330,17 @@ age_tables <- bind_rows(age_tables,
                     add_row)
 
 
+caption_trees <- "Binned age-distribution for street and park trees. Missing values feature no"
+caption_trees_short <- "Binned age-distribution for street and park trees."
+
 
 if (grepl("docx", out_format) ||
     knitr::is_latex_output() ) {
   table_dat_req_kable <- age_tables %>% 
   knitr::kable(booktabs = TRUE,
-              
-             caption = "Trees",
-             caption.short = "Trees"
+               format = "latex",
+             caption = caption_trees,
+             caption.short = caption_trees_short
              # col.names = c("Subject/Relevance",
              #              "Desc.",
              #              "Type",
@@ -282,8 +354,8 @@ if (grepl("docx", out_format) ||
 table_dat_req_kable <- age_tables %>% 
   knitr::kable(booktabs = TRUE,
                format = "html",
-               caption = "Trees",
-             caption.short = "Trees"
+              caption = caption_trees,
+             caption.short = caption_trees_short
              # col.names = c("Subject/Relevance",
              #              "Desc.",
              #              "Type",
@@ -377,7 +449,7 @@ The exposure to increased heat-loading of individual genera (and consequently sp
 Street and park trees of most genera are clustered in urban areas with intermediate to high UHI loading, while riparian trees, and some street and park trees of other genera tend to be spread more evenly across Berlin's UHI range.
 
 
-```{r fig-density, fig.cap="Empirical density distribution of all individuals within the presented genera along the UHI continuum. UHI intensities were extracted for each tree location, and the distribution hence represents the first detailed overview of the exposure of Berlin's trees to urban heat loading. The black line represents the density across all three categories. Insets represent corresponding tree totals.",fig.width = 12, fig.height = 12, out.width="100%"}
+```{r fig-density, fig.cap="Empirical density distribution of all individuals within the presented genera along the UHI continuum. UHI intensities were extracted for each tree location, and the distribution hence represents the first detailed overview of the exposure of Berlin's trees to urban heat loading. The black line is the density across all three categories. Insets show corresponding tree totals.",fig.width = 12, fig.height = 12, out.width="100%"}
 knitr::include_graphics(here::here("analysis/figures/plot_02_genus_UHI_dens.png"))
 
 
@@ -388,15 +460,12 @@ knitr::include_graphics(here::here("analysis/figures/plot_02_genus_UHI_dens.png"
 ```
 
 
-The effect of UHI loading on absolute growth potential varies between genera and species (Fig.$~$\@ref(fig:fig-lmestat)).
+The effect of UHI loading on absolute growth potential varies between genera and species (Fig.$~$\@ref(fig:fig-lmestat)); **note, that these results are preliminary and should be considered as template for future outputs, rather used for any inference**.
 Most notably, *Quercus*, the 3rd-most frequent genera, shows decreased absolute growth with increased UHI,
-while the most frequent genera, *Tilia* clearly features enhanced growth.
-Note, that the estimated effect sizes here are linear.
-Temperature may excert a non-linear control on absolute growth, however, and hence, applying a  method able to capture may result in altered presented effect sizes.
+while the most frequent genera, *Tilia* features contrasting relationships with UHI at species level.
+The estimated effect sizes presented here are linear.
+However, temperature may excert a non-linear control on absolute growth and, hence, applying a  method able to capture may result in altered presented effect sizes.
 Additionally, if temperatures increase in the future under climate warming current future increases in under climate warming, any non-linear effects may become more enhanced, stressing the need for a more flexible model fit and structure.
-
-
-alter the (preliminary) results substantially 
 
 
 ```{r fig-lmestat, fig.cap="Impact of UHI loading on tree diameter (\\(DBH\\)), accounting for age and inter-specific differences from the linear mixed model (via random slopes and intercepts). Line-ranges are standard errors of predicted effect sizes (i.e. slopes). Differences between street and park trees are considerable for some species, and may be due to local clustering and/or spatial under-representation across the UHI continuum. Further investigations need to address the degree of spatial autocorrelation and account for it where required in linear mixed models, and with smoothing interactions in a GAMM implementation.",fig.width = 20, fig.height = 12, out.width="100%"}
@@ -413,7 +482,8 @@ knitr::include_graphics(here::here("analysis/figures/plot_03_ranef_species_dbh_u
 
 We seek to build upon and improve the current analysis by: 
 
-- incorporating more pertinent covariates as dependent variables in the linear mixed model
+- validating the database with independent observations
+- incorporating more pertinent covariates as dependent variables in the linear mixed model, especially incremental tree growth
 - testing multiple model structures with formal model selection procedures
 - checking model resiudals for spatial auto-correlation and accounting for it where necessary to ensure unbiased estimates of effect sizes
 - repeating the above with a hierarchical GAM (i.e. GAMM) to allow for:  
@@ -422,10 +492,10 @@ We seek to build upon and improve the current analysis by:
   * assess potential age-dependent UHI impacts on individual species.
   
 
-# Acknowledgements
+<!-- # Acknowledgements -->
 
-<!-- The following line inserts a page break  -->
-`r pgbreak()`
+<!-- <!-- The following line inserts a page break  --> 
+<!-- `r pgbreak()` -->
 
 # References 
 <!-- The following line ensures the references appear here for the MS Word or HTML output files, rather than right at the end of the document (this will not work for PDF files):  -->

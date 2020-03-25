@@ -5,3 +5,6 @@
 analysis/data/raw_data/
 Rplots.pdf
 analysis/paper/paper_knit.log
+plotcheck.pdf
+ranef_plot.png
+analysis/figures/plot_03_ranef_species_dbh_uhi.png
