@@ -40,7 +40,10 @@ highlights: |
   We will see. 
 ---
 
-
+<style>
+body {
+text-align: justify}
+</style>
 
 <!-- This is the format for text comments that will be ignored during renderings. Do not put R code in these comments because it will not be ignored. -->
 
@@ -78,7 +81,7 @@ library(kableExtra)
 # library(patchwork)
 ```
 
-# Introduction
+# Introduction {#sec:intro}
 
 Berlin features the most intense Urban Heat Island (UHI) in Germany due to its large extent and development intensity [@kuttler2015], with temperature increases of up to $12~K$ during day-time and $6~K$ on average for night-times [2001-2010, @fenner2014] in urban $vs.$ rural areas.
 Consequently, urban green (infrastructure) systems are subjected to increased heat more frequently, potentially affecting their process dynamics - either positively or adversely. 
@@ -114,16 +117,16 @@ This is especially the case for studies reliant on labour-intensive methods whic
 
 <!-- Detailed, but spatially-limited dendroecological analyses of climate-growth relationships in Berlin for key species can be enhanced by inferring growth modulation from a large data set in excess of 650000 individuals provided by the Berlin Senate Administration (Senatsverwaltung). -->
 
-To complement (existing) detailed dendroecological analyses of climate-growth relationships in Berlin for key species, we propose inferring growth modulation from a large data set in excess of 650000 individuals provided by the Berlin Senate Administration (Senatsverwaltung).
-This data set contains information on location, species, trunk diameter (at breast height; $DBH$; see Tab.$~$\@ref(tab:tab-tree-overview)), and height, amongst other variables for street and park trees.
+To complement (existing) detailed dendroecological analyses of climate-growth relationships in Berlin for key species, we propose inferring growth modulation from a large data set in excess of 650000 individuals covering 94 genera and at least 600 species and/or cultivars provided by the Berlin Senate Administration (Senatsverwaltung).
+This data set contains information on location, species, trunk diameter (at breast height; $DBH$; see Tab.$~$\@ref(tab:tab-tree-overview)), and height, amongst other variables for the majority of street and park trees.
 
 
 ```{r tab-tree-overview}
 loadd(overview_table)
 
 
-caption_ov <- "Available records by categoryin entire data set (n), and those with age and $DBH$ entries (n$_{full}$)."
-caption_ov_short <- "Available records in berlin tree database."
+caption_ov <- "Available records by category in entire data set (n), and those with age and $DBH$ entries (n$_{full}$)."
+caption_ov_short <- "Available records in Berlin tree database."
 
 
 if (grepl("docx", out_format) ||
@@ -168,14 +171,22 @@ table_ov <- overview_table %>%
 ```
 
 
-In a space-for-time substitution, growth of individual species can be assessed across the entire cite of Berlin, and related to effects of the UHI, while accounting for other location-specific factors, such as street characteristics, development intensity, available soil volume, etc.
+In a space-for-time substitution, growth of individual species can be assessed across the entire city of Berlin, and related to effects of the UHI, while accounting for other location-specific factors, such as street characteristics, development intensity, available soil volume, etc.
 Comparable applications are found, for example, in @quigley2004 and @pretzsch2017.
-The former  inferred absolute growth potential for species across successional groups, and between rural and urban species, yet lacked spatially-explicit effect size estimates or predictions of maximum potential;
-@pretzsch2017 applied linear hierarchical models to infer growth modulation for different cities, time periods and urban $vs.$ rural locations while accounting for stand-level variability.
+The former  inferred absolute growth potential for species across successional groups (early, mid, late stage), and between rural and urban conspecifics, yet lacked spatially-explicit effect size estimates across the urban-rural space and was limited to comparatively small sample sizes per group ($n_{total}~=~230$ divided in 15 species, 3 groups and 2 locations).
+@pretzsch2017 applied linear hierarchical models to infer growth modulation on annual basis for different time periods and urban $vs.$ rural locations while accounting for stand-level variability;
+however, for Berlin only 145 individuals of one species (*T. cordata*) were assessed.
+As mentioned previously, climate-growth relationships can vary substantially between species, and in fact, @quigley2004 and @pretzsch2017 report contrasting results regarding average tree diameter, i.e. smaller or larger for urban $vs.$ rural trees of same age.
+Consequently, this variability of effect sizes and directions calls for a more comprehensive assessment across species and with greater spatial coverage throughout Berlin.
 
-**By contrast, we propose applying a statistical model that is fully spatially explicit, while also allowing to account for the nested nature of the data set (e.g. streets and districts) as well as other pertinent factors using hierarchical, generalized additive models (see Section$~$\@ref(sec:methods).
-This also allows to infer the absolute growth potential of a species given, for example, a specific location, age or UHI magnitude.**
-Tree-level growth data, however, is paramount in validating such relationships, and its inclusion in the model would also allow incorporating effects of varying climate over time.
+**We therefore propose applying a statistical model that is fully spatially explicit, while also allowing to account for the nested nature of the data set (e.g. streets and districts) as well as other pertinent factors using hierarchical, generalized additive models (see Section$~$\@ref(sec:methods)).
+As a result, the absolute growth potential of a species can be inferred given, for example, a specific location, age or UHI magnitude. 
+Further, the impact of UHI loading can be predicted for a single species across all of Berlin as a continuous surface.**
+The inclusion of independent, tree-level growth data, however, is paramount as it allows:  
+
+1) validating the publicly-available Senate dataset ($DBH$) while providing a more reliable estimate of tree age,  
+2) applying the model with annual basal area as a response (enabling incorporating effects of varying climate/UHI intensities over time), and  
+3) comparing $DBH$ (Senate data) and basal area-derived models for a subset of locations and species, increasing confidence in Berlin-wide predictions. 
 
 <!-- We acknolwedge results from [@gregg2003], which indicated impeded growth adjacent to intense urban clusters, rather than enhancement within them. -->
 
@@ -230,14 +241,14 @@ note, that for computational efficiency each genera was modelled seperately.
 Further, models were established for the three most abundant species per genera with at least 1000 individuals.
 
 
-We caution, that 1) the presented model results are preliminary, 2) initial diagnostics indicate that modification of the current model structure (e.g. by accounting for individual-level variability) may be required and 3) that further, time-intensive data cleaning is necessary. 
-First tests, however, showed that while the magnitude of effects changes with different model structures, their direction appears stable.
+<!-- We caution, that 1) the presented model results are preliminary, 2) initial diagnostics indicate that modification of the current model structure (e.g. by accounting for individual-level variability) may be required and 3) that further, time-intensive data cleaning is necessary.  -->
+<!-- First tests, however, showed that while the magnitude of effects changes with different model structures, their direction appears stable. -->
 
 ## Available and required data
 
 
-Additional remote sensing data for local context, higher resolution UHI data, and most important, temporally-resolved tree growth data are still required and/or would greatly improve the impact and confidence in effect size estimates.
-See Tab.$~$\@ref(tab:tab-data-req) for details.
+Additional remote sensing data for local context, higher resolution UHI data, and most important, temporally-resolved tree growth data are still required and/or would greatly improve the confidence in effect size estimates (see Section$~$\@ref(sec:intro)).
+See Tab.$~$\@ref(tab:tab-data-req) for details on data sets.
 
 
 
@@ -330,8 +341,8 @@ age_tables <- bind_rows(age_tables,
                     add_row)
 
 
-caption_trees <- "Binned age-distribution for street and park trees. Missing values feature no"
-caption_trees_short <- "Binned age-distribution for street and park trees."
+caption_trees <- "Binned age-distribution for trees in Berlin dataset, and entries missing age information."
+caption_trees_short <- "Binned age-distribution for trees in Berlin dataset."
 
 
 if (grepl("docx", out_format) ||
@@ -459,13 +470,13 @@ knitr::include_graphics(here::here("analysis/figures/plot_02_genus_UHI_dens.png"
 # plot(1:10)
 ```
 
-
-The effect of UHI loading on absolute growth potential varies between genera and species (Fig.$~$\@ref(fig:fig-lmestat)); **note, that these results are preliminary and should be considered as template for future outputs, rather used for any inference**.
-Most notably, *Quercus*, the 3rd-most frequent genera, shows decreased absolute growth with increased UHI,
-while the most frequent genera, *Tilia* features contrasting relationships with UHI at species level.
+**Note, that results below are preliminary and should be considered as a template for future outputs, rather than used for inference.**
+The effect of UHI loading on absolute growth potential varies between genera and species (Fig.$~$\@ref(fig:fig-lmestat)).
+Most notably, *Quercus*, the 3rd-most frequent genera, shows decreased absolute growth with increasing UHI loading,
+while the most frequent genera, *Tilia*, features contrasting relationships between species.
 The estimated effect sizes presented here are linear.
-However, temperature may excert a non-linear control on absolute growth and, hence, applying a  method able to capture may result in altered presented effect sizes.
-Additionally, if temperatures increase in the future under climate warming current future increases in under climate warming, any non-linear effects may become more enhanced, stressing the need for a more flexible model fit and structure.
+However, temperature may excert a non-linear control on absolute growth and, hence, applying a  method able to capture such dynamics may result in somewhat different effect sizes / behavior.
+Additionally, if temperatures increase in the future under climate warming, any non-linear effects may become more enhanced, stressing the need for a more flexible model fit and structure (i.e. using GAMM over linear models-).
 
 
 ```{r fig-lmestat, fig.cap="Impact of UHI loading on tree diameter (\\(DBH\\)), accounting for age and inter-specific differences from the linear mixed model (via random slopes and intercepts). Line-ranges are standard errors of predicted effect sizes (i.e. slopes). Differences between street and park trees are considerable for some species, and may be due to local clustering and/or spatial under-representation across the UHI continuum. Further investigations need to address the degree of spatial autocorrelation and account for it where required in linear mixed models, and with smoothing interactions in a GAMM implementation.",fig.width = 20, fig.height = 12, out.width="100%"}
@@ -483,13 +494,14 @@ knitr::include_graphics(here::here("analysis/figures/plot_03_ranef_species_dbh_u
 We seek to build upon and improve the current analysis by: 
 
 - validating the database with independent observations
-- incorporating more pertinent covariates as dependent variables in the linear mixed model, especially incremental tree growth
+- incorporating more pertinent covariates as dependent variables in the linear mixed model  
 - testing multiple model structures with formal model selection procedures
 - checking model resiudals for spatial auto-correlation and accounting for it where necessary to ensure unbiased estimates of effect sizes
 - repeating the above with a hierarchical GAM (i.e. GAMM) to allow for:  
   * estimating continuous prediction surfaces for UHI impacts on individual species' growth (similar to results in Figure$~$\@ref(fig:fig-lmestat)) under recent conditions
   * estimating absolute, species-specific growth potential under increased temperatures and UHI loading under climate change, ideally based on climate simulations (otherwise step-wise increases based on RCP scenarios) for the key species. Note, that  complications presented by 'out-of-sample' predictions will be addressed.
-  * assess potential age-dependent UHI impacts on individual species.
+  * assess potential age-dependent UHI impacts on individual species.  
+  * repeating the above (GAMM) with total and incremental basal area as responses  
   
 
 <!-- # Acknowledgements -->
