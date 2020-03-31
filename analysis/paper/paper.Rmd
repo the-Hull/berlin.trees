@@ -217,7 +217,7 @@ y~=~E (Y) + \epsilon,
 \end{equation}
 
 where $Y$ is taken from an appropriate distribution and corresponding link function $g$, $\beta_0$ is the intercept and $f_i$ represents a smooth function of a predictor [@pedersen2019], and $\epsilon \sim \mathcal{N}(0, \sigma ^2)$. 
-Note, that $f_i$ consists of a smooth (e.g. spline) constructed via basis functions of different form and complexity, multiplied by a coeffecient:
+Note, that $f_i$ consists of a smooth (e.g. spline) constructed via basis functions of different form and complexity, multiplied by a coefficient:
 
 \begin{equation}
 f_i(x_i)~=~\sum_{k = 1}^{K} \beta_{i, k} b_{i,k}(x_i).
@@ -225,9 +225,9 @@ f_i(x_i)~=~\sum_{k = 1}^{K} \beta_{i, k} b_{i,k}(x_i).
 \end{equation}
 
 Nested data structures (e.g. due to similar road [type]) can be accounted for by introducing random effects [@wood2017], while spatial dependence between observations can be included by constructing smoothing functions with e.g. northings and eastings, as for example done in [@augustin2009].
-Ultimately, the implementation of a such a GAMM will alow for establishing continuous prediction surfaces of growth potential (approximated via $DBH$) for individual species across urban areas (including parks) of Berlin.
+Ultimately, the implementation of a such a GAMM will allow for establishing continuous prediction surfaces of growth potential (approximated via $DBH$) for individual species across urban areas (including parks) of Berlin.
 
-Currently, $DBH$ has been modelled using a hierarchical linear model (linear mixed effects model) with `lme4` [@bates2015] in @rcoreteam2020 (see Section$~$\@ref(sec:results)).
+Currently, $DBH$ has been modeled using a hierarchical linear model (linear mixed effects model) with `lme4` [@bates2015] in @rcoreteam2020 (see Section$~$\@ref(sec:results)).
 The general form of this model is:
 
 \begin{equation}
@@ -237,7 +237,7 @@ Y_{i,j} = (\beta_0 + b_{0,i,j}) + (\beta_1 + b_{1,i,j}) \cdot x_i  + \epsilon_{i
 where $\beta_0$ is the intercept with its random component $b_0$, and $\beta_1$ the slope with its random component $b_1$.
 The random errors are assumed i.i.d. and distributed as $b \sim \mathcal{N}(0, \tau ^2)$. 
 The model for which results are presented in Figure$~$\@ref(fig:fig-lmestat) estimates $DBH$ from tree age and the local UHI intensity as continuous covariates with random slopes and intercepts for each species;
-note, that for computational efficiency each genera was modelled seperately.
+note, that for computational efficiency each genera was modeled separately.
 Further, models were established for the three most abundant species per genera with at least 1000 individuals.
 
 
@@ -341,8 +341,8 @@ age_tables <- bind_rows(age_tables,
                     add_row)
 
 
-caption_trees <- "Binned age-distribution for trees in Berlin dataset, and entries missing age information."
-caption_trees_short <- "Binned age-distribution for trees in Berlin dataset."
+caption_trees <- "Binned age-distribution for trees in Berlin data set, and entries missing age information."
+caption_trees_short <- "Binned age-distribution for trees in Berlin data set."
 
 
 if (grepl("docx", out_format) ||
@@ -475,7 +475,7 @@ The effect of UHI loading on absolute growth potential varies between genera and
 Most notably, *Quercus*, the 3rd-most frequent genera, shows decreased absolute growth with increasing UHI loading,
 while the most frequent genera, *Tilia*, features contrasting relationships between species.
 The estimated effect sizes presented here are linear.
-However, temperature may excert a non-linear control on absolute growth and, hence, applying a  method able to capture such dynamics may result in somewhat different effect sizes / behavior.
+However, temperature may exert a non-linear control on absolute growth and, hence, applying a  method able to capture such dynamics may result in somewhat different effect sizes / behavior.
 Additionally, if temperatures increase in the future under climate warming, any non-linear effects may become more enhanced, stressing the need for a more flexible model fit and structure (i.e. using GAMM over linear models-).
 
 
@@ -496,7 +496,7 @@ We seek to build upon and improve the current analysis by:
 - validating the database with independent observations
 - incorporating more pertinent covariates as dependent variables in the linear mixed model  
 - testing multiple model structures with formal model selection procedures
-- checking model resiudals for spatial auto-correlation and accounting for it where necessary to ensure unbiased estimates of effect sizes
+- checking model residuals for spatial auto-correlation and accounting for it where necessary to ensure unbiased estimates of effect sizes
 - repeating the above with a hierarchical GAM (i.e. GAMM) to allow for:  
   * estimating continuous prediction surfaces for UHI impacts on individual species' growth (similar to results in Figure$~$\@ref(fig:fig-lmestat)) under recent conditions
   * estimating absolute, species-specific growth potential under increased temperatures and UHI loading under climate change, ideally based on climate simulations (otherwise step-wise increases based on RCP scenarios) for the key species. Note, that  complications presented by 'out-of-sample' predictions will be addressed.
