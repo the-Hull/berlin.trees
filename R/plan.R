@@ -23,6 +23,9 @@ plan <- drake_plan(
 
 
 
+    # loads the raster data from file (not uploaded to github due to size,
+    # but see source in manuscript)
+
     uhi_stacks = berlin.trees::get_uhi_rasters(file.path(here::here(), "analysis", "data", "raw_data", "UHI_explorer")),
 
 
@@ -31,21 +34,26 @@ plan <- drake_plan(
 
 
 
-    ## Berlin trees
+    ## Berlin trees (download Senate tree data set from WFS using API)
     download_data = target(berlin.trees::download_berlin_trees()),
 
     ### Cleaning
+
+    # Load spatial-features data sets of all Berlin trees
     tree_data_in_lists = berlin.trees::load_downloaded_data_to_lists(download_data),
 
 
     cropped_data_set = berlin.trees::crop_data_with_bbox(tree_data_in_lists,
                                                          bounding_box),
+
+    # Bind rows of sf tibbles to single data set (currently in lists)
     full_data_set = berlin.trees::bind_rows_sf(cropped_data_set),
 
+    # Clean Feature Meta Data
     full_data_set_clean = target(berlin.trees::clean_data(full_data_set),
                                  format = "rds"),
 
-
+    # Add UHI data from RasterLayer stack to sf data frame
     extract_uhi_values_to_list = berlin.trees::add_uhi_hist_data(uhi_stack_list = uhi_stacks,
                                                                  sf_data = full_data_set_clean[, ]),
 
@@ -55,7 +63,7 @@ plan <- drake_plan(
 
 
 
-
+    # This is a list of models I apply simulatenously for later evaluation
     model_list = list(
         # null = function(x) lme4::lmer(dbh_cm ~ 1, data = x),
         # heat_only = function(x) lme4::lmer(dbh_cm ~ day_2007, data = x)  ,
@@ -81,13 +89,17 @@ plan <- drake_plan(
     ),
 
 
+    # Generate data set for stat-models
+    # This step just adds the UHI temperature data to the data set
+    # and adjusts a bit
     model_df = make_test_data_set(full_df = full_data_set_clean,
                                   extract_uhi = extract_uhi_values_to_list),
 
 
 
 
-
+   # here I apply all lme4 models not commented-out above,
+   # and also specify the data which I want to exclude
     model_res = berlin.trees::apply_models(df = model_df %>%
                                                dplyr::filter(STANDALTER < 350 &
                                                                  krone_m < 50 &
@@ -101,6 +113,9 @@ plan <- drake_plan(
 
 
     # Plotting --------------------------------
+
+   # Create overview-map of all data sets
+
     plot_overview_map = berlin.trees::make_overview_map(full_data_set_clean,
                                                         berlin_polygons,
                                                         file = drake::file_out("./analysis/figures/map_01_overview.png"),
@@ -110,11 +125,15 @@ plan <- drake_plan(
 
 
 
+   # Spatially-binned tree counts
+
     plot_count_map = berlin.trees::tree_count_map(full_data_set_clean,
                                                   berlin_polygons,file = drake::file_out("./analysis/figures/map_02_tree_sums_standardized.png"),
                                                   height = 12,
                                                   width = 12,
                                                   dpi = 300),
+
+   # Plot UHI with Berlin districts
 
     plot_uhi_map = berlin.trees::make_uhi_plot(uhi_stacks = uhi_stacks,
                                                berlin_poly = berlin_polygons,
@@ -127,6 +146,7 @@ plan <- drake_plan(
 
 
 
+   # Generate overview of records (bar plot)
 
     plot_tree_sums_bar = berlin.trees::tree_sums_bar_plot(full_data_set_clean,
                                                           file = drake::file_out("./analysis/figures/plot_01_tree_sums_bar.png"),
@@ -135,6 +155,7 @@ plan <- drake_plan(
                                                           height = 12,
                                                           width = 12,
                                                           dpi = 300),
+   # Density plot overview
 
     plot_density = berlin.trees::dens_plot_trees(sf_data = full_data_set_clean,
                                                  extracted_uhi = extract_uhi_values_to_list,
@@ -153,6 +174,8 @@ plan <- drake_plan(
     #                 ),
 
 
+   # Make Random-effects effect-size plot
+
     plot_LME_age = berlin.trees::make_ranef_plot(model_out = model_res$model,
                                                  model_name = "heat_age_RIspecies_RSspecies_RIprovenance",
                                                  df = model_res$test_data,
@@ -168,6 +191,8 @@ plan <- drake_plan(
 
     overview_table = berlin.trees::make_overview_table(full_data_set_clean),
 
+
+   # Generate table of genera age distribution
 
     age_tables = berlin.trees::make_age_table(df = model_df,
                                               max_age = 150,
