@@ -16,45 +16,61 @@ Title <- "Title of your paper goes here"
 
 # berlin.trees
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh///master?urlpath=rstudio)
+## Purpose
 
-This repository contains the data and code for our paper:
+This repository contains an analysis of tree growth (potential) and its relationship with the Urban Heat Island (UHI) effect in Berlin using an extensive, publicly available data set. 
+For some details of the (on-going) research, download this [file](./analysis/paper/paper.html)
 
-> Authors, (YYYY). _`r Title`_. Name of journal/book <https://doi.org/xxx/xxx>
+## Approach
 
-Our pre-print is online here:
+The folder structure follows the principal of a [research compendium](https://research-compendium.science/) following concepts developed by [Ben Marwick and others](https://www.tandfonline.com/doi/abs/10.1080/00031305.2017.1375986?journalCode=utas20).
+That means all analyses and the final write-up are organized in a (fairly) coherent manner, encouraing reproducibility.
 
-> Authors, (YYYY). _`r Title`_. Name of journal/book, Accessed `r format(Sys.Date(), "%d %b %Y")`. Online at <https://doi.org/xxx/xxx>
-
-
-### How to cite
-
-Please cite this compendium as:
-
-> Authors, (`r format(Sys.Date(), "%Y")`). _Compendium of R code and data for `r Title`_. Accessed `r format(Sys.Date(), "%d %b %Y")`. Online at <https://doi.org/xxx/xxx>
-
-### How to download or install
-
-You can download the compendium as a zip from from this URL: </archive/master.zip>
-
-Or you can install this compendium as an R package, berlin.trees, from GitHub with:
+I chose to package up the analyses in an `R` package to facilitate reproducibility, as dependencies are more easily tracked, and analyses steps can be broken down into functions that can be tested, adjusted when necessary, and most important, re-used.
 
 
-```{r gh-installation, eval = FALSE}
-# install.packages("devtools")
-remotes::install_github("/")
-```
 
 
-### Licenses
+<!-- [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh///master?urlpath=rstudio) -->
 
-**Text and figures :**  [CC-BY-4.0](http://creativecommons.org/licenses/by/4.0/)
 
-**Code :** See the [DESCRIPTION](DESCRIPTION) file
+<!-- This repository contains the data and code for our paper: -->
 
-**Data :** [CC-0](http://creativecommons.org/publicdomain/zero/1.0/) attribution requested in reuse
+<!-- > Authors, (YYYY). _`r Title`_. Name of journal/book <https://doi.org/xxx/xxx> -->
 
-### Contributions
+<!-- Our pre-print is online here: -->
 
-We welcome contributions from everyone. Before you get started, please see our [contributor guidelines](CONTRIBUTING.md). Please note that this project is released with a [Contributor Code of Conduct](CONDUCT.md). By participating in this project you agree to abide by its terms.
+<!-- > Authors, (YYYY). _`r Title`_. Name of journal/book, Accessed `r format(Sys.Date(), "%d %b %Y")`. Online at <https://doi.org/xxx/xxx> -->
+
+
+<!-- ### How to cite -->
+
+<!-- Please cite this compendium as: -->
+
+<!-- > Authors, (`r format(Sys.Date(), "%Y")`). _Compendium of R code and data for `r Title`_. Accessed `r format(Sys.Date(), "%d %b %Y")`. Online at <https://doi.org/xxx/xxx> -->
+
+<!-- ### How to download or install -->
+
+<!-- You can download the compendium as a zip from from this URL: </archive/master.zip> -->
+
+<!-- Or you can install this compendium as an R package, berlin.trees, from GitHub with: -->
+
+
+<!-- ```{r gh-installation, eval = FALSE} -->
+<!-- # install.packages("devtools") -->
+<!-- remotes::install_github("/") -->
+<!-- ``` -->
+
+
+<!-- ### Licenses -->
+
+<!-- **Text and figures :**  [CC-BY-4.0](http://creativecommons.org/licenses/by/4.0/) -->
+
+<!-- **Code :** See the [DESCRIPTION](DESCRIPTION) file -->
+
+<!-- **Data :** [CC-0](http://creativecommons.org/publicdomain/zero/1.0/) attribution requested in reuse -->
+
+<!-- ### Contributions -->
+
+<!-- We welcome contributions from everyone. Before you get started, please see our [contributor guidelines](CONTRIBUTING.md). Please note that this project is released with a [Contributor Code of Conduct](CONDUCT.md). By participating in this project you agree to abide by its terms. -->
 
