@@ -207,7 +207,7 @@ plan <- drake_plan(
 
 
 
-    # Reporting
+    # Reporting ------------------------------
     paper_html = rmarkdown::render(
         knitr_in("./analysis/paper/paper.Rmd"),
         output_file = file_out(file.path(here::here(), "paper_knit.html")),
