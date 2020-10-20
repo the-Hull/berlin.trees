@@ -135,9 +135,8 @@ download_berlin_trees <- function(){
 #' Download baumscheiben from Berlin daten WFS
 #'
 #' @return Baumscheiben JSON
-#' @export
 #' @import ckanr
-
+#' @export
 #'
 download_berlin_baumscheiben <- function(){
 

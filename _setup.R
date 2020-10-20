@@ -33,7 +33,8 @@ library(drake)
 
 # clean()
 #
-devtools::install(upgrade = TRUE)
+# devtools::install(upgrade = TRUE)
+devtools::install()
 
 
 drake::r_outdated(source = './_drake.R')
