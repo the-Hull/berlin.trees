@@ -37,10 +37,17 @@ plan <- drake_plan(
     ## Berlin trees (download Senate tree data set from WFS using API)
     download_data = target(berlin.trees::download_berlin_trees()),
 
+    # Berlin Baumscheiben
+    download_data_baumscheiben = berlin.trees::download_berlin_baumscheiben(),
+
     ### Cleaning
 
     # Load spatial-features data sets of all Berlin trees
     tree_data_in_lists = berlin.trees::load_downloaded_data_to_lists(download_data),
+
+
+    # Load spatial-features data sets of all Berlin baumscheiben
+    baumscheiben_in_lists = berlin.trees::load_downloaded_data_to_lists(download_data_baumscheiben),
 
 
     cropped_data_set = berlin.trees::crop_data_with_bbox(tree_data_in_lists,
