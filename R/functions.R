@@ -705,7 +705,8 @@ make_overview_map <- function(sf_data,
                               width,
                               dpi){
 
-    extrafont::loadfonts("win", quiet = TRUE)
+    # extrafont::loadfonts(device = "win", quiet = TRUE)
+    extrafont::loadfonts(device = "pdf", quiet = TRUE)
 
 
     gplot <- sf_data %>%
@@ -792,7 +793,8 @@ tree_sums_bar_plot <- function(sf_data,
                                width,
                                dpi){
 
-    extrafont::loadfonts("win", quiet = TRUE)
+    # extrafont::loadfonts("win", quiet = TRUE)
+    extrafont::loadfonts("pdf", quiet = TRUE)
 
 
     gplot <- sf_data %>%
@@ -872,7 +874,8 @@ tree_count_map <- function(sf_data,
                            dpi){
 
 
-    extrafont::loadfonts("win", quiet = TRUE)
+    # extrafont::loadfonts("win", quiet = TRUE)
+    extrafont::loadfonts("pdf", quiet = TRUE)
 
 
     sf_plot <- sf_data %>%
@@ -987,7 +990,8 @@ make_uhi_plot <- function(uhi_stacks,
                           width,
                           dpi){
 
-    extrafont::loadfonts(device = "win",quiet = TRUE)
+    # extrafont::loadfonts(device = "win",quiet = TRUE)
+    extrafont::loadfonts(device = "pdf",quiet = TRUE)
 
 
     mid_rescaler <- function(mid = 0) {
@@ -1088,7 +1092,8 @@ dens_plot_trees <- function(sf_data,
                             height,
                             dpi){
 
-    extrafont::loadfonts(device = "win",quiet = TRUE)
+    # extrafont::loadfonts(device = "win",quiet = TRUE)
+    extrafont::loadfonts(device = "pdf",quiet = TRUE)
 
 
     sf_extracted_uhi <- cbind(sf_data, extracted_uhi$Summertime_gridded_UHI_data$day)
@@ -1264,7 +1269,8 @@ make_ranef_plot <- function(model_out,
 
 
 
-    extrafont::loadfonts(device = "win", quiet = TRUE)
+    # extrafont::loadfonts(device = "win", quiet = TRUE)
+    extrafont::loadfonts(device = "pdf", quiet = TRUE)
 
 
     top_species <- df %>%
