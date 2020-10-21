@@ -1,7 +1,10 @@
 library(drake)
 library(future.callr)
 library(dplyr)
-future::plan(future.callr::callr)
+library(future)
+# future::plan(future.callr::callr)
+options(future.globals.maxSize = 600 * 1024 ^ 2)
+
 
 plan <- drake_plan(
 
@@ -57,13 +60,21 @@ plan <- drake_plan(
     full_data_set = berlin.trees::bind_rows_sf(cropped_data_set),
 
     # Clean Feature Meta Data
-    full_data_set_clean = target(berlin.trees::clean_data(full_data_set),
-                                 format = "rds"),
+    full_data_set_prep = berlin.trees::clean_data(full_data_set),
+
+    # add baumscheiben area to full_data
+    full_data_set_clean = berlin.trees::add_baumscheiben_flaeche(full_data_set_prep,
+                                                                 baumscheiben_in_lists$s_Baumscheibe,
+                                                                 max_dist_m = 10),
 
     # Add UHI data from RasterLayer stack to sf data frame
     extract_uhi_values_to_list = berlin.trees::add_uhi_hist_data(uhi_stack_list = uhi_stacks,
                                                                  sf_data = full_data_set_clean[, ]),
 
+    # steps to add baumscheiben to data set
+    # baumscheiben_with_tree_idx = berlin.trees::add_full_df_idx_to_baumscheiben(bms = baumscheiben_in_lists,
+    #                                                                         fulldf = full_data_set_clean,
+    #                                                                         max_dist_m = 15),
 
 
      # Model -------------------------------------------------------------------

@@ -282,6 +282,136 @@ load_downloaded_data_to_lists <- function(download_data){
 }
 
 
+#' Add tree info to Baumscheiben data set
+#'
+#' Grabs the closest tree (within max_dist_m) to a Baumscheibe, and adds the
+#' corresponding index from the tree data set as a column to baumscheiben
+#'
+#' @param bms list, contains an sf_df with baumscheiben polygons
+#' @param fulldf sf_df with all berlin trees
+#' @param max_dist_m numeric, max distance to buffer around a baumscheiben centroid to look for trees
+#'
+#' @return baumscheiben_in_lists, with modified element (added column of tree indices)
+#'
+#' @import dplyr
+#'  sf
+#'  furrr
+#'
+#' @export
+add_full_df_idx_to_baumscheiben <- function(bms,
+                                            fulldf,
+                                            max_dist_m = 15){
+
+    # make unique id
+    bms$s_Baumscheibe$split_id <- seq_len(nrow(bms$s_Baumscheibe))
+    # make unique labels
+    bms$s_Baumscheibe$split_label <- base::cut(
+        x = bms$s_Baumscheibe$split_id,
+        breaks = seq(0,
+                     max(bms$s_Baumscheibe$split_id) + 1,
+                     by = 3000),
+        labels = FALSE)
+
+
+
+    # make temp baumscheiben object
+    bms$s_Baumscheibe <-  sf::st_set_crs(bms$s_Baumscheibe,
+                               st_crs(fulldf))
+
+    # generate buffer and adjust crs
+    baumsch_buff <- sf::st_buffer(x = sf::st_centroid(bms$s_Baumscheibe),
+                                  dist = max_dist_m)
+    # assess which trees fall into specific buffer
+    # this outputs a list of indices in the y object (fulldf)
+    trees_in_buffs <- sf::st_intersects(baumsch_buff, fulldf)
+
+    # calc centroid for later use
+    baumsch_centroid <- sf::st_centroid(bms$s_Baumscheibe)
+
+
+
+
+    closest_tree_idx <- unlist(
+        furrr::future_map(
+            base::split(bms$s_Baumscheibe$split_id,
+                        f = bms$s_Baumscheibe$split_label),
+            function(spidx){
+
+                spidx <- as.numeric(spidx)
+
+                baumsch <- bms$s_Baumscheibe[spidx, ]
+
+                tree_idx <- lapply(
+                    seq_along(trees_in_buffs[spidx]),
+                    function(x){
+
+                        # grab the closest tree idx to the centroid
+                        idx <- which.min(st_distance(fulldf[trees_in_buffs[spidx][[x]], ],
+                                                     baumsch_centroid[spidx[x], ]))
+                        # subset the potential trees to the closests one
+                        out <- trees_in_buffs[spidx][[x]][idx]
+
+                        # clean up
+                        out <- ifelse(length(out) == 0,
+                                      NA,
+                                      out)
+
+
+                    })
+
+            return(tree_idx)
+
+        })
+    )
+
+    bms$s_Baumscheibe$closest_tree_idx <- closest_tree_idx
+
+    return(bms)
+
+}
+
+
+
+#' Add Baumscheiben Area to Tree Data set
+#'
+#' @param fulldf sf_df, all berlin trees
+#' @param bms sf_df, Baumscheiben polygons and their area
+#' @param max_dist numeric, how far from polygon centroid can tree lie and still be assigned?
+#'
+#' @return fulldf with additional columns: "baumsch_dist_m",
+#'  "baumsch_elem_nr",
+#'  "baumsch_gis_id",
+#'   "baumsch_flaeche_m2"
+#' @export
+#'
+#' @import sf
+#' units
+#'
+add_baumscheiben_flaeche <- function(fulldf, bms, max_dist = 10){
+
+    nearest_idx <- sf::st_nearest_feature(fulldf, bms)
+
+    # calculate pairwise distances
+    fulldf$baumsch_dist_m <- sf::st_distance(fulldf, bms[nearest_idx, ], by_element = TRUE)
+
+    bms <- sf::st_drop_geometry(bms[nearest_idx, c("elem_nr", "gis_id", "flaeche"), ])
+    names(bms) <- c("baumsch_elem_nr", "baumsch_gis_id", "baumsch_flaeche_m2")
+
+    # join manually
+    fulldf <- cbind(fulldf,
+                    bms)
+
+    fulldf$baumsch_flaeche_m2 <- ifelse(fulldf$baumsch_dist <= units::set_units(max_dist, m),
+                                        fulldf$baumsch_flaeche_m2,
+                                        NA)
+
+    return(full_df)
+
+}
+
+
+
+
 #' Bind rows of sf tibbles to single data set
 #'
 #' @param sf_list list containing simple feature tibbles
@@ -323,7 +453,7 @@ clean_data <- function(sf_data){
 
 
     sf_data[too_old_idx, c("STANDALTER", "PFLANZJAHR")] <-
-        sf_data[too_old_idx, rev(c("STANDALTER", "PFLANZJAHR"))]
+        sf_data[too_old_idx, rev(c("STANDALTER", "PFLANZJAHR")), drop = TRUE]
 
 
     sf_data <- sf_data %>%

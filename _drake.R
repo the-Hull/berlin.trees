@@ -13,8 +13,8 @@
 # drake::expose_imports("bookdown",
 #                       character_only = TRUE)
 
-drake::expose_imports("berlin.trees",
-                      character_only = TRUE)
+# drake::expose_imports("berlin.trees",
+                      # character_only = TRUE)
 # redownload <- FALSE
 
 source("R/plan.R")      # Create your drake plan.
@@ -22,4 +22,4 @@ source("R/plan.R")      # Create your drake plan.
 # The arguments to drake_config() are basically the same as those to make().
 # drake::expose_imports("berlin.trees",
                       # character_only = TRUE)
-drake_config(plan)
+drake_config(plan, envir = getNamespace("berlin.trees"))

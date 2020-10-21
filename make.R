@@ -10,8 +10,8 @@
 # source("R/plan.R")      # Create your drake plan.
 # devtools::install(upgrade = FALSE)
 
-drake::expose_imports("berlin.trees",
-                      character_only = TRUE)
+# drake::expose_imports("berlin.trees",
+#                       character_only = TRUE)
 # redownload <- FALSE
 
 source("R/plan.R")
@@ -19,4 +19,4 @@ source("R/plan.R")
 # Call make() to run your work.
 # Your targets will be stored in a hidden .drake/ cache,
 # and you can read them back into memory with loadd() and readd().
-make(plan)
+make(plan, envir = getNamespace("berlin.trees"))
