@@ -376,7 +376,7 @@ add_full_df_idx_to_baumscheiben <- function(bms,
 #'
 #' @param fulldf sf_df, all berlin trees
 #' @param bms sf_df, Baumscheiben polygons and their area
-#' @param max_dist numeric, how far from polygon centroid can tree lie and still be assigned?
+#' @param max_dist_m numeric, how far from polygon centroid can tree lie and still be assigned?
 #'
 #' @return fulldf with additional columns: "baumsch_dist_m",
 #'  "baumsch_elem_nr",
@@ -387,7 +387,7 @@ add_full_df_idx_to_baumscheiben <- function(bms,
 #' @import sf
 #' units
 #'
-add_baumscheiben_flaeche <- function(fulldf, bms, max_dist = 10){
+add_baumscheiben_flaeche <- function(fulldf, bms, max_dist_m = 10){
 
     nearest_idx <- sf::st_nearest_feature(fulldf, bms)
 
@@ -401,11 +401,11 @@ add_baumscheiben_flaeche <- function(fulldf, bms, max_dist = 10){
     fulldf <- cbind(fulldf,
                     bms)
 
-    fulldf$baumsch_flaeche_m2 <- ifelse(fulldf$baumsch_dist <= units::set_units(max_dist, m),
+    fulldf$baumsch_flaeche_m2 <- ifelse(fulldf$baumsch_dist <= units::set_units(max_dist_m, m),
                                         fulldf$baumsch_flaeche_m2,
                                         NA)
 
-    return(full_df)
+    return(fulldf)
 
 }
 
@@ -421,7 +421,12 @@ add_baumscheiben_flaeche <- function(fulldf, bms, max_dist = 10){
 #'
 bind_rows_sf <- function(sf_list){
     # bind data without geometry
-    sf_df  <- lapply(sf_list, function(x) sf::st_set_geometry(x, NULL)) %>%
+    sf_df  <- lapply(sf_list, function(x){
+
+        sf::st_set_geometry(x, NULL) %>%
+           setNames(toupper(colnames(x)))
+
+    }) %>%
         dplyr::bind_rows()
 
     # make data frame and set geometry based on original sfcs
@@ -444,6 +449,12 @@ bind_rows_sf <- function(sf_list){
 #' @export
 #'
 clean_data <- function(sf_data){
+
+    # colnames(sf_data)[which(colnames(sf_data) != "geometry")] <- toupper(colnames(sf_data)[which(colnames(sf_data) != "geometry")])
+
+    # sf_data$GATTUNG <- ifelse(!is.na(sf_data$GATTUNG),
+    #                           sf_data$GATTUNG,
+    #                           sf_data$gattung)
 
     sf_data$GATTUNG <- tools::toTitleCase(tolower(sf_data$GATTUNG))
     sf_data$GATTUNG[sf_data$GATTUNG==""] <- NA
@@ -475,7 +486,8 @@ clean_data <- function(sf_data){
                                                  paste(gattung_short, "spec.")),
 
 
-                      bezirk_num = as.numeric(as.factor(BEZIRK)))
+                      bezirk_num = as.numeric(as.factor(BEZIRK))) %>%
+        dplyr::rename(provenance = PROVENANCE)
 
     return(sf_data)
 
@@ -533,13 +545,34 @@ make_bbox <- function(lat_min, lat_max, lon_min, lon_max, feature_name, crs = 43
 #' Access Berlin district polygon from external source
 #'
 #' @return sf-tibble with polygons of Berlin districts
+#' @import httr
 #' @export
 #'
 get_berlin_polygons_as_sf <- function(){
-    cat("Accessing Berlin District polygon via GitHub/m-hoerz \n")
+    # cat("Accessing Berlin District polygon via GitHub/m-hoerz \n")
 
-    berlin_poly <- sf::read_sf("https://raw.githubusercontent.com/m-hoerz/berlin-shapes/master/berliner-bezirke.geojson")
-    return(berlin_poly)
+    # berlin_poly <- sf::read_sf("https://raw.githubusercontent.com/m-hoerz/berlin-shapes/master/berliner-bezirke.geojson")
+    # return(berlin_poly)
+    #
+    #
+    #
+    wfs_bez <- "https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_wfs_alkis_bezirk"
+
+
+    query <- list(service = "WFS",
+                  request = "GetFeature",
+                  version = "2.0.0",
+                  TypeNames = "fis:s_wfs_alkis_bezirk",
+                  # count = 10,
+                  outputFormat = 'application/geo+json')
+
+    # request data via GET (REST API and save to disk)
+    berlin_polygons <- sf::st_read(httr::GET(wfs_bez,
+                                             query = query
+
+    ))
+
+    return(berlin_polygons)
 }
 
 #' Crop Spatial data with bbox
@@ -913,7 +946,7 @@ apply_models <- function(df = test_df,
         dplyr::filter(ART_BOT %in% top_species$ART_BOT[top_species$n > min_individuals])
 
 
-    future::plan(future::multiprocess)
+    # future::plan(future::multiprocess)
     model_out <- furrr::future_map(model_list,
                                    apply_model_full,
                                    .data = test_set)
@@ -1247,6 +1280,9 @@ make_uhi_plot <- function(uhi_stacks,
     # extrafont::loadfonts(device = "win",quiet = TRUE)
     extrafont::loadfonts(device = "pdf",quiet = TRUE)
 
+
+    berlin_poly <- sf::st_transform(berlin_poly,
+                                    crs = raster::crs(uhi_stacks$Summertime_gridded_UHI_data$day))
 
     mid_rescaler <- function(mid = 0) {
         function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {

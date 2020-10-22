@@ -265,7 +265,7 @@ caption_data_req_short <- "Data requirements for analysis."
 if (grepl("docx", out_format) ||
     knitr::is_latex_output() ) {
   table_dat_req <- dat_req %>% 
-  select(-owned) %>% 
+  dplyr::select(-owned) %>% 
   knitr::kable(booktabs = TRUE,
               
              caption = caption_data_req,
@@ -286,7 +286,7 @@ if (grepl("docx", out_format) ||
   
 } else {
   table_dat_req <- dat_req %>% 
-  select(-owned) %>% 
+  dplyr::select(-owned) %>% 
   knitr::kable(booktabs = TRUE,
                format = "html",
                caption = "Data requirements for analysis, including currently available/accessed and required/desired data.",

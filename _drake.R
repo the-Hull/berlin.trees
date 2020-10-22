@@ -7,8 +7,8 @@
 # If you use supporting scripts like the ones below,
 # you will need to supply them yourself. Examples:
 # https://github.com/wlandau/drake-examples/tree/master/main/R
-# source("R/packages.R")  # Load your packages, e.g. library(drake).
-# source("R/functions.R") # Define your custom code as a bunch of functions.
+source("R/packages.R")  # Load your packages, e.g. library(drake).
+source("R/functions.R") # Define your custom code as a bunch of functions.
 # devtools::install(upgrade = FALSE)
 # drake::expose_imports("bookdown",
 #                       character_only = TRUE)
@@ -22,4 +22,5 @@ source("R/plan.R")      # Create your drake plan.
 # The arguments to drake_config() are basically the same as those to make().
 # drake::expose_imports("berlin.trees",
                       # character_only = TRUE)
-drake_config(plan, envir = getNamespace("berlin.trees"))
+# drake_config(plan, envir = getNamespace("berlin.trees"))
+drake_config(plan)

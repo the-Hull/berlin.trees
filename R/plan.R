@@ -1,9 +1,10 @@
 library(drake)
-library(future.callr)
+# library(future.callr)
 library(dplyr)
 library(future)
-# future::plan(future.callr::callr)
-options(future.globals.maxSize = 600 * 1024 ^ 2)
+future::plan(future.callr::callr)
+# future::plan(future::multiprocess)
+# options(future.globals.maxSize = 600 * 1024 ^ 2)
 
 
 plan <- drake_plan(
@@ -15,9 +16,9 @@ plan <- drake_plan(
     ## Spatial Ancillary -----------------------------------
 
     ### Berlin districts and BBoxx
-    berlin_polygons = target(berlin.trees::get_berlin_polygons_as_sf()),
+    berlin_polygons = target(get_berlin_polygons_as_sf()),
 
-    bounding_box = berlin.trees::make_bbox(52.083962, 52.847599,
+    bounding_box = make_bbox(52.083962, 52.847599,
                                            12.712024, 14.238359,
                                            "greater_berlin",
                                            crs = 4326),
@@ -29,7 +30,7 @@ plan <- drake_plan(
     # loads the raster data from file (not uploaded to github due to size,
     # but see source in manuscript)
 
-    uhi_stacks = berlin.trees::get_uhi_rasters(file.path(here::here(), "analysis", "data", "raw_data", "UHI_explorer")),
+    uhi_stacks = get_uhi_rasters(file.path(here::here(), "analysis", "data", "raw_data", "UHI_explorer")),
 
 
 
@@ -38,41 +39,41 @@ plan <- drake_plan(
 
 
     ## Berlin trees (download Senate tree data set from WFS using API)
-    download_data = target(berlin.trees::download_berlin_trees()),
+    download_data = target(download_berlin_trees()),
 
     # Berlin Baumscheiben
-    download_data_baumscheiben = berlin.trees::download_berlin_baumscheiben(),
+    download_data_baumscheiben = download_berlin_baumscheiben(),
 
     ### Cleaning
 
     # Load spatial-features data sets of all Berlin trees
-    tree_data_in_lists = berlin.trees::load_downloaded_data_to_lists(download_data),
+    tree_data_in_lists = load_downloaded_data_to_lists(download_data),
 
 
     # Load spatial-features data sets of all Berlin baumscheiben
-    baumscheiben_in_lists = berlin.trees::load_downloaded_data_to_lists(download_data_baumscheiben),
+    baumscheiben_in_lists = load_downloaded_data_to_lists(download_data_baumscheiben),
 
 
-    cropped_data_set = berlin.trees::crop_data_with_bbox(tree_data_in_lists,
+    cropped_data_set = crop_data_with_bbox(tree_data_in_lists,
                                                          bounding_box),
 
     # Bind rows of sf tibbles to single data set (currently in lists)
-    full_data_set = berlin.trees::bind_rows_sf(cropped_data_set),
+    full_data_set = bind_rows_sf(cropped_data_set),
 
     # Clean Feature Meta Data
-    full_data_set_prep = berlin.trees::clean_data(full_data_set),
+    full_data_set_prep = clean_data(full_data_set),
 
     # add baumscheiben area to full_data
-    full_data_set_clean = berlin.trees::add_baumscheiben_flaeche(full_data_set_prep,
+    full_data_set_clean = add_baumscheiben_flaeche(full_data_set_prep,
                                                                  baumscheiben_in_lists$s_Baumscheibe,
                                                                  max_dist_m = 10),
 
     # Add UHI data from RasterLayer stack to sf data frame
-    extract_uhi_values_to_list = berlin.trees::add_uhi_hist_data(uhi_stack_list = uhi_stacks,
+    extract_uhi_values_to_list = add_uhi_hist_data(uhi_stack_list = uhi_stacks,
                                                                  sf_data = full_data_set_clean[, ]),
 
     # steps to add baumscheiben to data set
-    # baumscheiben_with_tree_idx = berlin.trees::add_full_df_idx_to_baumscheiben(bms = baumscheiben_in_lists,
+    # baumscheiben_with_tree_idx = add_full_df_idx_to_baumscheiben(bms = baumscheiben_in_lists,
     #                                                                         fulldf = full_data_set_clean,
     #                                                                         max_dist_m = 15),
 
@@ -118,7 +119,7 @@ plan <- drake_plan(
 
    # here I apply all lme4 models not commented-out above,
    # and also specify the data which I want to exclude
-    model_res = berlin.trees::apply_models(df = model_df %>%
+    model_res = apply_models(df = model_df %>%
                                                dplyr::filter(STANDALTER < 350 &
                                                                  krone_m < 50 &
                                                                  dbh_cm < 300,
@@ -134,7 +135,7 @@ plan <- drake_plan(
 
    # Create overview-map of all data sets
 
-    plot_overview_map = berlin.trees::make_overview_map(full_data_set_clean,
+    plot_overview_map = make_overview_map(full_data_set_clean,
                                                         berlin_polygons,
                                                         file = drake::file_out("./analysis/figures/map_01_overview.png"),
                                                         height = 3.5,
@@ -145,7 +146,7 @@ plan <- drake_plan(
 
    # Spatially-binned tree counts
 
-    plot_count_map = berlin.trees::tree_count_map(full_data_set_clean,
+    plot_count_map = tree_count_map(full_data_set_clean,
                                                   berlin_polygons,file = drake::file_out("./analysis/figures/map_02_tree_sums_standardized.png"),
                                                   height = 12,
                                                   width = 12,
@@ -153,7 +154,7 @@ plan <- drake_plan(
 
    # Plot UHI with Berlin districts
 
-    plot_uhi_map = berlin.trees::make_uhi_plot(uhi_stacks = uhi_stacks,
+    plot_uhi_map = make_uhi_plot(uhi_stacks = uhi_stacks,
                                                berlin_poly = berlin_polygons,
                                                base_size = 18,
                                                file = drake::file_out("./analysis/figures/map_03_uhi.png"),
@@ -166,7 +167,7 @@ plan <- drake_plan(
 
    # Generate overview of records (bar plot)
 
-    plot_tree_sums_bar = berlin.trees::tree_sums_bar_plot(full_data_set_clean,
+    plot_tree_sums_bar = tree_sums_bar_plot(full_data_set_clean,
                                                           file = drake::file_out("./analysis/figures/plot_01_tree_sums_bar.png"),
                                                           base_size = 18,
 
@@ -175,7 +176,7 @@ plan <- drake_plan(
                                                           dpi = 300),
    # Density plot overview
 
-    plot_density = berlin.trees::dens_plot_trees(sf_data = full_data_set_clean,
+    plot_density = dens_plot_trees(sf_data = full_data_set_clean,
                                                  extracted_uhi = extract_uhi_values_to_list,
                                                  position_stack = "stack",
                                                  base_size = 18,
@@ -185,7 +186,7 @@ plan <- drake_plan(
                                                  dpi = 300),
 
 
-    # plot_LME_no_age = berlin.trees::make_ranef_plot(model_out = model_res,
+    # plot_LME_no_age = make_ranef_plot(model_out = model_res,
     #                 model_name = "heat_RIspecies_RSspecies_RIprovenance",
     #                 df = full_data_set_clean,
     #                 n_top_species = 3
@@ -194,7 +195,7 @@ plan <- drake_plan(
 
    # Make Random-effects effect-size plot
 
-    plot_LME_age = berlin.trees::make_ranef_plot(model_out = model_res$model,
+    plot_LME_age = make_ranef_plot(model_out = model_res$model,
                                                  model_name = "heat_age_RIspecies_RSspecies_RIprovenance",
                                                  df = model_res$test_data,
                                                  n_top_species = 3,
@@ -207,12 +208,12 @@ plan <- drake_plan(
 
     # tables ------------------------------------------
 
-    overview_table = berlin.trees::make_overview_table(full_data_set_clean),
+    overview_table = make_overview_table(full_data_set_clean),
 
 
    # Generate table of genera age distribution
 
-    age_tables = berlin.trees::make_age_table(df = model_df,
+    age_tables = make_age_table(df = model_df,
                                               max_age = 150,
                                               break_interval = 30),
 
@@ -228,22 +229,22 @@ plan <- drake_plan(
     # Reporting ------------------------------
     paper_html = rmarkdown::render(
         knitr_in("./analysis/paper/paper.Rmd"),
-        output_file = file_out(file.path(here::here(), "paper_knit.html")),
-        # output_file = file_out(file.path("./paper_knit.html")),
+        # output_file = file_out(file.path(here::here(), "paper_knit.html")),
+        output_file = file_out("./paper_knit.html"),
         output_format = bookdown::html_document2(),
         quiet = TRUE
     ),
     paper_word = rmarkdown::render(
         knitr_in("./analysis/paper/paper.Rmd"),
-        output_file = file_out(file.path(here::here(), "paper_knit.docx")),
-        # output_file = file_out(file.path("./paper_knit.html")),
+        output_file = file_out("./paper_knit.docx"),
+        # output_file = "./paper_knit.html",
         output_format = bookdown::word_document2(),
         quiet = TRUE
     ),
     paper_pdf = rmarkdown::render(
         knitr_in("./analysis/paper/paper.Rmd"),
-        output_file = file_out(file.path(here::here(), "paper_knit.pdf")),
-        # output_file = file_out(file.path("./paper_knit.html")),
+        output_file = file_out("./paper_knit.pdf"),
+        # output_file = "./paper_knit.html"),
         output_format = bookdown::pdf_document2(),
         quiet = TRUE
     )
