@@ -38,7 +38,8 @@ Imports:
     stars,
     scales,
     rgdal,
-    data.table
+    data.table,
+    snow
 Suggests: devtools,
     git2r
 RoxygenNote: 7.1.0

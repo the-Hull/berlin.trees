@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.0.2",
+    "Version": "4.0.3",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -382,10 +382,10 @@
     },
     "furrr": {
       "Package": "furrr",
-      "Version": "0.2.0",
+      "Version": "0.2.1",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "b8d3a04c6f7d7e73bfcf926be723f0d0"
+      "Hash": "af63be5cfd08a23db9bbf92acbccd11c"
     },
     "future": {
       "Package": "future",
@@ -578,10 +578,10 @@
     },
     "lme4": {
       "Package": "lme4",
-      "Version": "1.1-23",
+      "Version": "1.1-25",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "ad24d1fd9ed431543f4633bb083e194a"
+      "Hash": "b3b401eba1d6435bcf009576e811f9bf"
     },
     "lwgeom": {
       "Package": "lwgeom",

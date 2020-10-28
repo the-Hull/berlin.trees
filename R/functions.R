@@ -494,7 +494,112 @@ clean_data <- function(sf_data){
 }
 
 
+#' Download Building and Veg Height from Berlin Umweltatlas
+#'
+#' @param fpath character, file path for saving
+#' @source https://fbinter.stadt-berlin.de/fb/berlin/service_intern.jsp?id=a_06_10gebveghoeh2010_geb1@senstadt&type=FEED
+#'
+#' @return nothing
+#' @examples
+download_building_veg_height <- function(fpath = "./analysis/data/raw_data/spatial_ancillary/berlin_building_veg_height"){
 
+    gebveg_xml <- httr::GET(url = "https://fbinter.stadt-berlin.de/fb/feed/senstadt/a_06_10gebveghoeh2010_geb1/0") %>%
+        xml2::read_xml() %>%
+        xml2::as_list()
+
+    gebveg_xml <- gebveg_xml$feed$entry[3:6] %>% lapply(attr, "href") %>% unlist()
+
+
+    lapply(gebveg_xml, function(x){
+
+        fname <- fs::path_file(x)
+
+        httr::GET(url = x,
+                  httr::write_disk(file.path(fpath, fname),
+                                   overwrite = TRUE))
+
+    })
+
+}
+
+
+
+#' Download Soil type classification for Berlin
+#'
+#' @param path character, path to save file (with .geojson extension)
+#'
+#' @return sf dframe
+download_soil_types <- function(path = "./analysis/data/raw_data/spatial_ancillary/soil_type.geojson"){
+
+    wfs_soil <- "https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_boden_wfs1_2015"
+    query <- list(service = "WFS",
+                  request = "GetFeature",
+                  version = "2.0.0",
+                  TypeNames = "fis:s_boden_wfs1_2015",
+                  # count = 10,
+                  outputFormat = 'application/geo+json')
+
+    httr::GET(wfs_soil,
+              query = query,
+              httr::write_disk(path = path,
+                               overwrite = TRUE))
+
+
+    # request data via GET (REST API and save to disk)
+    soil_sf <- sf::st_read(path,
+                           quiet = TRUE)
+
+    return(soil_sf)
+}
+
+
+
+#' Access Berlin district polygon from external source
+#'
+#' @return sf-tibble with polygons of Berlin districts
+#' @import httr
+#' @export
+#'
+download_berlin_polygons_as_sf <- function(path = "./analysis/data/raw_data/spatial_ancillary/berlin_polygons.geojson"){
+    # cat("Accessing Berlin District polygon via GitHub/m-hoerz \n")
+
+    # berlin_poly <- sf::read_sf("https://raw.githubusercontent.com/m-hoerz/berlin-shapes/master/berliner-bezirke.geojson")
+    # return(berlin_poly)
+    #
+    #
+    #
+    wfs_bez <- "https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_wfs_alkis_bezirk"
+
+
+    query <- list(service = "WFS",
+                  request = "GetFeature",
+                  version = "2.0.0",
+                  TypeNames = "fis:s_wfs_alkis_bezirk",
+                  # count = 10,
+                  outputFormat = 'application/geo+json')
+
+    # request data via GET (REST API and save to disk)
+
+    httr::GET(wfs_bez,
+              query = query,
+              httr::write_disk(path = path, overwrite = TRUE)
+
+    )
+
+    berlin_polygons <- sf::st_read(path, quiet = TRUE) %>%
+        sf::st_make_valid()
+
+    return(berlin_polygons)
+}
+
+#' Crop Spatial data with bbox
+#'
+#' @param sf_data_list list containing sf tibbles
+#' @param bbox sf tibble, polygon used for cropping
+#'
+#' @return sf tibble, cropped with specified bbox
+#' @export
+#'
 # Spatial -----------------------------------------------------------------
 
 
@@ -542,47 +647,6 @@ make_bbox <- function(lat_min, lat_max, lon_min, lon_max, feature_name, crs = 43
 
 
 
-#' Access Berlin district polygon from external source
-#'
-#' @return sf-tibble with polygons of Berlin districts
-#' @import httr
-#' @export
-#'
-get_berlin_polygons_as_sf <- function(){
-    # cat("Accessing Berlin District polygon via GitHub/m-hoerz \n")
-
-    # berlin_poly <- sf::read_sf("https://raw.githubusercontent.com/m-hoerz/berlin-shapes/master/berliner-bezirke.geojson")
-    # return(berlin_poly)
-    #
-    #
-    #
-    wfs_bez <- "https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_wfs_alkis_bezirk"
-
-
-    query <- list(service = "WFS",
-                  request = "GetFeature",
-                  version = "2.0.0",
-                  TypeNames = "fis:s_wfs_alkis_bezirk",
-                  # count = 10,
-                  outputFormat = 'application/geo+json')
-
-    # request data via GET (REST API and save to disk)
-    berlin_polygons <- sf::st_read(httr::GET(wfs_bez,
-                                             query = query
-
-    ))
-
-    return(berlin_polygons)
-}
-
-#' Crop Spatial data with bbox
-#'
-#' @param sf_data_list list containing sf tibbles
-#' @param bbox sf tibble, polygon used for cropping
-#'
-#' @return sf tibble, cropped with specified bbox
-#' @export
-#'
 crop_data_with_bbox <- function(sf_data_list, bbox){
 
     # extract crs from list element,
@@ -599,6 +663,50 @@ crop_data_with_bbox <- function(sf_data_list, bbox){
                           return(cropped_sf)
                       }
     )
+}
+
+
+#' crop raster to (buffered) shp file extent (using centroid)
+#'
+#' This function factorized the raster and adds an LCZ value table with
+#' 1:10 and A:G to classes present in the cropped raster
+#'
+#' @param rasterpath character, path to e.g. LCZ tif file
+#' @param sf_data sf dframe, e.g. berlin polygons
+#' @param buffer_dist numeric, meters (around unioned sf_data)
+#'
+#' @return
+#' @export
+#'
+crop_raster <- function(rasterpath, sf_data, buffer_dist = 35000){
+
+    # read raster and extract crs
+    rasterdat <- raster::raster(rasterpath)
+    raster_crs <- raster::crs(rasterdat)
+
+    # adjust projections
+    sf_data <- sf::st_transform(sf_data,
+                                crs = raster_crs)
+
+    # cropped raster
+    crop_raster <- raster::crop(rasterdat,
+                                sf::st_union(sf_data) %>%
+                                    sf::st_buffer(buffer_dist)  %>% sf::st_as_sf())
+    # crop_raster <- raster::crop(rasterdat,
+    #                             sf::st_union(sf_data) %>% sf::st_centroid() %>%
+    #                                 sf::st_buffer(buffer_dist)  %>% sf::st_as_sf())
+
+    crop_raster <- raster::as.factor(crop_raster)
+
+    raster_value_map <- data.frame(raster_value = 1:17,
+                                   lcz_class = c(1:10, LETTERS[1:7]))
+
+    rat <- levels(crop_raster) %>% as.data.frame()
+
+
+    levels(crop_raster) <- dplyr::left_join(rat, raster_value_map, by = c("ID" = "raster_value"))
+
+    return(crop_raster)
 }
 
 
@@ -774,6 +882,63 @@ add_uhi_hist_data <- function(uhi_stack_list, sf_data){
 
 }
 
+#' Extract values from raster based on (point) sf
+#'
+#' @param sf_data sf dframe, e.g. berlin trees
+#' @param lcz_raster, raster
+#' @param buff_dist, buffer around points / polygons
+#' @param method character, "simple" (for categorical) or "bilinear"
+#'
+#' @return dframe, 1 row per sf geometry, with proportions of coverage
+#' @export
+#'
+assess_relative_cover <- function(sf_data, lcz_raster, buff_dist = 100, method = "simple"){
+
+    # ensure both objects have same projection
+
+    if(!sf::st_crs(sf_data)$wkt ==
+       raster::wkt(lcz_raster)){
+
+        #
+        #
+        # lcz_raster <- raster::projectRaster(lcz_raster,
+        #                       crs = sf::st_crs(full_data_set_clean)$wkt %>% raster::crs())
+        #
+        sf_data <- sf::st_transform(sf_data,
+                                    crs = raster::crs(lcz_raster))
+        message("adjusted CRS")
+    }
+
+    # plot(lcz_raster)
+    # plot(sf_data, add = TRUE, cex = 1, col = "black")
+
+
+    # extract values (proportionally) by tree buffer
+    # raster::beginCluster(n = 10, type='SOCK')
+
+    # extracted_vals <- raster::extract(lcz_raster, sf_data, method = "simple", buffer = buff_dist)
+    # extracted_vals <- dplyr::bind_rows(lapply(raster::extract(lcz_raster, sf_data, method = method, buffer = buff_dist),
+    #                                           function(x)prop.table(table(x))))
+
+
+     extracted_vals <- raster::extract(lcz_raster,
+                                       sf_data,
+                                       method = method,
+                                       buffer = buff_dist,
+                                       df = TRUE,
+                                       factors = TRUE)
+
+     extracted_vals <- data.table::as.data.table(extracted_vals)
+     extracted_vals <- extracted_vals[,.N, by = c("ID", "lcz_class")]
+     extracted_vals[ , `:=`(prop_class = prop.table(N)), by = "ID"]
+
+     extracted_vals <- data.table::dcast(extracted_vals, ID ~ lcz_class, value.var = "prop_class")
+
+    # raster::endCluster()
+
+     return(extracted_vals)
+
+}
 
 # Stats -------------------------------------------------------------------
 
@@ -1751,8 +1916,64 @@ filter_maybe <- function(df, fargs){
 }
 
 
+#' Split df in chunks for mapping/looping
+#'
+#' @param dframe df, nrow > 0
+#' @param cut_size numeric, number of rows in eaech chunk
+#'
+#' @return list of dfs with nrow <= cut_size
+#' @export
+#'
+split_by_n <- function(dframe, cut_size){
+
+    if(cut_size >= nrow(dframe)){
+        message("no splitting done")
+        return(dframe)
+    }
+
+    # make unique id
+    cuts <- base::cut(1:nrow(dframe),
+                      breaks = c(seq(from = 0,
+                                     to = nrow(dframe),
+                                     by = cut_size),
+                                 nrow(dframe) +1))
+    # make lists
+    dframe_lists <- base::split(dframe, f = as.factor(cuts))
+
+    return(dframe_lists)
+
+
+}
+
+
+#' add prefix to object names
+#'
+#' @param x df or vector
+#' @param prefix character, prefix to add, always uses "_" as seperator
+#'
+#' @return x, with adjusted names
+#'
+prefix_names <- function(x, prefix){
+
+    if(is.null(names(x))){
+
+        return(x)
+    }
+
+    # handle sf columns
+    if(rlang::inherits_any(x, "sf")){
+
+        geometry_col <- which(names(x) == "geometry")
+        names(x)[-geometry_col] <- paste0(prefix, "_", names(x)[-geometry_col])
+
+    } else {
+        names(x) <- paste0(prefix, "_", names(x))
+
+    }
 
 
 
+    return(x)
+}
 
 

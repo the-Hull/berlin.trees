@@ -16,12 +16,23 @@ plan <- drake_plan(
     ## Spatial Ancillary -----------------------------------
 
     ### Berlin districts and BBoxx
-    berlin_polygons = target(get_berlin_polygons_as_sf()),
+    berlin_polygons = target(download_berlin_polygons_as_sf()),
 
     bounding_box = make_bbox(52.083962, 52.847599,
                                            12.712024, 14.238359,
                                            "greater_berlin",
                                            crs = 4326),
+
+    wudapt_lcz = crop_raster("./analysis/data/raw_data/spatial_ancillary/WUDAPT_LCZ.geotiff",
+                              berlin_polygons,
+                              buffer_dist = 10000),
+
+    wudapt_lcz_by_district = raster::extract(wudapt_lcz,
+                                     berlin_polygons) %>%
+        lapply(., function(x)prop.table(table(x))) %>%
+        setNames(berlin_polygons$NAMGEM) %>% dplyr::bind_rows(.id = "bezirk"),
+
+    berlin_soil = download_soil_types(),
 
     ### Berlin UHI gridded data -------------------------------
 
@@ -63,19 +74,20 @@ plan <- drake_plan(
     # Clean Feature Meta Data
     full_data_set_prep = clean_data(full_data_set),
 
+
     # add baumscheiben area to full_data
     full_data_set_clean = add_baumscheiben_flaeche(full_data_set_prep,
                                                                  baumscheiben_in_lists$s_Baumscheibe,
                                                                  max_dist_m = 10),
 
+    lcz_cover_prop = furrr::future_map_dfr(split_by_n(full_data_set_clean,
+                                                      5000),
+                                           ~assess_relative_cover(.x, wudapt_lcz, 150),
+                                           .progress = FALSE),
+
     # Add UHI data from RasterLayer stack to sf data frame
     extract_uhi_values_to_list = add_uhi_hist_data(uhi_stack_list = uhi_stacks,
                                                                  sf_data = full_data_set_clean[, ]),
-
-    # steps to add baumscheiben to data set
-    # baumscheiben_with_tree_idx = add_full_df_idx_to_baumscheiben(bms = baumscheiben_in_lists,
-    #                                                                         fulldf = full_data_set_clean,
-    #                                                                         max_dist_m = 15),
 
 
      # Model -------------------------------------------------------------------
