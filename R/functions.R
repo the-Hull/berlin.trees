@@ -255,6 +255,195 @@ download_berlin_baumscheiben <- function(){
 }
 
 
+#' Download Building and Veg Height from Berlin Umweltatlas
+#'
+#' @param fpath character, file path for saving
+#' @source https://fbinter.stadt-berlin.de/fb/berlin/service_intern.jsp?id=a_06_10gebveghoeh2010_geb1@senstadt&type=FEED
+#'
+#' @return nothing
+#' @examples
+download_building_height <- function(fpath = "./analysis/data/raw_data/spatial_ancillary/berlin_building_veg_height"){
+
+    gebveg_xml <- httr::GET(url = "https://fbinter.stadt-berlin.de/fb/feed/senstadt/a_06_10gebveghoeh2010_geb1/0") %>%
+        xml2::read_xml() %>%
+        xml2::as_list()
+
+    gebveg_xml <- gebveg_xml$feed$entry[3:6] %>% lapply(attr, "href") %>% unlist()
+
+    # only dl gebaeude
+    gebveg_xml <- gebveg_xml[grepl("gebaeude", x=gebveg_xml, ignore.case = TRUE)]
+
+
+
+
+    fnames <- sapply(gebveg_xml, function(x){
+
+        fname <- fs::path_file(x)
+
+        # check if files already downloaded
+
+
+
+        if(!file.exists(file.path(fpath, fname))){
+
+            print("downloading building heights")
+            httr::GET(url = x,
+                      httr::write_disk(file.path(fpath, fname),
+                                       overwrite = TRUE))
+        }
+
+
+        return(fname)
+
+    },
+    simplify = TRUE)
+
+    zips <- file.path(fpath, fnames)
+
+
+    # check if already unzipped
+    if(length(
+
+        list.files(path = fpath,
+                   pattern = ".shp$",
+                   recursive = TRUE)) == 0) {
+
+        print("unzipping building heights")
+
+        lapply(seq_along(zips),
+               function(x){
+
+                   unzip(zips[x],
+                         exdir = fs::path_ext_remove(zips[x]))
+               })
+
+    }
+
+    # read shp files, some manual work needed
+
+    shps <- list.files(path = fpath,
+                       pattern = ".shp$",
+                       full.names = TRUE,
+                       recursive = TRUE)
+
+
+
+    ph1_idx <- grep(pattern ="phase1",
+                    x = shps)
+
+
+    building_height1 <- sf::read_sf(shps[ph1_idx]) %>%
+        setNames(tolower(names(.))) %>%
+        dplyr::select(c("os", "mean_ndom", "max_ndom", "min_ndom", "bezirk"))
+    building_height2 <- sf::read_sf(shps[-ph1_idx]) %>%
+        setNames(tolower(names(.))) %>%
+        dplyr::select(c("os", "mean_ndom", "max_ndom", "min_ndom", "bezirk_kla")) %>%
+        dplyr::rename(bezirk = bezirk_kla)
+
+    # clean up
+    building_full <- rbind(building_height1, building_height2)
+
+    rm(building_height1, building_height2)
+
+    building_full_raster <- raster::raster(building_full, resolution=10)
+
+    building_rasterized <- raster::rasterize(building_full,
+                                             building_full_raster,
+                                             field = "mean_ndom")
+
+
+
+
+    ## stars alternative:
+    # building_full_raster_sf <- stars::st_rasterize(sf = building_full,
+    #                                                template = stars::st_as_stars(st_bbox(building_full),
+    #                                                                       dx = 10,
+    #                                                                       dy = 10,
+    #                                                                       values = NA_real_))
+
+    return(building_rasterized)
+
+
+}
+
+
+
+#' Download Soil type classification for Berlin
+#'
+#' @param path character, path to save file (with .geojson extension)
+#'
+#' @return sf dframe
+download_soil_types <- function(path = "./analysis/data/raw_data/spatial_ancillary/soil_type.geojson"){
+
+    wfs_soil <- "https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_boden_wfs1_2015"
+    query <- list(service = "WFS",
+                  request = "GetFeature",
+                  version = "2.0.0",
+                  TypeNames = "fis:s_boden_wfs1_2015",
+                  # count = 10,
+                  outputFormat = 'application/geo+json')
+
+    httr::GET(wfs_soil,
+              query = query,
+              httr::write_disk(path = path,
+                               overwrite = TRUE))
+
+
+    # request data via GET (REST API and save to disk)
+    soil_sf <- sf::st_read(path,
+                           quiet = TRUE)
+
+    return(soil_sf)
+}
+
+
+
+#' Access Berlin district polygon from external source
+#'
+#' @return sf-tibble with polygons of Berlin districts
+#' @import httr
+#' @export
+#'
+download_berlin_polygons_as_sf <- function(path = "./analysis/data/raw_data/spatial_ancillary/berlin_polygons.geojson"){
+    # cat("Accessing Berlin District polygon via GitHub/m-hoerz \n")
+
+    # berlin_poly <- sf::read_sf("https://raw.githubusercontent.com/m-hoerz/berlin-shapes/master/berliner-bezirke.geojson")
+    # return(berlin_poly)
+    #
+    #
+    #
+    wfs_bez <- "https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_wfs_alkis_bezirk"
+
+
+    query <- list(service = "WFS",
+                  request = "GetFeature",
+                  version = "2.0.0",
+                  TypeNames = "fis:s_wfs_alkis_bezirk",
+                  # count = 10,
+                  outputFormat = 'application/geo+json')
+
+    # request data via GET (REST API and save to disk)
+
+    httr::GET(wfs_bez,
+              query = query,
+              httr::write_disk(path = path, overwrite = TRUE)
+
+    )
+
+    berlin_polygons <- sf::st_read(path, quiet = TRUE) %>%
+        sf::st_make_valid()
+
+    return(berlin_polygons)
+}
+
+#' Crop Spatial data with bbox
+#'
+#' @param sf_data_list list containing sf tibbles
+#' @param bbox sf tibble, polygon used for cropping
+#'
+#' @return sf tibble, cropped with specified bbox
+#' @export
+#'
 
 
 #' Load spatial-features data sets of all Berlin trees
@@ -281,98 +470,98 @@ load_downloaded_data_to_lists <- function(download_data){
 
 }
 
-
-#' Add tree info to Baumscheiben data set
 #'
-#' Grabs the closest tree (within max_dist_m) to a Baumscheibe, and adds the
-#' corresponding index from the tree data set as a column to baumscheiben
+#' #' Add tree info to Baumscheiben data set
+#' #'
+#' #' Grabs the closest tree (within max_dist_m) to a Baumscheibe, and adds the
+#' #' corresponding index from the tree data set as a column to baumscheiben
+#' #'
+#' #' @param bms list, contains an sf_df with baumscheiben polygons
+#' #' @param fulldf sf_df with all berlin trees
+#' #' @param max_dist_m numeric, max distance to buffer around a baumscheiben centroid to look for trees
+#' #'
+#' #' @return baumscheiben_in_lists, with modified element (added column of tree indices)
+#' #'
+#' #' @import dplyr
+#' #'  sf
+#' #'  furrr
+#' #'
+#' #' @export
+#' add_full_df_idx_to_baumscheiben <- function(bms,
+#'                                             fulldf,
+#'                                             max_dist_m = 15){
 #'
-#' @param bms list, contains an sf_df with baumscheiben polygons
-#' @param fulldf sf_df with all berlin trees
-#' @param max_dist_m numeric, max distance to buffer around a baumscheiben centroid to look for trees
+#'     # make unique id
+#'     bms$s_Baumscheibe$split_id <- seq_len(nrow(bms$s_Baumscheibe))
+#'     # make unique labels
+#'     bms$s_Baumscheibe$split_label <- base::cut(
+#'         x = bms$s_Baumscheibe$split_id,
+#'         breaks = seq(0,
+#'                      max(bms$s_Baumscheibe$split_id) + 1,
+#'                      by = 3000),
+#'         labels = FALSE)
 #'
-#' @return baumscheiben_in_lists, with modified element (added column of tree indices)
 #'
-#' @import dplyr
-#'  sf
-#'  furrr
 #'
-#' @export
-add_full_df_idx_to_baumscheiben <- function(bms,
-                                            fulldf,
-                                            max_dist_m = 15){
-
-    # make unique id
-    bms$s_Baumscheibe$split_id <- seq_len(nrow(bms$s_Baumscheibe))
-    # make unique labels
-    bms$s_Baumscheibe$split_label <- base::cut(
-        x = bms$s_Baumscheibe$split_id,
-        breaks = seq(0,
-                     max(bms$s_Baumscheibe$split_id) + 1,
-                     by = 3000),
-        labels = FALSE)
-
-
-
-    # make temp baumscheiben object
-    bms$s_Baumscheibe <-  sf::st_set_crs(bms$s_Baumscheibe,
-                               st_crs(fulldf))
-
-    # generate buffer and adjust crs
-    baumsch_buff <- sf::st_buffer(x = sf::st_centroid(bms$s_Baumscheibe),
-                                  dist = max_dist_m)
-    # assess which trees fall into specific buffer
-    # this outputs a list of indices in the y object (fulldf)
-    trees_in_buffs <- sf::st_intersects(baumsch_buff, fulldf)
-
-    # calc centroid for later use
-    baumsch_centroid <- sf::st_centroid(bms$s_Baumscheibe)
-
-
-
-
-    closest_tree_idx <- unlist(
-        furrr::future_map(
-            base::split(bms$s_Baumscheibe$split_id,
-                        f = bms$s_Baumscheibe$split_label),
-            function(spidx){
-
-                spidx <- as.numeric(spidx)
-
-                baumsch <- bms$s_Baumscheibe[spidx, ]
-
-                tree_idx <- lapply(
-                    seq_along(trees_in_buffs[spidx]),
-                    function(x){
-
-                        # grab the closest tree idx to the centroid
-                        idx <- which.min(st_distance(fulldf[trees_in_buffs[spidx][[x]], ],
-                                                     baumsch_centroid[spidx[x], ]))
-                        # subset the potential trees to the closests one
-                        out <- trees_in_buffs[spidx][[x]][idx]
-
-                        # clean up
-                        out <- ifelse(length(out) == 0,
-                                      NA,
-                                      out)
+#'     # make temp baumscheiben object
+#'     bms$s_Baumscheibe <-  sf::st_transform(bms$s_Baumscheibe,
+#'                                st_crs(fulldf))
+#'
+#'     # generate buffer and adjust crs
+#'     baumsch_buff <- sf::st_buffer(x = sf::st_centroid(bms$s_Baumscheibe),
+#'                                   dist = max_dist_m)
+#'     # assess which trees fall into specific buffer
+#'     # this outputs a list of indices in the y object (fulldf)
+#'     trees_in_buffs <- sf::st_intersects(baumsch_buff, fulldf)
+#'
+#'     # calc centroid for later use
+#'     baumsch_centroid <- sf::st_centroid(bms$s_Baumscheibe)
+#'
+#'
+#'
+#'
+#'     closest_tree_idx <- unlist(
+#'         furrr::future_map(
+#'             base::split(bms$s_Baumscheibe$split_id,
+#'                         f = bms$s_Baumscheibe$split_label),
+#'             function(spidx){
+#'
+#'                 spidx <- as.numeric(spidx)
+#'
+#'                 baumsch <- bms$s_Baumscheibe[spidx, ]
+#'
+#'                 tree_idx <- lapply(
+#'                     seq_along(trees_in_buffs[spidx]),
+#'                     function(x){
+#'
+#'                         # grab the closest tree idx to the centroid
+#'                         idx <- which.min(st_distance(fulldf[trees_in_buffs[spidx][[x]], ],
+#'                                                      baumsch_centroid[spidx[x], ]))
+#'                         # subset the potential trees to the closests one
+#'                         out <- trees_in_buffs[spidx][[x]][idx]
+#'
+#'                         # clean up
+#'                         out <- ifelse(length(out) == 0,
+#'                                       NA,
+#'                                       out)
+#'
+#'
+#'                     })
+#'
+#'             return(tree_idx)
+#'
+#'         })
+#'     )
+#'
+#'     bms$s_Baumscheibe$closest_tree_idx <- closest_tree_idx
+#'
+#'     return(bms)
+#'
+#' }
+#'
 
 
-                    })
-
-            return(tree_idx)
-
-        })
-    )
-
-    bms$s_Baumscheibe$closest_tree_idx <- closest_tree_idx
-
-    return(bms)
-
-}
-
-
-
-#' Add Baumscheiben Area to Tree Data set
+#' Prepare Baumscheiben Area to Tree Data set
 #'
 #' @param fulldf sf_df, all berlin trees
 #' @param bms sf_df, Baumscheiben polygons and their area
@@ -409,6 +598,43 @@ add_baumscheiben_flaeche <- function(fulldf, bms, max_dist_m = 10){
 
 }
 
+
+#' Prepare Soil Type for each Location
+#'
+#' @param fulldf sf_df, all berlin trees
+#' @param bms sf_df, Baumscheiben polygons and their area
+#' @param max_dist_m numeric, how far from polygon centroid can tree lie and still be assigned?
+#'
+#' @return fulldf with additional columns: "baumsch_dist_m",
+#'  "baumsch_elem_nr",
+#'  "baumsch_gis_id",
+#'   "baumsch_flaeche_m2"
+#' @export
+#'
+#' @import sf
+#' units
+#'
+prep_soil_type <- function(fulldf, sty, max_dist_m = 50){
+
+    nearest_idx <- sf::st_nearest_feature(fulldf, bms)
+
+    # calculate pairwise distances
+    fulldf$baumsch_dist_m <- sf::st_distance(fulldf, bms[nearest_idx, ], by_element = TRUE)
+
+    bms <- sf::st_drop_geometry(bms[nearest_idx, c("elem_nr", "gis_id", "flaeche"), ])
+    names(bms) <- c("baumsch_elem_nr", "baumsch_gis_id", "baumsch_flaeche_m2")
+
+    # join manually
+    fulldf <- cbind(fulldf,
+                    bms)
+
+    fulldf$baumsch_flaeche_m2 <- ifelse(fulldf$baumsch_dist <= units::set_units(max_dist_m, m),
+                                        fulldf$baumsch_flaeche_m2,
+                                        NA)
+
+    return(fulldf)
+
+}
 
 
 
@@ -494,112 +720,6 @@ clean_data <- function(sf_data){
 }
 
 
-#' Download Building and Veg Height from Berlin Umweltatlas
-#'
-#' @param fpath character, file path for saving
-#' @source https://fbinter.stadt-berlin.de/fb/berlin/service_intern.jsp?id=a_06_10gebveghoeh2010_geb1@senstadt&type=FEED
-#'
-#' @return nothing
-#' @examples
-download_building_veg_height <- function(fpath = "./analysis/data/raw_data/spatial_ancillary/berlin_building_veg_height"){
-
-    gebveg_xml <- httr::GET(url = "https://fbinter.stadt-berlin.de/fb/feed/senstadt/a_06_10gebveghoeh2010_geb1/0") %>%
-        xml2::read_xml() %>%
-        xml2::as_list()
-
-    gebveg_xml <- gebveg_xml$feed$entry[3:6] %>% lapply(attr, "href") %>% unlist()
-
-
-    lapply(gebveg_xml, function(x){
-
-        fname <- fs::path_file(x)
-
-        httr::GET(url = x,
-                  httr::write_disk(file.path(fpath, fname),
-                                   overwrite = TRUE))
-
-    })
-
-}
-
-
-
-#' Download Soil type classification for Berlin
-#'
-#' @param path character, path to save file (with .geojson extension)
-#'
-#' @return sf dframe
-download_soil_types <- function(path = "./analysis/data/raw_data/spatial_ancillary/soil_type.geojson"){
-
-    wfs_soil <- "https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_boden_wfs1_2015"
-    query <- list(service = "WFS",
-                  request = "GetFeature",
-                  version = "2.0.0",
-                  TypeNames = "fis:s_boden_wfs1_2015",
-                  # count = 10,
-                  outputFormat = 'application/geo+json')
-
-    httr::GET(wfs_soil,
-              query = query,
-              httr::write_disk(path = path,
-                               overwrite = TRUE))
-
-
-    # request data via GET (REST API and save to disk)
-    soil_sf <- sf::st_read(path,
-                           quiet = TRUE)
-
-    return(soil_sf)
-}
-
-
-
-#' Access Berlin district polygon from external source
-#'
-#' @return sf-tibble with polygons of Berlin districts
-#' @import httr
-#' @export
-#'
-download_berlin_polygons_as_sf <- function(path = "./analysis/data/raw_data/spatial_ancillary/berlin_polygons.geojson"){
-    # cat("Accessing Berlin District polygon via GitHub/m-hoerz \n")
-
-    # berlin_poly <- sf::read_sf("https://raw.githubusercontent.com/m-hoerz/berlin-shapes/master/berliner-bezirke.geojson")
-    # return(berlin_poly)
-    #
-    #
-    #
-    wfs_bez <- "https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_wfs_alkis_bezirk"
-
-
-    query <- list(service = "WFS",
-                  request = "GetFeature",
-                  version = "2.0.0",
-                  TypeNames = "fis:s_wfs_alkis_bezirk",
-                  # count = 10,
-                  outputFormat = 'application/geo+json')
-
-    # request data via GET (REST API and save to disk)
-
-    httr::GET(wfs_bez,
-              query = query,
-              httr::write_disk(path = path, overwrite = TRUE)
-
-    )
-
-    berlin_polygons <- sf::st_read(path, quiet = TRUE) %>%
-        sf::st_make_valid()
-
-    return(berlin_polygons)
-}
-
-#' Crop Spatial data with bbox
-#'
-#' @param sf_data_list list containing sf tibbles
-#' @param bbox sf tibble, polygon used for cropping
-#'
-#' @return sf tibble, cropped with specified bbox
-#' @export
-#'
 # Spatial -----------------------------------------------------------------
 
 
@@ -892,7 +1012,7 @@ add_uhi_hist_data <- function(uhi_stack_list, sf_data){
 #' @return dframe, 1 row per sf geometry, with proportions of coverage
 #' @export
 #'
-assess_relative_cover <- function(sf_data, lcz_raster, buff_dist = 100, method = "simple"){
+assess_relative_lcz_cover <- function(sf_data, lcz_raster, buff_dist = 100, method = "simple"){
 
     # ensure both objects have same projection
 
@@ -939,6 +1059,58 @@ assess_relative_cover <- function(sf_data, lcz_raster, buff_dist = 100, method =
      return(extracted_vals)
 
 }
+
+
+#' Extract values from raster based on (point) sf
+#'
+#' @param sf_data sf dframe, e.g. berlin trees
+#' @param bh_raster, raster, building height (or other)
+#' @param buff_dist, buffer around points / polygons
+#' @param method character, "simple" (for categorical) or "bilinear"
+#'
+#' @return dframe, 1 row per sf geometry, with proportions of coverage
+#' @export
+assess_relative_building_height <- function(sf_data, bh_raster, buff_dist = 100, method = "simple"){
+
+    # ensure both objects have same projection
+
+    if(!sf::st_crs(sf_data)$wkt ==
+       raster::wkt(bh_raster)){
+
+        #
+        #
+        # bh_raster <- raster::projectRaster(bh_raster,
+        #                       crs = sf::st_crs(full_data_set_clean)$wkt %>% raster::crs())
+        #
+        sf_data <- sf::st_transform(sf_data,
+                                    crs = raster::crs(bh_raster))
+        message("adjusted CRS")
+    }
+
+    # plot(bh_raster)
+    # plot(sf_data, add = TRUE, cex = 1, col = "black")
+
+
+    # extract values (proportionally) by tree buffer
+    # raster::beginCluster(n = 10, type='SOCK')
+
+    # extracted_vals <- raster::extract(bh_raster, sf_data, method = "simple", buffer = buff_dist)
+    # extracted_vals <- dplyr::bind_rows(lapply(raster::extract(bh_raster, sf_data, method = method, buffer = buff_dist),
+    #                                           function(x)prop.table(table(x))))
+
+
+    extracted_vals <- raster::extract(bh_raster,
+                                      sf_data,
+                                      method = method,
+                                      buffer = buff_dist,
+                                      fun = mean,
+                                      na.rm = TRUE,
+                                      df = FALSE,
+                                      factors = FALSE)
+    return(extracted_vals)
+
+}
+
 
 # Stats -------------------------------------------------------------------
 

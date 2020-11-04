@@ -15,6 +15,8 @@ plan <- drake_plan(
 
     ## Spatial Ancillary -----------------------------------
 
+
+
     ### Berlin districts and BBoxx
     berlin_polygons = target(download_berlin_polygons_as_sf()),
 
@@ -23,6 +25,8 @@ plan <- drake_plan(
                                            "greater_berlin",
                                            crs = 4326),
 
+    # obtained from http://www.wudapt.org/continental-lcz-maps/
+    # downloaded with wget in Ubuntu shell
     wudapt_lcz = crop_raster("./analysis/data/raw_data/spatial_ancillary/WUDAPT_LCZ.geotiff",
                               berlin_polygons,
                               buffer_dist = 10000),
@@ -33,6 +37,8 @@ plan <- drake_plan(
         setNames(berlin_polygons$NAMGEM) %>% dplyr::bind_rows(.id = "bezirk"),
 
     berlin_soil = download_soil_types(),
+
+    berlin_building_height = download_building_height(),
 
     ### Berlin UHI gridded data -------------------------------
 
@@ -74,20 +80,39 @@ plan <- drake_plan(
     # Clean Feature Meta Data
     full_data_set_prep = clean_data(full_data_set),
 
+    # Spatial ancillary extract/join ---------------------------
 
-    # add baumscheiben area to full_data
+    # add baumscheiben area and soil type to full_data
+    # polygon / non-raster operations
     full_data_set_clean = add_baumscheiben_flaeche(full_data_set_prep,
                                                                  baumscheiben_in_lists$s_Baumscheibe,
-                                                                 max_dist_m = 10),
+                                                                 max_dist_m = 10) %>%
+        sf::st_join(x = .,
+                    y = berlin_soil[, c("id", "NUTZ_BEZ", "BOGES_NEU5", "BTYP", "BTYP_KA4", "FLUR")] %>%
+                        prefix_names(prefix = "soil"),
+                    join = sf::st_nearest_feature),
+
 
     lcz_cover_prop = furrr::future_map_dfr(split_by_n(full_data_set_clean,
                                                       5000),
-                                           ~assess_relative_cover(.x, wudapt_lcz, 150),
+                                           ~assess_relative_lcz_cover(.x, wudapt_lcz, 150),
                                            .progress = FALSE),
+
+    build_height_prop = furrr::future_map_df(split_by_n(full_data_set_clean,
+                                     75000),
+                          ~assess_relative_building_height(sf_data =  .x,
+                                                           bh_raster = berlin_building_height,
+                                                           buff_dist = 150),
+                          .progress = FALSE) %>%
+        unlist() %>%
+        unname(),
 
     # Add UHI data from RasterLayer stack to sf data frame
     extract_uhi_values_to_list = add_uhi_hist_data(uhi_stack_list = uhi_stacks,
                                                                  sf_data = full_data_set_clean[, ]),
+    # TO DO
+    # add lcz, soil, building height, mineral content to data set
+
 
 
      # Model -------------------------------------------------------------------
