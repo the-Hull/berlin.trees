@@ -111,7 +111,7 @@ plan <- drake_plan(
                                            ~assess_relative_lcz_cover(.x, wudapt_lcz, 150),
                                            .progress = FALSE),
 
-    build_height_prop = furrr::future_map_df(split_by_n(full_data_set_clean,
+    build_height_prop = furrr::future_map(split_by_n(full_data_set_clean,
                                      75000),
                           ~assess_relative_building_height(sf_data =  .x,
                                                            bh_raster = berlin_building_height,
