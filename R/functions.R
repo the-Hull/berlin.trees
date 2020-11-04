@@ -396,6 +396,60 @@ download_soil_types <- function(path = "./analysis/data/raw_data/spatial_ancilla
     return(soil_sf)
 }
 
+#' Download Soil Nutrient data and classification for Berlin
+#'
+#' swertstu is the "Cumulative S-Value", used to determine cation exchange capacity
+#'
+#' @param path character, path to save file (with .geojson extension)
+#'
+#' @return sf dframe
+download_soil_nutrients <- function(path = "./analysis/data/raw_data/spatial_ancillary/soil_nutrients.geojson"){
+
+
+    # soil nutrient classes 1 - 3
+    # wfs_soil <- "https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_boden_wfs3_2015"
+    # query <- list(service = "WFS",
+    #               request = "GetFeature",
+    #               version = "2.0.0",
+    #               TypeNames = "fis:s_boden_wfs3_2015",
+    #               # count = 10,
+    #               outputFormat = 'application/geo+json')
+    #
+    # out <- httr::GET(wfs_soil,
+    #           query = query)
+    #
+    #
+    # # request data via GET (REST API and save to disk)
+    # soil_sf <- sf::st_read(out,
+    #                        quiet = TRUE)
+    #
+    #
+
+
+
+    # cation exchange capacity 1-10
+    wfs_soil_cat <- "https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_boden_wfs2_2015"
+    query <- list(service = "WFS",
+                  request = "GetFeature",
+                  version = "2.0.0",
+                  TypeNames = "fis:s_boden_wfs2_2015",
+                  # count = 10,
+                  outputFormat = 'application/geo+json')
+
+    out <- httr::GET(wfs_soil_cat,
+                     query = query)
+
+
+    # request data via GET (REST API and save to disk)
+    soil_cat_sf <- sf::st_read(out,
+                               quiet = TRUE)
+
+
+
+    # return(list(soil_sf, soil_cat_sf))
+    return(soil_cat_sf)
+}
+
 
 
 #' Access Berlin district polygon from external source
@@ -567,7 +621,7 @@ load_downloaded_data_to_lists <- function(download_data){
 #' @param bms sf_df, Baumscheiben polygons and their area
 #' @param max_dist_m numeric, how far from polygon centroid can tree lie and still be assigned?
 #'
-#' @return fulldf with additional columns: "baumsch_dist_m",
+#' @return a df of baumscheiben data: "baumsch_dist_m",
 #'  "baumsch_elem_nr",
 #'  "baumsch_gis_id",
 #'   "baumsch_flaeche_m2"
@@ -576,25 +630,30 @@ load_downloaded_data_to_lists <- function(download_data){
 #' @import sf
 #' units
 #'
-add_baumscheiben_flaeche <- function(fulldf, bms, max_dist_m = 10){
+prep_baumscheiben_flaeche <- function(fulldf, bms, max_dist_m = 10){
 
     nearest_idx <- sf::st_nearest_feature(fulldf, bms)
 
     # calculate pairwise distances
-    fulldf$baumsch_dist_m <- sf::st_distance(fulldf, bms[nearest_idx, ], by_element = TRUE)
+    baumsch_dist_m <- sf::st_distance(fulldf, bms[nearest_idx, ], by_element = TRUE)
 
-    bms <- sf::st_drop_geometry(bms[nearest_idx, c("elem_nr", "gis_id", "flaeche"), ])
+    # bms <- sf::st_drop_geometry(bms[nearest_idx, c("elem_nr", "gis_id", "flaeche"), ])
+    bms <- bms[nearest_idx, c("elem_nr", "gis_id", "flaeche"), ]
     names(bms) <- c("baumsch_elem_nr", "baumsch_gis_id", "baumsch_flaeche_m2")
 
-    # join manually
-    fulldf <- cbind(fulldf,
-                    bms)
+    bms$baumsch_flaeche_m2 <- ifelse(baumsch_dist_m <= units::set_units(max_dist_m, m),
+                                     bms$baumsch_flaeche_m2,
+                                     NA)
+    #
+    # # join manually
+    # fulldf <- cbind(fulldf,
+    #                 bms)
+    #
+    # fulldf$baumsch_flaeche_m2 <- ifelse(fulldf$baumsch_dist <= units::set_units(max_dist_m, m),
+    #                                     fulldf$baumsch_flaeche_m2,
+    #                                     NA)
 
-    fulldf$baumsch_flaeche_m2 <- ifelse(fulldf$baumsch_dist <= units::set_units(max_dist_m, m),
-                                        fulldf$baumsch_flaeche_m2,
-                                        NA)
-
-    return(fulldf)
+    return(bms)
 
 }
 
@@ -602,13 +661,10 @@ add_baumscheiben_flaeche <- function(fulldf, bms, max_dist_m = 10){
 #' Prepare Soil Type for each Location
 #'
 #' @param fulldf sf_df, all berlin trees
-#' @param bms sf_df, Baumscheiben polygons and their area
+#' @param sty sf_df, Baumscheiben polygons and their area
 #' @param max_dist_m numeric, how far from polygon centroid can tree lie and still be assigned?
 #'
-#' @return fulldf with additional columns: "baumsch_dist_m",
-#'  "baumsch_elem_nr",
-#'  "baumsch_gis_id",
-#'   "baumsch_flaeche_m2"
+#' @return a df of sty ordrered / subsetted for closest tree (following fulldf)
 #' @export
 #'
 #' @import sf
@@ -616,25 +672,68 @@ add_baumscheiben_flaeche <- function(fulldf, bms, max_dist_m = 10){
 #'
 prep_soil_type <- function(fulldf, sty, max_dist_m = 50){
 
-    nearest_idx <- sf::st_nearest_feature(fulldf, bms)
+
+    nearest_idx <- sf::st_nearest_feature(fulldf, sty)
 
     # calculate pairwise distances
-    fulldf$baumsch_dist_m <- sf::st_distance(fulldf, bms[nearest_idx, ], by_element = TRUE)
+    soil_poly_dist <- sf::st_distance(fulldf, sty[nearest_idx, ], by_element = TRUE)
 
-    bms <- sf::st_drop_geometry(bms[nearest_idx, c("elem_nr", "gis_id", "flaeche"), ])
-    names(bms) <- c("baumsch_elem_nr", "baumsch_gis_id", "baumsch_flaeche_m2")
+    # sty <- sf::st_drop_geometry(sty[nearest_idx, ])
+    sty <- sty[nearest_idx, ]
+    # names(sty) <- c("baumsch_elem_nr", "baumsch_gis_id", "baumsch_flaeche_m2")
 
-    # join manually
-    fulldf <- cbind(fulldf,
-                    bms)
+    sty[soil_poly_dist > units::set_units(max_dist_m, m), ] <- NA
+    #
+    # # join manually
+    # fulldf <- cbind(fulldf,
+    #                 sty)
+    #
+    # fulldf$baumsch_flaeche_m2 <- ifelse(fulldf$baumsch_dist <= units::set_units(max_dist_m, m),
+    #                                     fulldf$baumsch_flaeche_m2,
+    #                                     NA)
 
-    fulldf$baumsch_flaeche_m2 <- ifelse(fulldf$baumsch_dist <= units::set_units(max_dist_m, m),
-                                        fulldf$baumsch_flaeche_m2,
-                                        NA)
-
-    return(fulldf)
-
+    return(sty)
 }
+
+
+#' Prepare Soil Nutrients for each Location
+#'
+#' @param fulldf sf_df, all berlin trees
+#' @param nuts sf_df, Baumscheiben polygons and their area
+#' @param max_dist_m numeric, how far from polygon centroid can tree lie and still be assigned?
+#'
+#' @return a df of nuts ordrered / subsetted for closest tree (following fulldf)
+#' @export
+#'
+#' @import sf
+#' units
+#'
+prep_soil_nutrients <- function(fulldf, nuts, max_dist_m = 50){
+
+
+    nearest_idx <- sf::st_nearest_feature(fulldf, nuts)
+
+    # calculate pairwise distances
+    soil_poly_dist <- sf::st_distance(fulldf, nuts[nearest_idx, ], by_element = TRUE)
+
+    # nuts <- sf::st_drop_geometry(nuts[nearest_idx, ])
+    nuts <- nuts[nearest_idx, ]
+    # names(nuts) <- c("baumsch_elem_nr", "baumsch_gis_id", "baumsch_flaeche_m2")
+
+    nuts[soil_poly_dist > units::set_units(max_dist_m, m), ] <- NA
+    #
+    # # join manually
+    # fulldf <- cbind(fulldf,
+    #                 nuts)
+    #
+    # fulldf$baumsch_flaeche_m2 <- ifelse(fulldf$baumsch_dist <= units::set_units(max_dist_m, m),
+    #                                     fulldf$baumsch_flaeche_m2,
+    #                                     NA)
+
+    return(nuts)
+}
+
+
 
 
 

@@ -38,6 +38,8 @@ plan <- drake_plan(
 
     berlin_soil = download_soil_types(),
 
+    berlin_soil_nutrients = download_soil_nutrients(),
+
     berlin_building_height = download_building_height(),
 
     ### Berlin UHI gridded data -------------------------------
@@ -78,19 +80,30 @@ plan <- drake_plan(
     full_data_set = bind_rows_sf(cropped_data_set),
 
     # Clean Feature Meta Data
-    full_data_set_prep = clean_data(full_data_set),
+    full_data_set_clean = clean_data(full_data_set),
 
     # Spatial ancillary extract/join ---------------------------
 
     # add baumscheiben area and soil type to full_data
     # polygon / non-raster operations
-    full_data_set_clean = add_baumscheiben_flaeche(full_data_set_prep,
+    baumsch_data = prep_baumscheiben_flaeche(full_data_set_clean,
                                                                  baumscheiben_in_lists$s_Baumscheibe,
-                                                                 max_dist_m = 10) %>%
-        sf::st_join(x = .,
-                    y = berlin_soil[, c("id", "NUTZ_BEZ", "BOGES_NEU5", "BTYP", "BTYP_KA4", "FLUR")] %>%
-                        prefix_names(prefix = "soil"),
-                    join = sf::st_nearest_feature),
+                                                                 max_dist_m = 10),
+
+    soil_type_data = prep_soil_type(full_data_set_clean,
+                                    berlin_soil,
+                                    max_dist_m = 25),
+
+    soil_nutrient_data = prep_soil_nutrients(full_data_set_clean,
+                                             berlin_soil_nutrients,
+                                             max_dist_m = 25),
+
+
+    # %>%
+    #     sf::st_join(x = .,
+    #                 y = berlin_soil[, c("id", "NUTZ_BEZ", "BOGES_NEU5", "BTYP", "BTYP_KA4", "FLUR")] %>%
+    #                     prefix_names(prefix = "soil"),
+    #                 join = sf::st_nearest_feature),
 
 
     lcz_cover_prop = furrr::future_map_dfr(split_by_n(full_data_set_clean,
