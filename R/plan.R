@@ -111,7 +111,7 @@ plan <- drake_plan(
                                            ~assess_relative_lcz_cover(.x, wudapt_lcz, 150),
                                            .progress = FALSE),
 
-    build_height_prop = furrr::future_map(split_by_n(full_data_set_clean,
+    building_height_mean_m = furrr::future_map(split_by_n(full_data_set_clean,
                                      75000),
                           ~assess_relative_building_height(sf_data =  .x,
                                                            bh_raster = berlin_building_height,
@@ -123,12 +123,40 @@ plan <- drake_plan(
     # Add UHI data from RasterLayer stack to sf data frame
     extract_uhi_values_to_list = add_uhi_hist_data(uhi_stack_list = uhi_stacks,
                                                                  sf_data = full_data_set_clean[, ]),
-    # TO DO
-    # add lcz, soil, building height, mineral content to data set
 
+
+    # add lcz, soil, building height, mineral content to data set
+    covariate_df = combine_covariates(list(baumsch_data = baumsch_data,
+                            soil_type = soil_type_data,
+                            soil_nutrients = soil_nutrient_data,
+                            building_height_mean_m = building_height_mean_m,
+                            lcz_cover_prop = lcz_cover_prop)),
+
+
+
+    # Generate data set for stat-models
+    # This step just adds the UHI temperature data to the data set
+    # and adjusts a bit
+    full_data_set_clean_with_UHI = make_test_data_set(full_df = full_data_set_clean,
+                                  extract_uhi = extract_uhi_values_to_list),
+
+
+    full_data_set_clean_with_UHI_covariates = cbind(full_data_set_clean_with_UHI,
+                                                    covariate_df),
+
+
+
+    # Data cleaning (datacleanr) ------------------------
+
+    split_and_save = split_df(sfdf = full_data_set_clean_with_UHI_covariates,
+                        save_dir = drake::file_out("./analysis/data/raw_data/tree_splits")),
 
 
      # Model -------------------------------------------------------------------
+
+
+
+
 
 
 
@@ -158,18 +186,11 @@ plan <- drake_plan(
     ),
 
 
-    # Generate data set for stat-models
-    # This step just adds the UHI temperature data to the data set
-    # and adjusts a bit
-    model_df = make_test_data_set(full_df = full_data_set_clean,
-                                  extract_uhi = extract_uhi_values_to_list),
-
-
 
 
    # here I apply all lme4 models not commented-out above,
    # and also specify the data which I want to exclude
-    model_res = apply_models(df = model_df %>%
+    model_res = apply_models(df = full_data_set_clean_with_UHI_covariates %>%
                                                dplyr::filter(STANDALTER < 350 &
                                                                  krone_m < 50 &
                                                                  dbh_cm < 300,
@@ -263,7 +284,7 @@ plan <- drake_plan(
 
    # Generate table of genera age distribution
 
-    age_tables = make_age_table(df = model_df,
+    age_tables = make_age_table(df = full_data_set_clean_with_UHI_covariates,
                                               max_age = 150,
                                               break_interval = 30),
 

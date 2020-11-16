@@ -638,12 +638,14 @@ prep_baumscheiben_flaeche <- function(fulldf, bms, max_dist_m = 10){
     baumsch_dist_m <- sf::st_distance(fulldf, bms[nearest_idx, ], by_element = TRUE)
 
     # bms <- sf::st_drop_geometry(bms[nearest_idx, c("elem_nr", "gis_id", "flaeche"), ])
-    bms <- bms[nearest_idx, c("elem_nr", "gis_id", "flaeche"), ]
-    names(bms) <- c("baumsch_elem_nr", "baumsch_gis_id", "baumsch_flaeche_m2")
+    bms <- bms[nearest_idx, c("elem_nr", "gis_id", "flaeche", "geometry")]
+    names(bms) <- c("baumsch_elem_nr", "baumsch_gis_id", "baumsch_flaeche_m2", "geometry")
 
-    bms$baumsch_flaeche_m2 <- ifelse(baumsch_dist_m <= units::set_units(max_dist_m, m),
-                                     bms$baumsch_flaeche_m2,
-                                     NA)
+    # bms$baumsch_flaeche_m2 <- ifelse(baumsch_dist_m <= units::set_units(max_dist_m, m),
+    #                                  bms$baumsch_flaeche_m2,
+    #                                  NA)
+
+    bms[baumsch_dist_m <= units::set_units(max_dist_m, m), ] <- NA
     #
     # # join manually
     # fulldf <- cbind(fulldf,
@@ -763,6 +765,8 @@ bind_rows_sf <- function(sf_list){
 }
 
 
+# Cleaning -------------------------------------------
+
 #' Clean Feature Meta Data
 #'
 #' @param sf_data sf-tibble of Berlin City trees
@@ -817,6 +821,60 @@ clean_data <- function(sf_data){
     return(sf_data)
 
 }
+
+
+
+
+#' Split data sets and save to file
+#'
+#' Datasets are split by district and saved to individual files of form
+#' \code{berlin_trees_subset-DISTRICT.Rds}
+#'
+#' @param sfdf data.frame, full berlin tree data set
+#' @param save_dir character, path to save folder.
+#'
+#' @return nothing
+#' @export
+split_df <- function(sfdf, save_dir = "./analysis/data/raw_data/tree_splits"){
+    # make a unique id for re-joining at later stage
+    sfdf$berlin_id <- seq_len(nrow(sfdf))
+
+    # make "backup" geometry data set - needs unique id and geometry column
+    sfdf_geometry <- sfdf[ , c("berlin_id", "geometry")]
+
+    # drop geometry from df
+    # sdfdf <- sf::st_drop_geometry(sfdf)
+    sfdf <- sfdf %>%
+        dplyr::select(-geometry)
+
+    # split by district + gattung_short
+    splits <- split(sfdf, f = list(sfdf$BEZIRK))
+
+    # save_dir <- "./analysis/data/raw_data/tree_splits"
+
+    # save into individual files with reasonable naming structure
+    if(!fs::dir_exists(save_dir)){
+        fs::dir_create(save_dir)
+    }
+
+    purrr::iwalk(splits,
+                 ~saveRDS(.x,
+                          file = fs::path(
+                              save_dir,
+                              paste0(
+                                  "berlin_trees_subset_",
+                                  gsub("[-]",
+                                       "_",
+                                       .y,)),
+                                  ext = "RDS")))
+
+
+    saveRDS(sfdf_geometry,
+            file = fs::path(save_dir, "berlin_trees_GEOBACKUP", ext = "RDS"))
+
+}
+
+
 
 
 # Spatial -----------------------------------------------------------------
@@ -2247,4 +2305,43 @@ prefix_names <- function(x, prefix){
     return(x)
 }
 
+
+
+#' Make df with ancillary covariates for modelling
+#'
+#' @param data_list list with dfs/vectors, names must be specified as in function
+#'
+#' @return df with name prefixes for each data set; adjust function if additional data is used
+#' @export
+combine_covariates <- function(data_list){
+
+
+    # expected names are:
+    data_names <- c("baumsch_data",
+                    "soil_type",
+                    "soil_nutrients",
+                    "lcz_cover_prop",
+                    "building_height_mean_m")
+
+    if(!all(names(data_list) %in% data_names)){
+        stop("expecting different data set inputs. Check or change function to accommodate")
+    }
+
+
+    soil_nutrient_cols <- c("nfkdur", "swert", "swertstu")
+    soil_type_cols <- c("NUTZ", "NUTZ_BEZ", "BOGES_NEU5", "BTYP", "BTYP_KA4", "BTYP_KA4_LINK")
+
+
+    covariate_df <- cbind(sf::st_drop_geometry(data_list$baumsch_data),
+                          prefix_names(sf::st_drop_geometry(data_list$soil_type)[, soil_type_cols ], "soil_type"),
+                          prefix_names(sf::st_drop_geometry(data_list$soil_nutrients)[, soil_nutrient_cols], "soil_nutrients"),
+                          building_heigt_m = data_list$building_height_mean_m,
+                          prefix_names(data_list$lcz_cover_prop, "lcz_prop"))
+
+
+    return(covariate_df)
+
+
+
+}
 
