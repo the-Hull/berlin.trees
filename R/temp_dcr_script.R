@@ -79,3 +79,44 @@ file_index <- grep("Reinick",
 
 
 datacleanr::dcr_app(dframe = tree_by_dists[file_index])
+
+
+# Spandau -------------------------------------
+
+file_index <- grep("Spandau",
+                   tree_by_dists)
+
+
+datacleanr::dcr_app(dframe = tree_by_dists[file_index])
+
+
+# Stegl -------------------------------------
+
+file_index <- grep("Stegl",
+                   tree_by_dists)
+
+
+datacleanr::dcr_app(dframe = tree_by_dists[file_index])
+
+
+
+
+# Tempelhof -------------------------------------
+
+file_index <- grep("Tempelhof",
+                   tree_by_dists)
+
+
+datacleanr::dcr_app(dframe = tree_by_dists[file_index])
+
+
+
+
+# Trep -------------------------------------
+
+file_index <- grep("Trep",
+                   tree_by_dists)
+
+
+datacleanr::dcr_app(dframe = tree_by_dists[file_index])
+
