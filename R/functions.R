@@ -565,6 +565,44 @@ download_berlin_polygons_as_sf <- function(path = "./analysis/data/raw_data/spat
 
 
 
+
+#' Download  Berlin Land use to green, water and urban
+#'
+#' @param path character, path to read file from
+#'
+#' @return sf-tibble with polygons of Berlin landuse
+#' @import httr
+#' dplyr
+#'
+download_berlin_lu <- function(path = "./analysis/data/raw_data/spatial_ancillary/berlin_landuse.geojson"){
+
+    # blu <- sf::st_read(path)
+
+    wfs_lu <- "https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/sach_nutz2015_nutzsa"
+
+
+    query <- list(service = "WFS",
+                  request = "GetFeature",
+                  version = "2.0.0",
+                  TypeNames = "fis:sach_nutz2015_nutzsa",
+                  # count = 10,
+                  outputFormat = 'application/geo+json')
+
+    # request data via GET (REST API and save to disk)
+
+    httr::GET(wfs_lu,
+              query = query,
+              httr::write_disk(path = path, overwrite = TRUE)
+
+    )
+
+
+
+    return(path)
+}
+
+
+
 #' Load spatial-features data sets of all Berlin trees
 #'
 #' @param download_data Character, file paths for downloaded .geojson files from WFS service
@@ -1090,6 +1128,9 @@ prep_model_df <- function(dset,
     return(df_nest)
 
 }
+
+
+
 
 # Spatial -----------------------------------------------------------------
 
@@ -2518,6 +2559,138 @@ make_ranef_plot <- function(model_out,
 
 
 }
+
+
+#' Generate study site area
+#'
+#' @param blu character, path to berlin land use
+#' @param berlin_poly character, path to berlin poly
+#'
+#' @return ggplot object
+#' @export
+#'
+#' @examples
+make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
+
+
+
+    blu <-  sf::st_read(blu, quiet = TRUE) %>%
+        sf::st_make_valid()
+
+    blu <- blu %>%
+        dplyr::mutate(lu_adjusted = dplyr::case_when(
+            GRZ_NAME %in% c("Baumschule / Gartenbau",
+                            "Park / Grünfläche",
+                            "Friedhof",
+                            "Brachfläche, wiesenartiger Vegetationsbestand",
+                            "Brachfläche, Mischbestand aus Wiesen, Gebüschen und Bäumen",
+                            "Kleingartenanlage",
+                            "Baumschule / Gartenbau",
+                            "Wald",
+                            "Grünland",
+                            "Ackerland") ~ "greenspace",
+            GRZ_NAME == "Gewässer" ~ "water",
+            TRUE ~ "urbanized"))
+
+
+
+
+
+    base_size <- 16
+
+
+
+    # countries <- rnaturalearth::ne_countries(returnclass = "sf", continent = "Europe", scale = 50)
+    countries <- rnaturalearth::ne_countries(returnclass = "sf", continent = "Europe", scale = 110)
+
+
+
+    europe_box <- data.frame(lon = c(-12, 45),
+                             lat = c(71, 34)) %>%
+        sf::st_as_sf(coords = c('lon', 'lat'), crs=4326, remove = FALSE) %>%
+        sf::st_bbox() %>%
+        sf::st_as_sfc()
+
+
+
+    berlin_loc <- blu %>%
+        sf::st_bbox() %>%
+        sf::st_as_sfc() %>%
+        sf::st_centroid() %>%
+        sf::st_transform(crs = sf::st_crs(countries))
+
+    # countries <- sf::st_crop(countries, europe_box)
+
+
+    map_europe<- ggplot2::ggplot() +
+        ggplot2::geom_sf(data = countries,
+                         # geom_sf(data = countries  %>%
+                         #             dplyr::filter(admin != 'Russia'),
+                         ggplot2::aes(fill = admin == 'Germany'),
+                         color = "gray20", show.legend = FALSE) +
+        ggplot2::geom_sf(data = berlin_loc, fill = "firebrick1", shape = 23, size = 2) +
+        ggplot2::coord_sf(xlim = c(-10,45), ylim = c(34,71), crs = 4326) +
+        # geom_sf(data = countries  %>%
+        #             dplyr::filter(admin == 'Russia'),
+        #         fill = "gray90",
+        #         color = "gray90") +
+        # geom_sf(data = europe_box, color = "black", fill = "transparent") +
+        ggplot2::scale_fill_manual(values = c("gray95", "gray30")) +
+        ggplot2::theme_void() +
+        ggplot2::theme(plot.background = ggplot2::element_rect(fill = "white"),
+                       panel.border = ggplot2::element_rect(color = "black", fill = "transparent"))
+
+
+
+    berlin_poly <- sf::st_read(berlin_poly) %>%
+        sf::st_make_valid() %>%
+        sf::st_union()
+
+
+
+
+
+
+    plt <- ggplot2::ggplot() +
+        ggplot2::geom_sf(data = blu,
+                         ggplot2::aes(fill = lu_adjusted,
+                                      color = lu_adjusted)) +
+        ggplot2::geom_sf(data = berlin_poly, color = "black", fill = "transparent") +
+        ggplot2::scale_fill_manual(values = c("greenspace" = "seagreen4",
+                                              "urbanized" = "beige",
+                                              "water" = "steelblue1")) +
+        ggplot2::scale_color_manual(values = c("greenspace" = "seagreen4",
+                                               "urbanized" = "beige",
+                                               "water" = "steelblue1")) +
+        ggplot2::coord_sf(xlim = c(370000, 425000.2), ylim = c(5795000    , 5837259.4 )) +
+        ggplot2::scale_y_continuous(breaks = seq(52.35, 52.65, by = 0.1)) +
+        ggplot2::theme_minimal(
+            # base_family = "Roboto Condensed",
+            base_size = base_size) +
+        ggplot2::theme(legend.direction = "horizontal",
+                       legend.position = c(0.4, 0.075),
+                       # legend.position = "top",
+                       legend.background = ggplot2::element_rect(fill = "white", color = "transparent"),
+                       # legend.key = element_rect(color = "black", fill = "transparent"),
+                       legend.title = ggplot2::element_blank()) +
+        ggplot2::annotation_custom(grob = ggplot2::ggplotGrob(map_europe),
+                                   xmin = 410000 ,
+                                   xmax = 430000.2 ,
+                                   ymin = 5820000 ,
+                                   ymax = 5837259.4)
+
+    ggplot2::ggsave(path_out,
+           plot = plt,
+           height = height,
+           width = width,
+           units = "cm",
+           dpi = dpi)
+
+
+
+}
+
+
 
 
 # Tables ------------------------------------------------------------------

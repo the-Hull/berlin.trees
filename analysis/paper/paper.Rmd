@@ -5,7 +5,11 @@ author:
   - $^a$ *Geoforschungszentrum Potsdam, Section 4.3, Germany*
   - "* Corresponding author: hurley@gfz-potsdam.de"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
+always_allow_html: true
 output: 
+    bookdown::html_document2:
+      fig_caption: yes
+      toc: true
     bookdown::word_document2:
       fig_caption: yes
       reference_docx: "../templates/template.docx" # Insert path for the DOCX file
@@ -13,9 +17,6 @@ output:
       - --lua-filter=../templates/scholarly-metadata.lua
       - --lua-filter=../templates/author-info-blocks.lua
       - --lua-filter=../templates/pagebreak.lua
-    bookdown::html_document2:
-      fig_caption: yes
-      toc: true
     bookdown::pdf_document2:
       fig_caption: yes
       toc: yes
@@ -30,7 +31,9 @@ header-includes:
 - \usepackage{tabu}
 - \usepackage{threeparttable}
 - \usepackage[normalem]{ulem}
-bibliography: uhi_references.bib
+bibliography: 
+  - uhi_references.bib
+  - 04_gfz_uhi.bib
 csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
 abstract: |
   **This document outlines the rationale for an analysis of tree growth (potential) and its relationship with the Urban Heat Island (UHI) effect in Berlin using an extensive, publicly available data set. It introduces preliminary results and provides an outlook for up-coming and potential work.**
@@ -122,7 +125,7 @@ This data set contains information on location, species, trunk diameter (at brea
 
 
 ```{r tab-tree-overview}
-loadd(overview_table)
+drake::loadd(overview_table)
 
 
 caption_ov <- "Available records by category in entire data set (n), and those with age and $DBH$ entries (n$_{full}$)."
@@ -195,7 +198,115 @@ The inclusion of independent, tree-level growth data, however, is paramount as i
 
 
 
-# Proposed methods and data requirements {#sec:methods}
+# Methods {#sec:methods}
+
+## Study area
+
+Berlin is one of the largest metropolitan areas in Central Europe (892$~km^2$) with a population of approximately 3.6 million, and a maximum extent of 38$~km$ in North-South and 45$~km$ in East-West directions. 
+It is located in North-Eastern Germany, and lies in the temperate zone with warm-humid climate (Dfb) according to the updated Köppen-Geiger classification [@beck2018], with mean annual temperature of approximately 10$^\circ C$ and precipitation of 575$~mm$ (Tempelhof weather station, DWD).
+Berlin features low relief (approximately 30$~m$ to 60$~m$ with 120$~m$ at solitary peaks), and is centered around a glacial outwash valley (sands, gravel), bordered by two plateaus consisting of glacial till and clay in the North-East and South, as well as sands in the South-West.
+The city provides extensive public green space covering around 30$~\%$ of its area [@suvkberlin2019], with an extensive urban forest of nearly 700000 publically-managed trees along streets, in parks and in riparian areas.
+It has a pronounced urban heat island, owing to its high degree of built-up and sealed surfaces, with air temperatures up to 12$^\circ C$ higher in urban compared to adjacent rural areas [@fenner2014].
+
+
+## Data sources
+
+An overview of all data used in this study, including sources, types, and application, is provided in Table X.
+Most notably, characteristics of street trees and their respective environments were collated from the city's tree inventory, as well as various elements of the Berlin Environment Atlas, which are openly available via daten.berlin.de and curated by the city's government.
+The data used from the inventory includes species, location, age, and diameter at breast height (dbh).
+The environment atlas holds information on several variables relevant to tree growth, such as soil type and nutrient exchange capacity, distance to groundwater, surface area of tree planting beds ("Baumscheibe"), as well as general characteristics of the urban environment like building height.
+It also includes spatially-explicit model outputs for local climate simulations representative of typical conditions, such as air temperature (2 m) on a 2015 summer's day at different hours (0400, 1400, 2200). 
+These outputs are available at city block or planning unit level, and were used as a proxy for the general temperature distribution influenced by urbanization across the investigated growth period across the previous 80 years (see section X for details).
+This was deemed reasonable as Berlin's built-up area has not changed markedly over the past 50 years (i.e., from about 52 to 61 %) [@mohamed2017]. 
+The utility of using this high-resolution data set of air temperatures over a derived urban heat island product was assessed by… 
+Further insight into the role of the urban environment was assessed by including local climate zone classes derived by WUDAPT.
+These describe the proportion of urban area with a specific cover, such as dense high rises, sealed surfaces, etc. 
+For this study, the LCZ 2, representing dense mid-rise built up cover was used as a proxy for the degree of urbanization, and is the most frequent LCZ for Berlin [@fenner2017] (found ref in .
+Use percent sealed surface instead?
+
+
+
+```{r dsources-prep, include=FALSE}
+
+options(knitr.kable.NA = "")
+
+
+dsources_path <- "analysis/data/tables/data_sources.xlsx"
+dsources <- readxl::read_excel(dsources_path, na = "NA")
+dsources$Accessed <- format(dsources$Accessed, "%b '%y")
+
+```
+
+```{r dsources-tab}
+
+caption <- "Data description used for generating maps and route optimization. Resolution and radius are provided in $m$, the latter referring to the buffer size across which data was averaged to estimate trees' environmental conditions. A zero-radius refers to a point extraction from categorical and location specific data. **Planting Bed Area, and Soil type are not currently used.**"
+
+
+dsources <- dsources %>%
+  dplyr::select(Name = `Name-eng`, Accessed, Type, Unit = `Unit-latex`, Resolution, Radius, Source = `Source-short`, Reference = TextRef) %>%
+  dplyr::filter(Name != "UHI Berlin",
+                Name != "Park Trees",
+                Name != "Riparian Trees") 
+
+
+if (grepl("docx", out_format) ||
+    knitr::is_latex_output() ) {
+  table_ds <- dsources %>% 
+  knitr::kable(booktabs = TRUE,
+              
+             caption = caption,
+             caption.short = caption,
+             format = "latex",
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             escape = FALSE) 
+  
+} else {
+table_ds <- dsources %>% 
+  knitr::kable(booktabs = TRUE,
+               format = "html",
+               
+             caption = caption,
+             caption.short = caption_ov_short,
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             escape = FALSE) 
+}
+
+
+table_ds %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 11,
+                            latex_options = c("hold_position")) %>% 
+  kableExtra::row_spec(0, bold = TRUE, font_size = 12) 
+
+
+# dsources %>%
+#   
+#   knitr::kable(caption = caption, escape = FALSE) %>%
+#   kableExtra::kable_styling(full_width = TRUE,
+#                             bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+
+# flextable::set_flextable_defaults(padding.left = 0)
+# 
+# dsources %>%
+#   dplyr::select(`Name-eng`, Accessed, Type, Source, TextRef) %>%
+#   flextable::flextable() %>%
+#   flextable::autofit()
+
+
+```
+
+
 
 ## General analyses
 
@@ -323,13 +434,13 @@ Table$~$\@ref(tab:tab-age) shows the binned distribution of genera across age cl
 
 ```{r tab-age}
 
-loadd(age_tables)
+drake::loadd(age_tables)
 
 age_tables <- age_tables %>% 
   dplyr::arrange(desc(n_total))
 colnames(age_tables)[c(1,7,8, 9)] <- c("Genera", "150+", "Total (n)", "Missing (n)") 
 
-age_tables <- bind_rows(age_tables[age_tables$Genera!="Other",],
+age_tables <- dplyr::bind_rows(age_tables[age_tables$Genera!="Other",],
                         age_tables[age_tables$Genera=="Other",])
 
   
@@ -337,7 +448,7 @@ add_row <- as.data.frame(matrix(c(NA, colSums(age_tables[,-1])), nrow = 1))
 add_row[1,1] <- "Marg. Totals"
 colnames(add_row) <- colnames(age_tables)
 
-age_tables <- bind_rows(age_tables,
+age_tables <- dplyr::bind_rows(age_tables,
                     add_row)
 
 
