@@ -23,4 +23,8 @@ source("R/plan.R")      # Create your drake plan.
 # drake::expose_imports("berlin.trees",
                       # character_only = TRUE)
 # drake_config(plan, envir = getNamespace("berlin.trees"))
+
+
+# future::plan(future.callr::callr)
+
 drake_config(plan)

@@ -1,10 +1,12 @@
 library(drake)
 # library(future.callr)
 library(dplyr)
-library(future)
-future::plan(future.callr::callr)
-# future::plan(future::multiprocess)
-# options(future.globals.maxSize = 600 * 1024 ^ 2)
+# library(future)
+# future::plan(future.callr::callr)
+# future::plan(future::multisession)
+# options(future.globals.maxSize = 5000 * 1024 ^ 2)
+
+redownload <- FALSE
 
 
 plan <- drake_plan(
@@ -18,7 +20,8 @@ plan <- drake_plan(
 
 
     ### Berlin districts and BBoxx
-    berlin_polygons = target(download_berlin_polygons_as_sf()),
+    berlin_polygons = target(download_berlin_polygons_as_sf(),
+                             trigger = trigger(condition = redownload)),
 
     bounding_box = make_bbox(52.083962, 52.847599,
                                            12.712024, 14.238359,
@@ -36,11 +39,18 @@ plan <- drake_plan(
         lapply(., function(x)prop.table(table(x))) %>%
         setNames(berlin_polygons$NAMGEM) %>% dplyr::bind_rows(.id = "bezirk"),
 
-    berlin_soil = download_soil_types(),
+    berlin_soil = target(download_soil_types(),
+                         trigger = trigger(condition = redownload)),
 
-    berlin_soil_nutrients = download_soil_nutrients(),
+    berlin_soil_nutrients = target(download_soil_nutrients(),
+                                   trigger = trigger(condition = redownload)),
 
-    berlin_building_height = download_building_height(),
+    berlin_building_height = target(download_building_height(),
+                                    trigger = trigger(condition = redownload)),
+
+    berlin_heat_model_2015 = target(download_heat_data(),
+                                    trigger = trigger(condition = redownload)),
+
 
     ### Berlin UHI gridded data -------------------------------
 
@@ -58,10 +68,12 @@ plan <- drake_plan(
 
 
     ## Berlin trees (download Senate tree data set from WFS using API)
-    download_data = target(download_berlin_trees()),
+    download_data = target(download_berlin_trees(),
+                           trigger = trigger(condition = redownload)),
 
     # Berlin Baumscheiben
-    download_data_baumscheiben = download_berlin_baumscheiben(),
+    download_data_baumscheiben = target(download_berlin_baumscheiben(),
+                                        trigger = trigger(condition = redownload)),
 
     ### Cleaning
 
@@ -120,6 +132,11 @@ plan <- drake_plan(
         unlist() %>%
         unname(),
 
+
+    berlin_heat_model = assess_mean_temps(full_data_set_clean,
+                                          berlin_heat_model_2015,
+                                          20),
+
     # Add UHI data from RasterLayer stack to sf data frame
     extract_uhi_values_to_list = add_uhi_hist_data(uhi_stack_list = uhi_stacks,
                                                                  sf_data = full_data_set_clean[, ]),
@@ -130,7 +147,8 @@ plan <- drake_plan(
                             soil_type = soil_type_data,
                             soil_nutrients = soil_nutrient_data,
                             building_height_mean_m = building_height_mean_m,
-                            lcz_cover_prop = lcz_cover_prop)),
+                            lcz_cover_prop = lcz_cover_prop,
+                            berlin_heat_model = berlin_heat_model)),
 
 
 
@@ -152,22 +170,46 @@ plan <- drake_plan(
                         save_dir = drake::file_out("./analysis/data/raw_data/tree_splits")),
 
 
+    combined_data = combine_split_clean_data(full_data_set_clean_with_UHI_covariates),
+
+
      # Model -------------------------------------------------------------------
 
 
+    model_params = list(n_max_species = 10,
+                                        age_cutoff = 150,
+                                        mad_factor = 7),
+
+    model_df = prep_model_df(
+        dset = combined_data,
+        model_params = model_params,
+        plot = TRUE,
+        path = "./analysis/figures/diagnostic_01_model_data.png"),
+
+
+
+    model_grid = make_model_grid(),
+
+    bam_dbh_fulldf = apply_gam_mod(path = "./analysis/data/models/stat/fulldf/",
+                                   model_grid = model_grid, dat = model_df,
+                                   overwrite = FALSE),
+
+
+    bam_dbh_filtered = apply_gam_mod(path = "./analysis/data/models/stat/filtered/",
+        model_grid = model_grid, dat = model_df[model_df$diag_mad_select,],
+        overwrite = FALSE),
 
 
 
 
-
-    # This is a list of models I apply simulatenously for later evaluation
+    # This is a list of models I apply simultaneously for later evaluation
     model_list = list(
         # null = function(x) lme4::lmer(dbh_cm ~ 1, data = x),
         # heat_only = function(x) lme4::lmer(dbh_cm ~ day_2007, data = x)  ,
         # heat_RIspecies = function(x) lme4::lmer(dbh_cm ~ day_2007 + (1 | ART_BOT) , data = x) ,
         # heat_RIspecies_provenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + (1 | ART_BOT) + provenance , data = x) ,
         # heat_RIspecies_RSspecies = function(x) lme4::lmer(dbh_cm ~ day_2007 + (1 + day_2007 | ART_BOT) , data = x)  ,
-        # heat_RIspecies_RSspecies_provenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + (1 + day_2007 | ART_BOT) + provenance , data = x)  ,
+        # heat_RIspecies_RSspecies_provenance = function(x) dralme4::lmer(dbh_cm ~ day_2007 + (1 + day_2007 | ART_BOT) + provenance , data = x)  ,
         # heat_RIspecies_RSspecies_RIprovenance = function(x) lme4::lmer(dbh_cm ~ day_2007 + provenance + (1 + day_2007 | provenance : ART_BOT)  , data = x)  ,
         # heat_age = function(x) lme4::lmer(dbh_cm ~ day_2007 + STANDALTER, data = x)  ,
         # heat_age_species = function(x) lme4::lmer(dbh_cm ~ day_2007 + STANDALTER + ART_BOT, data = x)  ,

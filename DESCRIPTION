@@ -42,4 +42,4 @@ Imports:
     snow
 Suggests: devtools,
     git2r
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1

@@ -451,8 +451,81 @@ download_soil_nutrients <- function(path = "./analysis/data/raw_data/spatial_anc
 }
 
 
+#' Download Klimamodell 2015 heat data for Berlin
+#'
+#' Heat data (PET, 2 m..) at multiple time points from a climate model
+#' @return heats raster dframe
+download_heat_data <- function(){
 
-#' Access Berlin district polygon from external source
+
+
+    wfs_heat_area <- "https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_0410_analysedaten2015"
+    wfs_heat_street <- "https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_0410_analysedaten_strasse_2015"
+
+    wfss <- list(block = wfs_heat_area, street = wfs_heat_street)
+
+    # cation exchange capacity 1-10
+
+
+    out <- lapply(wfss,
+                  function(x){
+
+                      q <- list(service = "WFS",
+                                request = "GetFeature",
+                                version = "2.0.0",
+                                TypeNames = sprintf("fis:%s", fs::path_file(x)),
+                                outputFormat = 'application/geo+json')
+
+                      return(httr::GET(x,
+                                       query = q))
+                  })
+
+
+
+
+
+    sfs <- lapply(out, sf::st_read, quiet = TRUE)
+
+
+    sfs[[1]] <- sfs[[1]] %>%
+        mutate_at(.vars = 2:16,
+                  .funs = function(x){as.numeric(as.character(x))}) %>%
+        mutate_at(.vars = 2:16,
+                  .funs = function(x){ifelse(x == 0, NA, x)})
+    sfs[[2]] <- sfs[[2]] %>%
+        mutate_at(.vars = 2:13,
+                  .funs = function(x){as.numeric(as.character(x))}) %>%
+        mutate_at(.vars = 2:13,
+                  .funs = function(x){ifelse(x == 0, NA, x)})
+    names(sfs) <- names(wfss)
+
+    sfs <- purrr::map2(sfs, names(sfs),
+                       function(x, y){
+                           x$type <- y
+                           return(x)
+                       })
+
+    sfs <- bind_rows(sfs)
+    sfs_raster <- raster::raster(sfs, resolution = 5)
+
+    fields <- c("T2M04HMEA",  "T2M14HMEA",  "T2M22HMEA")
+
+    heat_rasterized <- lapply(fields,
+                              function(x){
+                                  fasterize::fasterize(sfs,
+                                                       sfs_raster,
+                                                       field = x,
+                                                       fun = "max")
+                              }) %>%
+        setNames(nm = fields)
+    heat_rasterized <- raster::stack(heat_rasterized)
+
+    return(heat_rasterized)
+}
+
+
+
+2#' Access Berlin district polygon from external source
 #'
 #' @return sf-tibble with polygons of Berlin districts
 #' @import httr
@@ -490,14 +563,6 @@ download_berlin_polygons_as_sf <- function(path = "./analysis/data/raw_data/spat
     return(berlin_polygons)
 }
 
-#' Crop Spatial data with bbox
-#'
-#' @param sf_data_list list containing sf tibbles
-#' @param bbox sf tibble, polygon used for cropping
-#'
-#' @return sf tibble, cropped with specified bbox
-#' @export
-#'
 
 
 #' Load spatial-features data sets of all Berlin trees
@@ -751,7 +816,7 @@ bind_rows_sf <- function(sf_list){
     sf_df  <- lapply(sf_list, function(x){
 
         sf::st_set_geometry(x, NULL) %>%
-           setNames(toupper(colnames(x)))
+            setNames(toupper(colnames(x)))
 
     }) %>%
         dplyr::bind_rows()
@@ -828,7 +893,7 @@ clean_data <- function(sf_data){
 #' Split data sets and save to file
 #'
 #' Datasets are split by district and saved to individual files of form
-#' \code{berlin_trees_subset-DISTRICT.Rds}
+#' \code{berlin_trees_subset-GENUS.Rds}
 #'
 #' @param sfdf data.frame, full berlin tree data set
 #' @param save_dir character, path to save folder.
@@ -848,7 +913,7 @@ split_df <- function(sfdf, save_dir = "./analysis/data/raw_data/tree_splits"){
         dplyr::select(-geometry)
 
     # split by district + gattung_short
-    splits <- split(sfdf, f = list(sfdf$BEZIRK))
+    splits <- split(sfdf, f = list(sfdf$gattung_short))
 
     # save_dir <- "./analysis/data/raw_data/tree_splits"
 
@@ -866,7 +931,7 @@ split_df <- function(sfdf, save_dir = "./analysis/data/raw_data/tree_splits"){
                                   gsub("[-]",
                                        "_",
                                        .y,)),
-                                  ext = "RDS")))
+                              ext = "RDS")))
 
 
     saveRDS(sfdf_geometry,
@@ -875,7 +940,156 @@ split_df <- function(sfdf, save_dir = "./analysis/data/raw_data/tree_splits"){
 }
 
 
+loadd(full_data_set_clean_with_UHI_covariates)
 
+
+
+#' Join dcr cleaned data together and sanity check
+#'
+#' @param origdf full df
+#' @param georecover_path path to RDS of georecover file
+#' @param cleaned_path folder path to cleaned data
+#'
+#' @return cleaned and joined df
+#' @export
+combine_split_clean_data <- function(
+    origdf,
+    georecover_path = "./analysis/data/raw_data/tree_splits/berlin_trees_GEOBACKUP.RDS",
+    cleaned_path = "./analysis/data/raw_data/tree_splits/"
+){
+
+
+    geo_recover <- readRDS(georecover_path)
+
+    # make id for sanity check
+    origdf <- cbind(origdf, berlin_id = geo_recover$berlin_id) %>%
+        tidyr::unite("old_id", KENNZEICH, GISID)
+
+    split_files <- list.files(path = cleaned_path,
+                              pattern = "cleaned.Rds$",
+                              full.names = TRUE)
+
+
+    cleaned_data_join <- lapply(split_files,
+                                readRDS) %>%
+        dplyr::bind_rows() %>%
+        dplyr::ungroup() %>%
+        tidyr::unite("check_id", KENNZEICH, GISID) %>%
+        dplyr::filter(is.na(.annotation)) %>%
+        dplyr::select(berlin_id, check_id) %>%
+        dplyr::left_join(origdf, by = "berlin_id") %>%
+        tidyr::drop_na(STANDALTER, dbh_cm)
+    # %>% sf::st_set_geometry(.$geometry)
+
+
+    if(
+        !identical(
+            cleaned_data_join$check_id,
+            cleaned_data_join$old_id,
+        )
+    ){
+        stop("Something went wrong while merging the cleaned data. Please check")
+    }
+
+
+    return(cleaned_data_join)
+}
+
+
+
+#' Prep model data frame
+#'
+#' Defines df with top species by abundance, max age and the median absolute
+#' deviance score used to remove gross outliers.
+#'
+#' @param dset
+#' @param model_params
+#' @param plot
+#' @param path
+#'
+#' @return dset filtered according to the model params and has two additional columns.
+#' One of these is `mad_select`, (logical), which can be used to subset the df.
+#' @export
+#'
+#' @examples
+prep_model_df <- function(dset,
+                          model_params,
+                          plot = TRUE,
+                          path = "./analysis/figures/diagnostic_01_model_data.png"){
+
+
+
+    top_species <- dset %>%
+        dplyr::group_by(species_corrected) %>%
+        dplyr::tally(sort = TRUE) %>%
+        dplyr::top_n(model_params$n_max_species)
+
+
+
+    df_nest <- dset %>%
+        dplyr::filter(species_corrected %in% top_species$species_corrected,
+                      STANDALTER <= model_params$age_cutoff) %>%
+        tidyr::nest(cols = -species_corrected) %>%
+        dplyr::mutate(
+            mod = purrr::map(
+                cols,
+                function(df){
+                    glm(dbh_cm ~ STANDALTER, family = Gamma(link = "identity"), data = df)
+                }),
+            cols = purrr::modify2(
+                cols,
+                mod,
+                ~dplyr::mutate(.x,
+                               diag_fitted_dat = predict(.y, .x, type = "response"),
+                               diag_resid_val = resid(.y),
+                               diag_mad_cutoff = +1 * model_params$mad_factor * mad(resid(.y)),
+                               diag_mad_select = abs(diag_resid_val) <= diag_mad_cutoff
+                )
+            )
+        ) %>%
+        dplyr::select(-mod) %>%
+        tidyr::unnest(cols = cols)
+
+
+    if(plot == TRUE){
+
+
+
+        p <- df_nest %>%
+            dplyr::arrange(desc(diag_mad_select)) %>%
+            ggplot(aes(x = STANDALTER,
+                       y = dbh_cm,
+                       color = diag_mad_select,
+                       group = species_corrected)) +
+            geom_point() +
+            geom_point(aes(y = diag_fitted_dat), col = "pink", size = 0.5) +
+            labs(color = "Retained point",
+                 subtitle = sprintf("dbh ~ STANDALTER^1; MAD Cutoff factor +/- %i x MAD", model_params$mad_factor)) +
+            # geom_line(color = "pink", aes(group = species_corrected)) +
+            facet_wrap(~species_corrected, scales = "free")
+
+        if(file.exists(path)){
+            cat("Plot already exists. Overwriting. \n\n")
+        }
+
+
+        ggsave(filename = path,
+               plot = p,
+               width = 35,
+               height = 30,
+               units = "cm")
+
+        if(file.exists(path)){
+            cat(sprintf("Created diagnostic plot successfully in %s \n\n", path))
+        }
+
+    }
+
+    df_nest$species_corrected <- as.factor(df_nest$species_corrected)
+
+    return(df_nest)
+
+}
 
 # Spatial -----------------------------------------------------------------
 
@@ -1198,22 +1412,22 @@ assess_relative_lcz_cover <- function(sf_data, lcz_raster, buff_dist = 100, meth
     #                                           function(x)prop.table(table(x))))
 
 
-     extracted_vals <- raster::extract(lcz_raster,
-                                       sf_data,
-                                       method = method,
-                                       buffer = buff_dist,
-                                       df = TRUE,
-                                       factors = TRUE)
+    extracted_vals <- raster::extract(lcz_raster,
+                                      sf_data,
+                                      method = method,
+                                      buffer = buff_dist,
+                                      df = TRUE,
+                                      factors = TRUE)
 
-     extracted_vals <- data.table::as.data.table(extracted_vals)
-     extracted_vals <- extracted_vals[,.N, by = c("ID", "lcz_class")]
-     extracted_vals[ , `:=`(prop_class = prop.table(N)), by = "ID"]
+    extracted_vals <- data.table::as.data.table(extracted_vals)
+    extracted_vals <- extracted_vals[,.N, by = c("ID", "lcz_class")]
+    extracted_vals[ , `:=`(prop_class = prop.table(N)), by = "ID"]
 
-     extracted_vals <- data.table::dcast(extracted_vals, ID ~ lcz_class, value.var = "prop_class")
+    extracted_vals <- data.table::dcast(extracted_vals, ID ~ lcz_class, value.var = "prop_class")
 
     # raster::endCluster()
 
-     return(extracted_vals)
+    return(extracted_vals)
 
 }
 
@@ -1267,6 +1481,43 @@ assess_relative_building_height <- function(sf_data, bh_raster, buff_dist = 100,
     return(extracted_vals)
 
 }
+
+
+#' Extract values from raster based on (point) sf
+#'
+#' @param sf_data sf dframe, e.g. berlin trees
+#' @param heat_raster, raster, berlin klimamodell temps (or other)
+#' @param buff_dist, buffer around points / polygons
+#' @param method character, "simple" (for categorical) or "bilinear"
+#'
+#' @return dframe, 1 row per sf geometry, with proportions of coverage
+#' @export
+assess_mean_temps <- function(sf_data, heat_raster, buff_dist = 100, method = "simple"){
+
+    # ensure both objects have same projection
+
+    if(!sf::st_crs(sf_data)$wkt ==
+       raster::wkt(heat_raster)){
+
+        sf_data <- sf::st_transform(sf_data,
+                                    crs = raster::crs(heat_raster))
+        message("adjusted CRS")
+    }
+
+
+    extracted_vals <- raster::extract(heat_raster,
+                                      sf_data,
+                                      method = method,
+                                      buffer = buff_dist,
+                                      fun = mean,
+                                      na.rm = TRUE,
+                                      df = FALSE,
+                                      factors = FALSE)
+    return(extracted_vals)
+
+}
+
+
 
 
 # Stats -------------------------------------------------------------------
@@ -1446,6 +1697,7 @@ apply_models <- function(df = test_df,
                                    .data = test_set)
 
 
+
     return(list(model = model_out, test_data = test_set))
 
 
@@ -1456,8 +1708,145 @@ apply_models <- function(df = test_df,
 
 
 
+#' Apply GAM models across pre-defined grid (formula, family)
+#'
+#' Take care to manage overwrite properly - if model grid changes, might require re-running with "overwrite" set to TRUE
+#'
+#' @param model_grid df, predefined model grid from `make_model_grid()`
+#' @param dat df to run with model
+#' @param path character, output path
+#' @param overwrite logical, defaults to FALSE, i.e. don't overwrite existing models
+#'
+#' @return df with status overview
+#' @export
+#'
+#' @examples
+apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/", overwrite = TRUE){
 
 
+    safe_bam <- purrr::possibly(mgcv::bam, otherwise = NULL)
+
+
+
+    model_grid_list <- split(model_grid,
+                             seq_len(nrow(model_grid)))
+
+
+    out <- purrr::map_dfr(
+        # out <- furrr::future_map_dfr(
+        model_grid_list,
+        function(x){
+
+
+            out_file_path <- fs::path(path, x$mod_names, ext = "Rds")
+
+
+            if(file.exists(out_file_path) && !overwrite){
+
+
+                generated <- "old"
+                status <- "success"
+
+                cat(sprintf("Model: %s \n exists in  %s \n\n Skipping! \n \n", x$mod_names, out_file_path))
+
+            } else {
+
+
+
+                mod <- safe_bam(
+                    formula = x$forms[[1]],
+                    family = eval(x$fams[[1]]),
+                    data = dat)
+
+
+                if(!is.null(mod)){
+                    # out_file_path <- fs::path(path, x$mod_names, ext = "Rds")
+
+
+
+                    saveRDS(mod, out_file_path)
+                    cat(sprintf("Model: %s \n Writing to: %s \n\n", x$mod_names, out_file_path))
+                    status <- "success"
+                    generated <- "new"
+                    rm(mod)
+
+
+                } else {
+                    status <- "fail"
+                    out_file_path <- NA
+                    cat(sprintf("Model: %s \n Failed.\n\n", x$mod_names))
+                    generated <- NA
+                }
+
+            }
+
+            status_df <- data.frame(model = x$mod_names,
+                                    model_file_path = out_file_path,
+                                    state = status,
+                                    generated_in_run = generated,
+                                    stringsAsFactors = FALSE)
+
+
+            return(status_df)
+        })
+    # ,
+    # .options = furrr::furrr_options(seed = 123)
+    # }
+    # )
+
+
+    return(out)
+}
+
+
+
+#' Make df with model formulas and families
+#'
+#' @return tibble with 3 colums  `forms` = formulas, `fams` = family function, `mod_names` = id
+make_model_grid <- function(){
+
+
+    k_uni <- 30
+    k_te <- 40
+
+
+    forms <- list("mI_age_by_species" =
+                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+
+                  # AGE + Heat by Species
+                  "mI_age_by_species_ADD_heat14_by_species" =
+                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(T2M14HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+                  "mI_age_by_species_ADD_heat04_by_species" =
+                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(T2M04HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+                  "mI_age_by_species_ADD_heat22_by_species" =
+                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(T2M22HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+
+                  # AGE x HEAT by Species
+                  "mI_age_x_heat14_by_species" =
+                      dbh_cm ~ te(STANDALTER, T2M14HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected,
+                  "mI_age_x_heat04_by_species" =
+                      dbh_cm ~ te(STANDALTER, T2M04HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected,
+                  "mI_age_x_heat22_by_species" =
+                      dbh_cm ~ te(STANDALTER, T2M22HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected,
+                  "mI_age_x_heat14_by_species_reBEZIRK" =
+                      dbh_cm ~ te(STANDALTER, T2M14HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+
+                  # SPATIAL + AGE x HEAT by Species
+                  "mI_spatial_age_x_heat14_by_species" =
+                      dbh_cm ~ s(x,y, k = 200) + te(STANDALTER, T2M14HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected
+    )
+
+
+
+    fams <- rep(expression(Gamma(link = "log")), length(forms))
+
+
+    model_grid <- dplyr::tibble(forms, fams)  %>%
+        mutate(mod_names = names(forms))
+
+    return(model_grid)
+
+}
 
 
 # PLOTS -------------------------------------------------------------------
@@ -2261,11 +2650,16 @@ split_by_n <- function(dframe, cut_size){
     }
 
     # make unique id
+    break_sequence <- seq(from = 0,
+                          to = nrow(dframe),
+                          by = cut_size)
+    if(tail(break_sequence, 1) < nrow(dframe)){
+
+        break_sequence <- c(break_sequence, nrow(dframe))
+
+    }
     cuts <- base::cut(1:nrow(dframe),
-                      breaks = c(seq(from = 0,
-                                     to = nrow(dframe),
-                                     by = cut_size),
-                                 nrow(dframe) +1))
+                      breaks = break_sequence)
     # make lists
     dframe_lists <- base::split(dframe, f = as.factor(cuts))
 
@@ -2321,7 +2715,8 @@ combine_covariates <- function(data_list){
                     "soil_type",
                     "soil_nutrients",
                     "lcz_cover_prop",
-                    "building_height_mean_m")
+                    "building_height_mean_m",
+                    "berlin_heat_model")
 
     if(!all(names(data_list) %in% data_names)){
         stop("expecting different data set inputs. Check or change function to accommodate")
@@ -2336,7 +2731,8 @@ combine_covariates <- function(data_list){
                           prefix_names(sf::st_drop_geometry(data_list$soil_type)[, soil_type_cols ], "soil_type"),
                           prefix_names(sf::st_drop_geometry(data_list$soil_nutrients)[, soil_nutrient_cols], "soil_nutrients"),
                           building_heigt_m = data_list$building_height_mean_m,
-                          prefix_names(data_list$lcz_cover_prop, "lcz_prop"))
+                          prefix_names(data_list$lcz_cover_prop, "lcz_prop"),
+                          prefix_names(data_list$berlin_heat_model, "mod2015"))
 
 
     return(covariate_df)
