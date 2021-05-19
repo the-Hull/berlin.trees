@@ -216,12 +216,12 @@ Most notably, characteristics of street trees and their respective environments 
 The data used from the inventory includes species, location, age, and diameter at breast height (dbh).
 The environment atlas holds information on several variables relevant to tree growth, such as soil type and nutrient exchange capacity, distance to groundwater, surface area of tree planting beds ("Baumscheibe"), as well as general characteristics of the urban environment like building height.
 It also includes spatially-explicit model outputs for local climate simulations representative of typical conditions, such as air temperature (2 m) on a 2015 summer's day at different hours (0400, 1400, 2200). 
+These model outputs were preferred over *in situ* measurements as **more representative based on averaged conditions, physiologically more relevant than surface urban heat island products**.
 These outputs are available at city block or planning unit level, and were used as a proxy for the general temperature distribution influenced by urbanization across the investigated growth period across the previous 80 years (see section X for details).
-This was deemed reasonable as Berlin's built-up area has not changed markedly over the past 50 years (i.e., from about 52 to 61 %) [@mohamed2017]. 
-The utility of using this high-resolution data set of air temperatures over a derived urban heat island product was assessed by… 
+This was deemed reasonable as Berlin's built-up area has not changed markedly over the past 50 years, i.e., about 52 to 61$\%$ [@mohamed2017]. 
 Further insight into the role of the urban environment was assessed by including local climate zone classes derived by WUDAPT.
 These describe the proportion of urban area with a specific cover, such as dense high rises, sealed surfaces, etc. 
-For this study, the LCZ 2, representing dense mid-rise built up cover was used as a proxy for the degree of urbanization, and is the most frequent LCZ for Berlin [@fenner2017] (found ref in .
+For this study, the LCZ 6, representing dense mid-rise built up cover was used as a proxy for the degree of urbanization, and is the most frequent LCZ for Berlin [@fenner2017] (found ref in .
 Use percent sealed surface instead?
 
 
@@ -598,7 +598,20 @@ knitr::include_graphics(here::here("analysis/figures/plot_03_ranef_species_dbh_u
 ```
 
 
+# Discussion
 
+- Temperature, environmental and urban controls on tree growth  
+	+ Intra specific differences
+	+ Sensitive trees in hot spots
+	+ Temporal dynamics  
+	+ Validity and limitations  
+- Implications:  
+  + Policy / planning:  
+    - tree species
+	  - Increase temporal coverage and accuracy  
+		- which trees to prioritize for measurement campaigns  
+		- Supplement species matrix etc. with these analyses  
+  + Open data important --> drives innovation
 
 # Outlook
 
