@@ -2775,6 +2775,43 @@ make_age_table <- function(df, max_age = 120, break_interval = 20){
 }
 
 
+#' Returns df table of proportionial LCZ cover
+#'
+#' @param wudapt_path
+#' @param wudapt_desc_path
+#' @param berlin_poly_path
+#'
+#' @return df with covers
+make_wudapt_landcover_table <- function(wudapt_path, wudapt_desc_path, berlin_poly_path){
+
+    wudapt <- terra::rast(wudapt_path)
+    berlin_poly <- terra::vect(berlin_poly_path) %>%
+        terra::project(wudapt)
+
+    wudapt_desc <- read.csv(wudapt_desc_path, header = FALSE, skip = 2, stringsAsFactors = FALSE) %>%
+        setNames(nm = c("class", "r", "g", "b", "alpha", "name")) %>%
+        dplyr::mutate(class = as.factor(class))
+
+    lcz_berlin <- wudapt %>%
+        terra::crop(berlin_poly) %>%
+        terra::mask(berlin_poly)
+
+
+    lcz_prop <- lcz_berlin %>%
+        terra::values() %>%
+        table() %>%
+        prop.table() %>%
+        round(3) %>%
+        as.data.frame() %>%
+        setNames(nm = c("class", "freq")) %>%
+        mutate(class = as.factor(class)) %>%
+        dplyr::left_join(x = wudapt_desc, y = .) %>%
+        dplyr::arrange(dplyr::desc(freq))
+
+
+    return(lcz_prop)
+
+}
 
 
 
