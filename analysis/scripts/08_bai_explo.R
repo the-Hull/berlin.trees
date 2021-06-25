@@ -293,6 +293,36 @@ meta_trees <- readxl::read_xlsx("C:/Users/ahurl/Documents/_work/p024_gfz_berlin-
 
 
 
+meta_sites <- meta_sites %>%
+    mutate(
+        site_short = dplyr::case_when(
+            `District                               Kreis` == "Müggelheimer Damm 141; Frau Silvia Knöfel-Mosch (Tel.:030 6540083)" ~ "natural_teufelsee",
+            `District                               Kreis` == "Kolonie Heimaterde Alpenrose" ~ "urban-gardens_alpenrose",
+            `District                               Kreis` == "Gutschmidtstraße" ~ "urban-park_britz-sued",
+            `District                               Kreis` == "Hasenheide" ~ "urban-park_hasenheide",
+            `District                               Kreis` == "Weigandufer 23" ~ "urban-smallpark_weigandufer",
+            `District                               Kreis` == "Werrastraße" ~ "urban-smallpark_weigandufer",
+            `District                               Kreis` == "Mecklenburgische Seenplatte" ~ "natural_mueritz-np",
+            `District                               Kreis` == "Potsdam" ~ "rural_telegrafenberg",
+            TRUE ~ NA_character_),
+        site_type = sub("(.+(?=_))(_)(.+)",
+                        "\\1",
+                        x = site_short,
+                        perl = TRUE),
+        location_short = sub("(.+(?=_))(_)(.+)",
+                        "\\3",
+                        x = site_short,
+                        perl = TRUE)
+    )
+
+# dplyr::distinct(meta_sites[ ,c("Province                        Region",
+#          "Location                                   Standortname",
+#          "District                               Kreis",
+#          "Laenge",
+#          "Breite",
+#          "site_short",
+#          "site_type")])
+#
 
 # rws <- dplR::read.fh(fname = fhs[1])
 # rws <- dplR::read.fh(fname = fhs[524])
@@ -481,7 +511,10 @@ all_series_rwl_long <- dplyr::left_join(all_series_rwl_long,
                                             age = Alter,
                                             pith = Mark,
                                             first_ring = `erster JR`,
-                                            date_sample = `Datum`),
+                                            date_sample = `Datum`,
+                                            site_short,
+                                            site_type,
+                                            location_short),
                                         by = "tree_id"
 )
 all_series_rwl_long$age <- all_series_rwl_long$age + 2
@@ -533,68 +566,6 @@ rwl_windows <- furrr::future_map_dfr(
     })
 
 
-future::plan(sequential)
-
-
-
-rwl_windows %>%
-    filter(between(cambial_age, 20, 40)) %>%
-    ggplot(aes(group = tree_id)) +
-    geom_line(aes(x = cambial_age,
-                  y = window_mean_mm,
-                  color = window_center)) +
-    # facet_wrap(~sample_location_desc)
-    facet_wrap(~sample_location)
-
-
-
-
-rwl_windows %>%
-    filter(between(cambial_age, 30, 35)) %>%
-    ggplot(aes(x = window_center,
-               y = window_mean_mm,
-               color = species,
-               group = species)) +
-    geom_point() +
-    # facet_wrap(~sample_location_desc)
-    facet_wrap(~sample_location, scales = "free_x") +
-    geom_smooth(method = "lm")
-    # lims(xlim = c(1940, 2020))
-
-
-rwl_windows %>%
-    filter(between(cambial_age, 30, 40)) %>%
-    ggplot(aes(x = window_center,
-               y = window_mean_mm,
-               color = species,
-               group = species)) +
-    geom_point() +
-    # facet_wrap(~sample_location_desc)
-    facet_wrap(~sample_location, scales = "free_x") +
-    geom_smooth(method = "lm")
-# lims(xlim = c(1940, 2020))
-
-
-
-
-rwl_windows %>%
-    filter(between(cambial_age, 60, 70)) %>%
-    ggplot(aes(x = window_center,
-               y = window_mean_mm,
-               color = species,
-               group = species)) +
-    geom_point() +
-    # facet_wrap(~sample_location_desc)
-    facet_wrap(~sample_location, scales = "free_x") +
-    geom_smooth(method = "lm")
-# lims(xlim = c(1940, 2020))
-
-
-
-
-
-library(furrr)
-future::plan(future::multisession(workers = future::availableCores()-1))
 
 rwl_move <- furrr::future_map_dfr(
     split(all_series_rwl_long,
@@ -608,61 +579,492 @@ future::plan(sequential)
 
 
 
+# rwl_windows %>%
+#     filter(between(cambial_age, 50, 60)) %>%
+#     ggplot(aes(group = tree_id,
+#                x = cambial_age,
+#                y = window_mean_mm,
+#                color = window_center)) +
+#     geom_line() +
+#     # facet_wrap(~sample_location_desc)
+#     facet_wrap(~sample_location) +
+#     geom_smooth(method = "lm", aes(group = 1),
+#                 color = "darkorange",
+#                 size = 1.5) +
+#     scale_color_viridis_c()
+#
+#
+#
+# rwl_move %>%
+#     filter(between(cambial_age, 20, 40)) %>%
+#     ggplot(aes(group = tree_id,
+#                x = cambial_age,
+#                y = window_mean_mm,
+#                color = window_center)) +
+#     geom_line() +
+#     # facet_wrap(~sample_location_desc)
+#     facet_wrap(~sample_location) +
+#     geom_smooth(method = "lm", aes(group = 1),
+#                 color = "darkorange",
+#                 size = 1.5) +
+#     scale_color_viridis_c()
+#
+#
+#
+#
+# rwl_windows %>%
+#     filter(between(cambial_age, 30, 35)) %>%
+#     ggplot(aes(x = window_center,
+#                y = window_mean_mm,
+#                color = species,
+#                group = species)) +
+#     geom_point() +
+#     # facet_wrap(~sample_location_desc)
+#     facet_wrap(~sample_location, scales = "free_x") +
+#     geom_smooth(method = "lm")
+#     # lims(xlim = c(1940, 2020))
+#
+#
+# rwl_windows %>%
+#     filter(between(cambial_age, 30, 40)) %>%
+#     ggplot(aes(x = window_center,
+#                y = window_mean_mm,
+#                color = species,
+#                group = species)) +
+#     geom_point() +
+#     # facet_wrap(~sample_location_desc)
+#     facet_wrap(~sample_location, scales = "free_x") +
+#     geom_smooth(method = "lm")
+# # lims(xlim = c(1940, 2020))
+#
+#
+#
+#
+# rwl_windows %>%
+#     filter(between(cambial_age, 60, 70)) %>%
+#     ggplot(aes(x = window_center,
+#                y = window_mean_mm,
+#                color = species,
+#                group = species)) +
+#     geom_point() +
+#     # facet_wrap(~sample_location_desc)
+#     facet_wrap(~sample_location, scales = "free_x") +
+#     geom_smooth(method = "lm")
+# lims(xlim = c(1940, 2020))
+
+
+
+
+
+# library(furrr)
+# future::plan(future::multisession(workers = future::availableCores()-1))
+#
+# rwl_move <- furrr::future_map_dfr(
+#     split(all_series_rwl_long,
+#           all_series_rwl_long$tree_id),
+#     function(x){
+#         move_mean(x)
+#     })
+#
+#
+# future::plan(sequential)
+#
+
+
 rwl_move %>%
-    filter(between(cambial_age, 50, 70)) %>%
+    mutate(age_group = cut(cambial_age, seq(from = 0, to = 120, by = 5)),
+           site_global = case_when(
+               site_type %in% c("natural", "rural") ~ "forest",
+               TRUE ~ "urban")) %>%
+    # mutate(age_group_young = ifelse(between(age_group, 10, 25), "young", NA),
+           # age_group_old = ifelse(between(age_group, 55, 70), "old", "NA")) %>%
+    filter(between(cambial_age, 21, 25) |
+               between(cambial_age, 51, 55)) %>%
     ggplot(aes(x = window_center,
                y = window_mean_mm,
-               color = species,
-               group = species)) +
+               linetype = age_group,
+               color = site_global,
+               group = site_global,
+               shape = location_short)) +
     geom_point() +
     # facet_wrap(~sample_location_desc)
-    facet_wrap(~sample_location, scales = "free_x") +
+    facet_grid(age_group~species, scales = "free_x") +
     geom_smooth(method = "lm")
-# lims(xlim = c(1940, 2020))
+
+
+
+# rwl_move %>%
+#     filter(between(cambial_age, 25, 25)) %>%
+#     ggplot(aes(x = window_center,
+#                y = window_mean_mm,
+#                color = site_type,
+#                group = site_type,
+#                shape = location_short)) +
+#     geom_point() +
+#     # facet_wrap(~sample_location_desc)
+#     facet_wrap(~species, scales = "free_x") +
+#     geom_smooth(method = "lm")
+#
+#
+# rwl_move %>%
+#     filter(between(cambial_age, 50, 55)) %>%
+#     ggplot(aes(x = window_center,
+#                y = window_mean_mm,
+#                color = site_type,
+#                group = site_type,
+#                shape = location_short)) +
+#     geom_point() +
+#     # facet_wrap(~sample_location_desc)
+#     facet_wrap(~species, scales = "free_x") +
+#     geom_smooth(method = "lm")
+# # lims(xlim = c(1940, 2020))
+# rwl_move %>%
+#     filter(between(cambial_age, 10, 25)) %>%
+#     ggplot(aes(x = window_center,
+#                y = window_mean_mm,
+#                color = sample_location)) +
+#     geom_point(alpha = 0.3) +
+#     # facet_wrap(~sample_location_desc)
+#     facet_wrap(~species) +
+#     geom_smooth(method = "lm") +
+#     guides(color = FALSE)
+# # lims(xlim = c(1940, 2020))
+#
+#
+#
+#
+#
+# rwl_move %>%
+#     filter(sample_location == "Teufelssee-Kie",
+#            between(cambial_age, 60, 70)) %>%
+#     ggplot(aes(x = window_center,
+#                y = window_mean_mm,
+#                color = species,
+#                group = species)) +
+#     geom_point() +
+#     # facet_wrap(~sample_location_desc)
+#     # facet_wrap(~sample_location, scales = "free_x") +
+#     geom_smooth(method = "lm")
+# # lims(xlim = c(1940, 2020))
+#
+#
+#
+# rwl_move %>%
+#     filter(sample_location == "Teufelssee-Kie", between(cambial_age, 60, 70)) %>%
+#     ggplot(aes(x = pith,
+#                y = tree_id,
+#                color = species,
+#                group = tree_id)) +
+#     geom_point()
+#     # facet_wrap(~sample_location_desc)
+#     # geom_smooth(method = "lm")
+# # lims(xlim = c(1940, 2020))
+#
+#
+#
+# rwl_move %>%
+#     mutate(age_group = cut(cambial_age, seq(from = 0, to = 120, by = 5)),
+#            site_global = case_when(
+#                site_type %in% c("natural", "rural") ~ "forest",
+#                TRUE ~ "urban")) %>%
+#     filter(between(cambial_age, 25, 25) |
+#                between(cambial_age, 55, 55)) %>%
+#     ggplot(aes(x = window_center,
+#                y = window_mean_mm,
+#                linetype = age_group,
+#                color = site_global,
+#                group = location_short,
+#                shape = location_short)) +
+#     geom_point() +
+#     # facet_wrap(~sample_location_desc)
+#     facet_grid(age_group~species, scales = "free_x") +
+#     geom_smooth(method = "lm")
+
+
+
+
 rwl_move %>%
-    filter(between(cambial_age, 30, 31)) %>%
-    ggplot(aes(x = window_center,
-               y = window_mean_mm,
-               color = sample_location)) +
+    mutate(age_group = cut(cambial_age, seq(from = 0, to = 120, by = 5)),
+           site_global = case_when(
+               site_type %in% c("natural", "rural") ~ "forest",
+               TRUE ~ "urban")) %>%
+    filter(cambial_age >= 0, cambial_age < 150) %>%
+    # filter(between(cambial_age, 31, 35) |
+               # between(cambial_age, 61, 65)) %>%
+    ggplot(aes(x = cambial_age,
+               y = rwl_mm,
+               # color = species,
+               group = species)) +
     geom_point(alpha = 0.3) +
     # facet_wrap(~sample_location_desc)
-    facet_wrap(~species) +
-    geom_smooth(method = "lm") +
-    guides(color = FALSE)
-# lims(xlim = c(1940, 2020))
+    facet_grid(species~site_global, scales = "free_x") +
+    # geom_smooth(method = "lm") +
+    geom_smooth(aes(group = 1), color = "purple") +
+    geom_smooth(aes(group = year >= 1960, color  = year >= 1960))
 
 
 
 
+# rwl_move %>%
+#     mutate(age_group = cut(cambial_age, seq(from = 0, to = 120, by = 5)),
+#            site_global = case_when(
+#                site_type %in% c("natural", "rural") ~ "forest",
+#                TRUE ~ "urban")) %>%
+#     filter(!is.na(rwl_mm)) %>%
+#     # filter(between(cambial_age, 31, 35) |
+#     # between(cambial_age, 61, 65)) %>%
+#     ggplot(aes(x = year)) +
+#     geom_histogram(alpha = 0.3) +
+#     # facet_wrap(~sample_location_desc)
+#     facet_grid(species~site_global, scales = "free_x")
+#     # geom_smooth(method = "lm") +
+#
+#
 
-rwl_move %>%
-    filter(sample_location == "Teufelssee-Kie",
-           between(cambial_age, 60, 70)) %>%
-    ggplot(aes(x = window_center,
-               y = window_mean_mm,
-               color = species,
-               group = species)) +
-    geom_point() +
-    # facet_wrap(~sample_location_desc)
-    # facet_wrap(~sample_location, scales = "free_x") +
-    geom_smooth(method = "lm")
-# lims(xlim = c(1940, 2020))
+make_urban_df <- function(df, year_min, year_max,year_break, cambial_age_max){
+    urban_rwl <- df %>%
+        mutate(age_group = cut(cambial_age, seq(from = 0, to = 120, by = 5)),
+               site_global = case_when(
+                   site_type %in% c("natural", "rural") ~ "forest",
+                   TRUE ~ "urban"),
+               year_break = as.factor(
+                   ifelse(
+                       year <= year_break,
+                       sprintf("<=%s", year_break),
+                       sprintf(">%s", year_break))),
+               location_short = as.factor(location_short)) %>%
+        filter(site_global == "urban",
+               year >= year_min,
+               year <= year_max,
+               cambial_age <= cambial_age_max) %>%
+        arrange(tree_id, year)
+
+    return(urban_rwl)
+}
+
+urban_rwl <- make_urban_df(rwl_move,
+                           year_min = 1920,
+                           year_max = 2000,
+                           year_break = 1960,
+                           cambial_age_max = 100)
 
 
 
-rwl_move %>%
-    filter(sample_location == "Teufelssee-Kie", between(cambial_age, 60, 70)) %>%
-    ggplot(aes(x = pith,
-               y = tree_id,
-               color = species,
-               group = tree_id)) +
-    geom_point()
-    # facet_wrap(~sample_location_desc)
-    # geom_smooth(method = "lm")
-# lims(xlim = c(1940, 2020))
+urban_rwl %>%
+    group_by(tree_id,
+             year_break) %>%
+    tally() %>%
+    group_by(year_break) %>%
+    tally()
+
+
+
+library(mgcv)
+ctrl <- list(niterEM = 0, msVerbose = TRUE, optimMethod="L-BFGS-B")
+# ctrl <- list(niterPQL = 30, msVerbose = TRUE, optimMethod="L-BFGS-B")
+# mod_growth1 <- gamm(rwl_mm ~ s(year, k = 30) + s(cambial_age, k = 40),
+#                    data = urban_rwl,
+#                   family = Gamma(link = "log"),
+#                   correlation = corARMA(form = ~ year | tree_id, p = 1),
+#                   random = list(species = ~1,
+#                                 location_short = ~1))
+#
+#
+# mod_growth0 <- gamm(rwl_mm ~ s(year, k = 30) + s(cambial_age, k = 40),
+#                    data = urban_rwl,
+#                    family = Gamma(link = "log"),
+#                    correlation = corARMA(form = ~ year | tree_id, p = 0),
+#                    random = list(species = ~1,
+#                                  location_short = ~1))
+#
+#
+# mod_growth2a <- gamm(rwl_mm ~ s(year, k = 30) + s(cambial_age, k = 40),
+#                     data = urban_rwl,
+#                     family = Gamma(link = "log"),
+#                     correlation = corARMA(form = ~ year | tree_id, p = 2),
+#                     random = list(species = ~1,
+#                                   location_short = ~1))
+# mod_growth2b <- gamm(rwl_mm ~ s(year, k = 30) + s(cambial_age, k = 40),
+#                     data = urban_rwl,
+#                     family = Gamma(link = "log"),
+#                     correlation = corARMA(form = ~ year | tree_id, p = 2),
+#                     random = list(tree_id = ~1,
+#                                   species = ~1,
+#                                   location_short = ~1))
+# mod_growth3 <- gamm(rwl_mm ~ s(year, k = 30) + s(cambial_age, k = 40),
+#                     data = urban_rwl,
+#                     family = Gamma(link = "log"),
+#                     correlation = corARMA(form = ~ year | tree_id, p = 3),
+#                     random = list(tree_id = ~1,
+#                                   species = ~1,
+#                                   location_short = ~1))
+mod_growth4 <- gamm(rwl_mm ~ s(year, k = 40) + s(cambial_age, k = 40),
+                    data = urban_rwl,
+                    family = Gamma(link = "log"),
+                    correlation = corARMA(form = ~ year | tree_id, p = 3),
+                    random = list(tree_id = ~1),
+                    niterPQL = 30)
+
+mod_growth5 <- gamm(rwl_mm ~ s(year, k = 60) + s(cambial_age, k = 40),
+                    data = urban_rwl,
+                    family = Gamma(link = "log"),
+                    correlation = corARMA(form = ~ year | tree_id, p = 3),
+                    random = list(tree_id = ~1),
+                    niterPQL = 30)
+
+                    # control = ctrl)
+
+#
+# mod_growth3 <- gamm(rwl_mm ~ s(year, k = 40) + s(cambial_age, k = 40),
+#                     data = urban_rwl,
+#                     family = Gamma(link = "log"),
+#                     correlation = corARMA(form = ~ year | tree_id, p = 3),
+#                     random = list(species = ~1,
+#                                   location_short = ~1),
+#                   control = ctrl)
+# mod_growth <- gam(rwl_mm ~ s(year, k = 65) + s(cambial_age, k = 30)  +  s(location_short, species, bs = "re"), data = urban_rwl,
+#                   family = Gamma(link = "log"))
+
+
+
+layout(matrix(1:2, ncol = 2))
+# res <- resid(mod_growth3$lme, type = "normalized")
+res <- resid(mod_growth4$lme, type = "normalized")
+acf(res, lag.max = 10, main = "ACF - AR(2) errors")
+pacf(res, lag.max = 10, main = "pACF- AR(2) errors")
+layout(1)
 
 
 
 
-rwl_move %>%
-    filter(species == "TICO", between(cambial_age, 20, 40)) %>% View()
+# gam.check(mod_growth$gam)
+# gam.check(mod_growth0$gam)
+# gam.check(mod_growth2$gam)
+# gam.check(mod_growth2b$gam)
+# gam.check(mod_growth3$gam)
+gam.check(mod_growth4$gam)
+
+# plot(mod_growth0$gam,scheme = 2,pages = 1)
+# plot(mod_growth2$gam,scheme = 2,pages = 1)
+# plot(mod_growth2b$gam,scheme = 2,pages = 1)
+# plot(mod_growth3$gam,scheme = 2,pages = 1)
+plot(mod_growth4$gam,scheme = 2,pages = 1)
+
+# new_dat <- expand.grid(cambial_age = c(0:100), year = c(1900:2000) ,
+                       # location_short = unique(urban_rwl$location_short), species = unique(urban_rwl$species))
+new_dat <- expand.grid(cambial_age = c(0:100), year = c(1900:2000))
+preds <- predict(mod_growth4$gam, newdata = new_dat, type = "link", se.fit = TRUE)
+# preds <- predict(mod_growth$gam, newdata = new_dat, type = "terms", exclude = "s(location_short,species)")
+
+# sapply(mod_growth$smooth, '[[',  'label')
+# mod_fixed <- rowSums(preds) + attr(preds, "constant")
+# new_dat$fitted <- family(mod_growth)$linkinv(mod_fixed)
+# new_dat$fitted <- preds
+
+
+new_dat <- cbind(new_dat, preds) %>%
+    mutate(year_group = as.factor(year <= 1950))
+
+
+serror <- function(x){
+
+    return(sqrt(sum(x^2))/length(x))
+
+}
+
+
+means <- new_dat %>%
+    group_by(cambial_age, year_group) %>%
+    summarize(mean_link = mean(fit),
+              mean_fit_response = Gamma(link="log")$linkinv(mean_link),
+              mean_se_response_low = Gamma(link="log")$linkinv(mean_link - 1.96 * serror(se.fit)),
+              mean_se_response_high = Gamma(link="log")$linkinv(mean_link + 1.96 * serror(se.fit)))
+
+
+# ggplot(new_dat, aes(x = cambial_age, y = fitted, color = year <= 1950, group = year)) +
+#     geom_line(alpha = 0.3) +
+#     stat_summary(geom = "ribbon", fun.data = "mean_cl_boot", aes(group  = year <= 1950, fill = year <= 1950), alpha = 0.6) +
+#     theme_minimal()
+ggplot(new_dat, aes(x = cambial_age, y = Gamma(link="log")$linkinv(fit), color = year_group, group = year)) +
+    geom_line(alpha = 0.2) +
+    geom_ribbon(data = means,
+                inherit.aes = FALSE,
+                aes(x = cambial_age, y = mean_fit_response,
+                    ymin = mean_se_response_low,
+                    ymax = mean_se_response_high,
+                    color = year_group,
+                    fill = year_group,
+                    group = year_group),
+                alpha = 0.35) +
+    geom_line(data = means,
+                inherit.aes = FALSE,
+                aes(x = cambial_age,
+                    y = mean_fit_response,
+                    group = year_group,
+                    color = year_group),
+              size = 1) +
+    # lims(y = c(0, 7)) +
+    scale_fill_brewer(type = "qual", palette = 2) +
+    scale_color_brewer(type = "qual", palette = 2) +
+    theme_test(base_family = "serif")
+
+overview <- all_series_rwl_long %>%
+    filter(!site_type %in% c("rural", "natural")) %>%
+    tidyr::drop_na(rwl_mm) %>%
+        group_by(tree_id) %>%
+    summarise(ymin = min(year),
+              ymax = max(year),
+              n_years = n()) %>%
+    arrange(ymin) %>%
+    mutate(tree_id = forcats::fct_reorder(tree_id, ymin))
+overview <- urban_rwl %>%
+    filter(site_global == "urban") %>%
+    tidyr::drop_na(rwl_mm) %>%
+        group_by(tree_id) %>%
+    summarise(ymin = min(year),
+              ymax = max(year),
+              n_years = n()) %>%
+    arrange(ymin) %>%
+    mutate(tree_id = forcats::fct_reorder(tree_id, ymin))
+
+
+
+
+ggplot(overview) +
+    geom_segment(aes(x = ymin, xend = ymax, y = tree_id, yend = tree_id, group = tree_id))
+
+
+
+
+# new_dat <- expand.grid(cambial_age = c(25, 50, 75), year = c(1940:2010) ,
+#                        location_short = unique(urban_rwl$location_short), species = unique(urban_rwl$species))
+#
+# preds <- predict(mod_growth, newdata = new_dat, type = "terms", exclude = "s(location_short,species)")
+#
+# sapply(mod_growth$smooth, '[[',  'label')
+#
+#
+# mod_fixed <- rowSums(preds) + attr(preds, "constant")
+#
+#
+# new_dat$fitted <- family(mod_growth)$linkinv(mod_fixed)
+#
+#
+# ggplot(new_dat, aes(x = year, y = fitted, color =as.factor(cambial_age), group = cambial_age)) +
+#     geom_line(alpha = 0.3) +
+#     # stat_summary(geom = "ribbon", fun.data = "mean_cl_boot"), alpha = 0.6) +
+#     # theme_minimal() +
+#     theme_test() +
+#     geom_smooth(method = "lm")
+#
+#
+#
+#
+#
+#
+# preds_full <- predict(mod_growth$gam, newdata = new_dat)
+# new_dat$fitted <- preds_full
+#
+# ggplot(new_dat, aes(x = cambial_age, y = fitted, color = year <= 1970, group = year)) +
+#     geom_line(alpha = 0.4) +
+#     facet_grid(location_short~ species)
