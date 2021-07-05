@@ -525,7 +525,68 @@ download_heat_data <- function(){
 
 
 
-2#' Access Berlin district polygon from external source
+
+#' Download UrbClim data from ecmwf C3S
+#'
+#' Download and unzip data set, file format is .zip/.nc;
+#' creates a directory "unzipped" in `path_dir`
+#'
+#' @param month character, defaults to 06
+#' @param year character, 2008 - 2017, defaults to 2010
+#' @param var character, defaults to 'air_temperature'
+#' @param path_dir character, folder to download and unzip directory
+#'
+#' @return character, path to unzipped file
+download_urbclim_uhi <- function(month = "06", year = "2010", var = air_temperature, path_dir){
+
+    if(!nchar(month) == 2 &&
+       !class(month) == "character"){
+        stop("Provide month as a character string with length 0; e.g. '01' for January")
+    }
+
+    if(!nchar(year) == 4 &&
+       !class(month) == "character"){
+        stop("Provide year as a character string with length 4; e.g. '2012'")
+    }
+
+
+    #
+
+    fname <- sprintf("berlin_%s_%s_%s.zip", year, month, var)
+
+    request <- list(
+        format = "zip",
+        variable = var,
+        city = "berlin",
+        year = year,
+        month = month,
+        dataset_short_name = "sis-urban-climate-cities",
+        target = fname
+    )
+
+
+    # If you have stored your user login information
+    # in the keyring by calling cds_set_key you can
+    # call:
+    file <- wf_request(user     = "92658",   # user ID (for authentification)
+                       request  = request,  # the request
+                       transfer = TRUE,     # download the file
+                       path     = path_dir)      # store data in current working directory
+
+
+    unzip_dir <- normalizePath(file.path(path_dir, "unzipped"))
+    unzip(normalizePath(file.path(path_dir, fname)), exdir = unzip_dir)
+
+    # path_file <- normalizePath(list.files(unzip_dir, pattern = "nc", full.names = TRUE)[grep(paste(year, month, sep = "_"), list.files(unzip_dir, pattern = "nc"))])
+
+
+    return(unzip_dir)
+
+}
+
+
+
+#' Access Berlin district polygon from external source
 #'
 #' @return sf-tibble with polygons of Berlin districts
 #' @import httr
@@ -561,6 +622,44 @@ download_berlin_polygons_as_sf <- function(path = "./analysis/data/raw_data/spat
         sf::st_make_valid()
 
     return(berlin_polygons)
+}
+
+
+
+
+#' Download  Berlin Land use to green, water and urban
+#'
+#' @param path character, path to read file from
+#'
+#' @return sf-tibble with polygons of Berlin landuse
+#' @import httr
+#' dplyr
+#'
+download_berlin_lu <- function(path = "./analysis/data/raw_data/spatial_ancillary/berlin_landuse.geojson"){
+
+    # blu <- sf::st_read(path)
+
+    wfs_lu <- "https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/sach_nutz2015_nutzsa"
+
+
+    query <- list(service = "WFS",
+                  request = "GetFeature",
+                  version = "2.0.0",
+                  TypeNames = "fis:sach_nutz2015_nutzsa",
+                  # count = 10,
+                  outputFormat = 'application/geo+json')
+
+    # request data via GET (REST API and save to disk)
+
+    httr::GET(wfs_lu,
+              query = query,
+              httr::write_disk(path = path, overwrite = TRUE)
+
+    )
+
+
+
+    return(path)
 }
 
 
@@ -1094,6 +1193,9 @@ prep_model_df <- function(dset,
     return(df_nest)
 
 }
+
+
+
 
 # Spatial -----------------------------------------------------------------
 
@@ -2526,6 +2628,138 @@ make_ranef_plot <- function(model_out,
 }
 
 
+#' Generate study site area
+#'
+#' @param blu character, path to berlin land use
+#' @param berlin_poly character, path to berlin poly
+#'
+#' @return ggplot object
+#' @export
+#'
+#' @examples
+make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
+
+
+
+    blu <-  sf::st_read(blu, quiet = TRUE) %>%
+        sf::st_make_valid()
+
+    blu <- blu %>%
+        dplyr::mutate(lu_adjusted = dplyr::case_when(
+            GRZ_NAME %in% c("Baumschule / Gartenbau",
+                            "Park / Grünfläche",
+                            "Friedhof",
+                            "Brachfläche, wiesenartiger Vegetationsbestand",
+                            "Brachfläche, Mischbestand aus Wiesen, Gebüschen und Bäumen",
+                            "Kleingartenanlage",
+                            "Baumschule / Gartenbau",
+                            "Wald",
+                            "Grünland",
+                            "Ackerland") ~ "greenspace",
+            GRZ_NAME == "Gewässer" ~ "water",
+            TRUE ~ "urbanized"))
+
+
+
+
+
+    base_size <- 16
+
+
+
+    # countries <- rnaturalearth::ne_countries(returnclass = "sf", continent = "Europe", scale = 50)
+    countries <- rnaturalearth::ne_countries(returnclass = "sf", continent = "Europe", scale = 110)
+
+
+
+    europe_box <- data.frame(lon = c(-12, 45),
+                             lat = c(71, 34)) %>%
+        sf::st_as_sf(coords = c('lon', 'lat'), crs=4326, remove = FALSE) %>%
+        sf::st_bbox() %>%
+        sf::st_as_sfc()
+
+
+
+    berlin_loc <- blu %>%
+        sf::st_bbox() %>%
+        sf::st_as_sfc() %>%
+        sf::st_centroid() %>%
+        sf::st_transform(crs = sf::st_crs(countries))
+
+    # countries <- sf::st_crop(countries, europe_box)
+
+
+    map_europe<- ggplot2::ggplot() +
+        ggplot2::geom_sf(data = countries,
+                         # geom_sf(data = countries  %>%
+                         #             dplyr::filter(admin != 'Russia'),
+                         ggplot2::aes(fill = admin == 'Germany'),
+                         color = "gray20", show.legend = FALSE) +
+        ggplot2::geom_sf(data = berlin_loc, fill = "firebrick1", shape = 23, size = 2) +
+        ggplot2::coord_sf(xlim = c(-10,45), ylim = c(34,71), crs = 4326) +
+        # geom_sf(data = countries  %>%
+        #             dplyr::filter(admin == 'Russia'),
+        #         fill = "gray90",
+        #         color = "gray90") +
+        # geom_sf(data = europe_box, color = "black", fill = "transparent") +
+        ggplot2::scale_fill_manual(values = c("gray95", "gray30")) +
+        ggplot2::theme_void() +
+        ggplot2::theme(plot.background = ggplot2::element_rect(fill = "white"),
+                       panel.border = ggplot2::element_rect(color = "black", fill = "transparent"))
+
+
+
+    berlin_poly <- sf::st_read(berlin_poly) %>%
+        sf::st_make_valid() %>%
+        sf::st_union()
+
+
+
+
+
+
+    plt <- ggplot2::ggplot() +
+        ggplot2::geom_sf(data = blu,
+                         ggplot2::aes(fill = lu_adjusted,
+                                      color = lu_adjusted)) +
+        ggplot2::geom_sf(data = berlin_poly, color = "black", fill = "transparent") +
+        ggplot2::scale_fill_manual(values = c("greenspace" = "seagreen4",
+                                              "urbanized" = "beige",
+                                              "water" = "steelblue1")) +
+        ggplot2::scale_color_manual(values = c("greenspace" = "seagreen4",
+                                               "urbanized" = "beige",
+                                               "water" = "steelblue1")) +
+        ggplot2::coord_sf(xlim = c(370000, 425000.2), ylim = c(5795000    , 5837259.4 )) +
+        ggplot2::scale_y_continuous(breaks = seq(52.35, 52.65, by = 0.1)) +
+        ggplot2::theme_minimal(
+            # base_family = "Roboto Condensed",
+            base_size = base_size) +
+        ggplot2::theme(legend.direction = "horizontal",
+                       legend.position = c(0.4, 0.075),
+                       # legend.position = "top",
+                       legend.background = ggplot2::element_rect(fill = "white", color = "transparent"),
+                       # legend.key = element_rect(color = "black", fill = "transparent"),
+                       legend.title = ggplot2::element_blank()) +
+        ggplot2::annotation_custom(grob = ggplot2::ggplotGrob(map_europe),
+                                   xmin = 410000 ,
+                                   xmax = 430000.2 ,
+                                   ymin = 5820000 ,
+                                   ymax = 5837259.4)
+
+    ggplot2::ggsave(path_out,
+           plot = plt,
+           height = height,
+           width = width,
+           units = "cm",
+           dpi = dpi)
+
+
+
+}
+
+
+
+
 # Tables ------------------------------------------------------------------
 
 #' Make overview table
@@ -2608,6 +2842,43 @@ make_age_table <- function(df, max_age = 120, break_interval = 20){
 }
 
 
+#' Returns df table of proportionial LCZ cover
+#'
+#' @param wudapt_path
+#' @param wudapt_desc_path
+#' @param berlin_poly_path
+#'
+#' @return df with covers
+make_wudapt_landcover_table <- function(wudapt_path, wudapt_desc_path, berlin_poly_path){
+
+    wudapt <- terra::rast(wudapt_path)
+    berlin_poly <- terra::vect(berlin_poly_path) %>%
+        terra::project(wudapt)
+
+    wudapt_desc <- read.csv(wudapt_desc_path, header = FALSE, skip = 2, stringsAsFactors = FALSE) %>%
+        setNames(nm = c("class", "r", "g", "b", "alpha", "name")) %>%
+        dplyr::mutate(class = as.factor(class))
+
+    lcz_berlin <- wudapt %>%
+        terra::crop(berlin_poly) %>%
+        terra::mask(berlin_poly)
+
+
+    lcz_prop <- lcz_berlin %>%
+        terra::values() %>%
+        table() %>%
+        prop.table() %>%
+        round(3) %>%
+        as.data.frame() %>%
+        setNames(nm = c("class", "freq")) %>%
+        mutate(class = as.factor(class)) %>%
+        dplyr::left_join(x = wudapt_desc, y = .) %>%
+        dplyr::arrange(dplyr::desc(freq))
+
+
+    return(lcz_prop)
+
+}
 
 
 
@@ -2747,3 +3018,363 @@ combine_covariates <- function(data_list){
 
 }
 
+
+
+# BIWI analyses -----------------------------------------------------------
+
+#' Moving or sliding windows for rwl time series
+#'
+#' @param df data.frame, long format with "rwl_mm" and "year" columns
+#' @param window_n numeric, n years for moving or sliding window
+#' @param type character, either slide or moving
+#'
+#' @return
+#' @export
+#'
+#' @examples
+make_rwl_windows <- function(df, window_n = 5, type = "slide"){
+
+
+    # checks
+    if(! type %in% c("move", "slide")){
+        stop("Please provide type as either 'move' or 'slide.'")
+    }
+
+    # define inner fns
+    #' Calculate sliding window means for growth time series
+    #'
+    #' @param df data.frame in long containing colum "rwl_mm", "year"
+    #' @param window_size
+    slide_mean <- function(df, window_size = 5){
+
+        rws <- nrow(df)
+
+        window_mean_mm <- numeric(rws)
+        window_nas <- numeric(rws)
+        window_center <- numeric(rws)
+
+        for(j in 3:(rws-3)){
+
+
+
+            window <- (j-2):(j+2)
+
+
+
+            window_mean_mm[j] <- mean(df[window, "rwl_mm", drop = TRUE], na.rm = TRUE)
+            window_nas[j] <- sum(is.na(df[window, "rwl_mm", drop = TRUE]))
+            window_center[j] <- df[j, "year"]
+
+
+        }
+
+        window_mean_mm[window_nas > 0 | window_mean_mm == 0] <- NA
+        window_center [window_nas > 0 |  window_center == 0] <- NA
+
+        cbind(df,data.frame(window_mean_mm,
+                            window_nas,
+                            window_center,
+                            stringsAsFactors = FALSE))
+
+
+
+    }
+
+
+    #' Calculate moving window means for growth time series
+    #'
+    #' @param df data.frame in long containing colum "rwl_mm", "year"
+    #' @param window_size
+    move_mean <- function(df, window_size = 5){
+
+        rws <- nrow(df)
+
+        window_mean_mm <- numeric(rws)
+        window_nas <- numeric(rws)
+        window_center <- numeric(rws)
+
+        # find first non-NA entry in rwl
+        first_val <- min(which(!is.na(df[ , "rwl_mm"])))
+
+        n_windows <- (rws - first_val + 1) %/% window_size
+
+
+        for(j in seq_len(n_windows)){
+
+
+
+
+            window <- seq(from = (j - 1) * window_size, length.out = window_size) + (first_val)
+
+
+
+            window_mean_mm[window] <- mean(df[window, "rwl_mm", drop = TRUE], na.rm = TRUE)
+            window_nas[window] <- sum(is.na(df[window, "rwl_mm", drop = TRUE]))
+            window_center[window] <- df[median(window), "year", drop  = TRUE]
+
+
+        }
+
+
+        window_mean_mm[window_nas > 0 | window_mean_mm == 0] <- NA
+        window_center [window_nas > 0 |  window_center == 0] <- NA
+
+        cbind(df,data.frame(window_mean_mm,
+                            window_nas,
+                            window_center,
+                            stringsAsFactors = FALSE))
+
+
+
+    }
+
+
+
+
+    if(type == "slide"){
+
+        out <- slide_mean(df = df, window_size = window_n)
+
+    } else {
+
+        out <- move_mean(df = df, window_size = window_n)
+
+    }
+
+    return(out)
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+prep_rwl_data <- function(path_meta_cores,
+                          path_meta_trees,
+                          path_meta_sites,
+                          path_dir_fh){
+
+    # define inner funcs
+
+    #' Load al .fh files in a directory
+    #'
+    #' @param path_dir_raw char, path to folder
+    #' @param code_def numeric, vector of length 3, with specification of site and tree codes
+    #' @param meta data.frame, contains meta info on trees
+    #'
+    #' @return list with all .fhs
+    #'
+    #' @examples
+    rw_load_raw <- function(
+        path_dir_raw,
+        code_def = c(5,2,1),
+        meta
+    ){
+
+        path_fh <- fs::path_norm(path_dir_raw)
+        fhs <- list.files(
+            path = path_fh,
+            pattern = "*.fh",
+            full.names = TRUE,
+            recursive = TRUE
+        )
+
+        ## CUSTOM CLEAN
+        # drop duplicated, keep "den15"
+        fhs <- fhs[!grepl("den15o/", fhs, fixed = TRUE)]
+
+
+
+
+        rws <- lapply(fhs,
+                      function(path){
+
+                          rw <- dplR::read.fh(fname = path)
+
+                          # grab meta rows
+                          meta <- meta[meta$Ident. %in% names(rw) & meta$G %in% c(1:4, 7,8, NA), ]
+
+
+                          names_old <- names(rw)
+
+
+                          # rw <- rw[ , meta$Ident.]
+                          rw <- rw[ , meta$Ident., drop = FALSE]
+
+
+                          cat(sprintf("Did previious and new rw series match? %i \n \n", identical(names_old, names(rw))))
+
+                          if(is.numeric(rw)){
+                              return(rw)
+                          } else {
+
+
+                              rw_mean <- dplR::treeMean(
+                                  rwl = rw,
+                                  ids = dplR::read.ids(rw, stc = code_def))
+
+                              return(rw_mean)
+                          }
+
+                      })
+
+        names(rws) <- fs::path_ext_remove(fs::path_file(fhs))
+
+        return(rws)
+
+
+    }
+
+
+
+    # prep meta data ----------------------------------------------------------
+
+
+    meta_cores <- readxl::read_xlsx(path_meta_cores,
+                                    sheet = "Cores")
+    meta_sites <- readxl::read_xlsx(path_meta_sites,
+                                    sheet = "Plots")
+    meta_trees <- readxl::read_xlsx(path_meta_trees,
+                                    sheet = "Trees")
+
+
+
+    meta_sites <- meta_sites %>%
+        mutate(
+            site_short = dplyr::case_when(
+                `District                               Kreis` == "Müggelheimer Damm 141; Frau Silvia Knöfel-Mosch (Tel.:030 6540083)" ~ "natural_teufelsee",
+                `District                               Kreis` == "Kolonie Heimaterde Alpenrose" ~ "urban-gardens_alpenrose",
+                `District                               Kreis` == "Gutschmidtstraße" ~ "urban-park_britz-sued",
+                `District                               Kreis` == "Hasenheide" ~ "urban-park_hasenheide",
+                `District                               Kreis` == "Weigandufer 23" ~ "urban-smallpark_weigandufer",
+                `District                               Kreis` == "Werrastraße" ~ "urban-smallpark_weigandufer",
+                `District                               Kreis` == "Mecklenburgische Seenplatte" ~ "natural_mueritz-np",
+                `District                               Kreis` == "Potsdam" ~ "rural_telegrafenberg",
+                TRUE ~ NA_character_),
+            site_type = sub("(.+(?=_))(_)(.+)",
+                            "\\1",
+                            x = site_short,
+                            perl = TRUE),
+            location_short = sub("(.+(?=_))(_)(.+)",
+                                 "\\3",
+                                 x = site_short,
+                                 perl = TRUE)
+        )
+
+
+    # join with inventory meta
+    meta_trees$tree_id <- substr(meta_trees$Ident., 1, 7)
+    meta_trees$plot_id <- substr(meta_trees$Ident., 1,5)
+
+    meta_full <- dplyr::left_join(meta_trees, meta_sites, by = c("plot_id" = "Key-Code"))
+
+    # check that years in meta match series
+    # series_lengths <- purrr::map_dfr(all_series, function(x){as.data.frame(nrow(x))}, .id = "tree_id")
+
+    # series_checks <- dplyr::left_join(series_lengths,
+    # meta_full[ , c("tree_id", "Anzahl JR")], by = "tree_id")
+
+    # series_checks[!series_checks$`nrow(x)` == series_checks$`Anzahl JR`, ]
+    # ddp0212 has bad meta val
+    # all others are considered okay
+
+
+    # adjust for missing rings (pith and bark)
+    # calculate average ring width for first/last 15 years of series, to estimate radius offsets)
+
+    # meta_full$tree_id[ meta_full$`mR to pith` > 0 & !is.na(meta_full$`mR to pith`)]
+    # meta_full$tree_id[meta_full$`mR to bark` > 0  & !is.na(meta_full$`mR to bark`)]
+
+
+
+    # read in data ------------------------------------------------------------
+
+    all_series <- rw_load_raw(path_dir_raw = path_dir_fh,
+                              meta = meta_cores)
+
+
+    all_series <- purrr::discard(all_series, ~length(.x) == 0)
+
+
+    all_series <- purrr::modify2(all_series, names(all_series),
+                                 function(x,y){
+                                     colnames(x) <- y
+                                     return(x)
+                                 })
+
+    all_series_rwl <- dplR::combine.rwl(all_series)
+
+    all_series_rwl$year <- as.numeric(row.names(all_series_rwl))
+
+
+    # make long and add meta columns
+    all_series_rwl_long <- tidyr::pivot_longer(data = all_series_rwl,
+                                               cols = -year,
+                                               names_to = "tree_id",
+                                               values_to = "rwl_mm")
+
+    all_series_rwl_long <- dplyr::left_join(all_series_rwl_long,
+                                            dplyr::select(
+                                                meta_full,
+                                                height = `Höhe [m]`,
+                                                circ_cm = `BH-Umfang`,
+                                                tree_id,
+                                                plot_id,
+                                                species = `Species Art`,
+                                                sample_location = `Location                                   Standortname`,
+                                                sample_location_desc = `District                               Kreis`,
+                                                quality = `G`,
+                                                mr_pith = `mR to pith`,
+                                                mr_bark = `mR to bark`,
+                                                age = Alter,
+                                                pith = Mark,
+                                                first_ring = `erster JR`,
+                                                date_sample = `Datum`,
+                                                site_short,
+                                                site_type,
+                                                location_short),
+                                            by = "tree_id"
+    )
+
+    # Tue Jun 29 11:26:44 2021 ------------------------------
+    all_series_rwl_long$age <- all_series_rwl_long$age + 3 # data sampled in 2018;
+
+    # adjust factors
+    all_series_rwl_long$species <- as.factor(all_series_rwl_long$species)
+    all_series_rwl_long$plot_id <- as.factor(all_series_rwl_long$plot_id)
+    all_series_rwl_long$tree_id <- as.factor(all_series_rwl_long$tree_id)
+    all_series_rwl_long$year_sampled <- as.numeric(format(all_series_rwl_long$date_sample, "%Y"))
+
+    # drop empyt rows
+    drop_rows <- which.max(apply(all_series_rwl[ ,-grep("year", colnames(all_series_rwl))], MARGIN = 1, function(x){any(!is.na(x))})) - 1
+    # all_series_rwl_long <- all_series_rwl_long
+    all_series_rwl_long <- all_series_rwl_long[-drop_rows, ] %>%
+        mutate(cambial_age = case_when(
+            !is.na(pith) ~ year - pith,
+            !is.na(pith) & !is.finite(mr_pith) ~ year - pith,
+            !is.na(pith) & is.finite(mr_pith) ~ year - pith,
+
+
+            is.na(pith) & is.finite(mr_pith)  & is.finite(first_ring) ~ year - first_ring - mr_pith,
+            is.na(age) & !is.finite(mr_pith) ~ year - first_ring,
+            TRUE ~ NA_real_
+        ))
+
+
+    return(all_series_rwl_long)
+
+
+}
