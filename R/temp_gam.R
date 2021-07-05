@@ -707,3 +707,191 @@ test <- apply_gam_mod(model_grid = model_grid_bad[1:3, ], dat = model_df[model_d
 
 
 
+# explore spatial ---------------------------------------------------------
+
+
+
+
+apply_gam_mod(path = "./analysis/data/models/stat/filtered/test",
+              model_grid = model_grid, dat = model_df[model_df$diag_mad_select,],
+              overwrite = FALSE)
+
+
+dir.create("./analysis/data/models/stat/filtered/test")
+
+
+library(parallel)
+
+###see if you have multiple cores
+
+detectCores()
+
+###indicate number of cores used for parallel processing
+if (detectCores()>1) {
+    cl <- makeCluster(detectCores()-1)
+} else cl <- NULL
+
+cl
+
+
+
+model_df$soil_nutrients_swert <- as.numeric(model_df$soil_nutrients_swert)
+
+
+apply_gam_mod(path = "./analysis/data/models/stat/filtered/test",
+              model_grid = model_grid[9,], dat = model_df[model_df$diag_mad_select,],
+              overwrite = FALSE)
+
+
+
+mod9 <- mgcv::bam(formula = model_grid[9,]$forms[[1]],
+                  data = model_df[model_df$diag_mad_select,],
+                  family = Gamma(link = "log"),
+                  # cl = cl
+                  discrete = TRUE
+)
+
+
+mod10 <- mgcv::bam(formula = model_grid[9,]$forms[[1]],
+                  data = model_df[model_df$diag_mad_select & model_df$provenance == "s_wfs_baumbestand",],
+                  family = Gamma(link = "log"),
+                  # cl = cl
+                  discrete = TRUE
+)
+
+mod11 <- mgcv::bam(dbh_cm ~ s(X, Y, k = 200, bs = "ds") +
+                       te(STANDALTER, T2M14HMEA, by = species_corrected, m = 1, k = c(10, 30)) + species_corrected,
+                   data = model_df[model_df$diag_mad_select & model_df$provenance == "s_wfs_baumbestand",],
+                   family = Gamma(link = "log"),
+                   # cl = cl
+                   discrete = TRUE)
+
+mod11 <- mgcv::bam(dbh_cm ~ s(X, Y, k = 200, bs = "ds") +
+                       te(STANDALTER, T2M14HMEA, by = species_corrected, m = 1, k = c(5, 15)) + species_corrected,
+                   data = model_df[model_df$provenance == "s_wfs_baumbestand",],
+                   family = Gamma(link = "log"),
+                   # cl = cl
+                   discrete = TRUE)
+
+model_df$BEZIRK <- as.factor(model_df$BEZIRK)
+mod12 <- mgcv::bam(dbh_cm ~ s(X, Y, k = 200, bs = "ds") +
+                       te(STANDALTER, T2M14HMEA, by = species_corrected, m = 1, k = c(5, 15)) + species_corrected + s(BEZIRK, bs = "re"),
+                   data = model_df[model_df$provenance == "s_wfs_baumbestand",],
+                   family = Gamma(link = "log"),
+                   # cl = cl
+                   discrete = TRUE)
+mod13 <- mgcv::bam(dbh_cm ~ s(X, Y, k = 200, bs = "ds") +
+                       te(STANDALTER, T2M14HMEA, by = species_corrected, m = 1, k = c(5, 15)) +
+                       species_corrected +
+                       s(BEZIRK, bs = "re") +
+                       s(soil_nutrients_swert, k = 20) +
+                       s(building_heigt_m,  k = 20),
+                   data = model_df[model_df$provenance == "s_wfs_baumbestand",],
+                   family = Gamma(link = "log"),
+                   # cl = cl
+                   discrete = TRUE)
+
+mgcv::gam.check(mod9)
+mgcv::gam.check(mod10)
+mgcv::gam.check(mod11)
+mgcv::gam.check(mod12)
+mgcv::gam.check(mod13)
+
+pdata <- with(model_df[model_df$provenance == "s_wfs_baumbestand",] %>%
+# pdata <- with(model_df[model_df$diag_mad_select & model_df$provenance == "s_wfs_baumbestand",, ] %>%
+                  mutate(species_corrected = as.factor(species_corrected)),
+              expand.grid(T2M14HMEA = seq(min(T2M14HMEA, na.rm = TRUE),
+                                          max(T2M14HMEA, na.rm = TRUE), length.out = 200),
+                          X = 385785,
+                          Y = 5816681,
+                          # STANDALTER = c(30, 50, 80),
+                          STANDALTER = c(30:35, 45:50, 60:65, 75:80),
+                          species_corrected = as.factor(unique(species_corrected)),
+                          BEZIRK = as.factor(unique(BEZIRK))
+              ))
+# fit <- predict(mod9 , pdata, type = "response", se.fit = TRUE)
+fit <- predict(mod9 , pdata, se.fit = TRUE)
+fit10 <- predict(mod10 , pdata, se.fit = TRUE)
+fit11 <- predict(mod10 , pdata, se.fit = TRUE)
+fit12 <- predict(mod12 , pdata, se.fit = TRUE, exclude = "s(BEZIRK)")
+# ind <- mgcv::exclude.too.far(pdata$day_2007, pdata$STANDALTER,
+#                              mdf_tilia[mad_select, ]$day_2007, mdf_tilia[mad_select, ]$STANDALTER, dist = 0.1)
+# fit[ind] <- NA
+pred <- cbind(pdata, Fitted = fit12)
+pred$se.low <- pred$Fitted.fit - 1.96 * pred$Fitted.se.fit
+pred$se.high <- pred$Fitted.fit + 1.96 * pred$Fitted.se.fit
+
+
+ifun <- family(mod9)$linkinv
+ifun <- family(mod10)$linkinv
+ifun <- family(mod11)$linkinv
+
+pred$response.fit <- ifun(pred$Fitted.fit)
+pred$response.low <- ifun(pred$se.low)
+pred$response.high <- ifun(pred$se.high)
+
+
+
+pred_groups <- pred %>%
+    mutate(age_group = cut(STANDALTER, c(26, 36, 50, 66, 80))) %>%
+    filter(STANDALTER < 75) %>%
+    group_by(age_group, T2M14HMEA, species_corrected) %>%
+    summarise(mean_dbh = mean(Fitted.fit, na.rm = TRUE),
+              mean_se = sqrt(sum(Fitted.se.fit))/n()) %>%
+    mutate(response.fit = ifun(mean_dbh),
+           response.low = ifun(mean_dbh - 1.96 * mean_se),
+           response.high = ifun(mean_dbh + 1.96 * mean_se))
+
+
+
+
+
+plt <- ggplot(pred, aes(y = response.fit, x = (T2M14HMEA), color = as.factor(STANDALTER)), fill =  as.factor(STANDALTER)) +
+
+    geom_ribbon(aes(ymin = response.low, ymax = response.high,  color = as.factor(STANDALTER), fill =  as.factor(STANDALTER)), alpha = 0.4) +
+    geom_line()+
+    # facet_wrap(~ species_corrected, ncol = 2) +
+    # scale_color_brewer(type = "qual", palette = "Set2") +
+    theme(legend.position = 'right') +
+    # facet_wrap(~species_corrected) +
+    # geom_smooth(method = "lm")
+    # geom_smooth() +
+    theme_minimal(base_size = 16) +
+    facet_wrap(~species_corrected, scales = "free_y") +
+    # scale_color_brewer(palette = 1) +
+    labs(linetype = "Age Class", color = "Age", fill = "Age", x = expression(UHI~Magnitude~(degree~C)), y = "Mean DBH (cm)")
+plt
+
+
+
+
+plt <- ggplot(pred_groups, aes(y = response.fit, x = (T2M14HMEA), colour = as.factor(age_group), fill =  as.factor(age_group), group = as.factor(age_group))) +
+
+    geom_ribbon(alpha = 0.2,  aes(ymin = response.low, ymax = response.high), color = "transparent") +
+    # geom_ribbon( aes(ymin = se.low, ymax = se.high), alpha = 0.4) +
+    geom_line()+
+    # facet_wrap(~ species_corrected, ncol = 2) +
+    # scale_color_brewer(type = "qual", palette = "Set2") +
+    theme(legend.position = 'right') +
+    # facet_wrap(~species_corrected) +
+    # geom_smooth(method = "lm")
+    # geom_smooth() +
+    theme_minimal(base_size = 16) +
+    facet_wrap(~species_corrected, scales = "free_y") +
+    scale_color_brewer(palette = 2, type = "qual") +
+    scale_fill_brewer(palette = 2, type = "qual") +
+    labs(color = "Age", fill = "Age", x = expression(UHI~Magnitude~(degree~C)), y = "Mean DBH (cm)")
+plt
+
+
+
+library(DHARMa)
+
+simout  <-  simulateResiduals(mod11,  n=500, plot = TRUE)
+# simout  <-  simulateResiduals(model_mad,  n=250, plot = TRUE)
+# simout  <-  simulateResiduals(mod2,  n=250, plot = TRUE)
+plot(simout)
+testResiduals(simout)
+plotResiduals(simout,quantreg = TRUE)
+
+plotResiduals(simout, simple_spatial@frame$day_2007, quantreg = TRUE)

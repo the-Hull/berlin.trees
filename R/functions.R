@@ -978,8 +978,10 @@ combine_split_clean_data <- function(
         dplyr::filter(is.na(.annotation)) %>%
         dplyr::select(berlin_id, check_id) %>%
         dplyr::left_join(origdf, by = "berlin_id") %>%
-        tidyr::drop_na(STANDALTER, dbh_cm)
-    # %>% sf::st_set_geometry(.$geometry)
+        tidyr::drop_na(STANDALTER, dbh_cm) %>%
+        sf::st_set_geometry(.$geometry)
+
+    cleaned_data_join <- cbind(cleaned_data_join, sf::st_coordinates(cleaned_data_join))
 
 
     if(
@@ -1017,6 +1019,8 @@ prep_model_df <- function(dset,
                           plot = TRUE,
                           path = "./analysis/figures/diagnostic_01_model_data.png"){
 
+
+    dset <- sf::st_drop_geometry(dset)
 
 
     top_species <- dset %>%
@@ -1716,12 +1720,13 @@ apply_models <- function(df = test_df,
 #' @param dat df to run with model
 #' @param path character, output path
 #' @param overwrite logical, defaults to FALSE, i.e. don't overwrite existing models
+#' @param n_cl numeric, number of clusters for parallel run, defaults to `NULL`
 #'
 #' @return df with status overview
 #' @export
 #'
 #' @examples
-apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/", overwrite = TRUE){
+apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/", overwrite = TRUE, n_cl = NULL){
 
 
     safe_bam <- purrr::possibly(mgcv::bam, otherwise = NULL)
@@ -1756,7 +1761,8 @@ apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/"
                 mod <- safe_bam(
                     formula = x$forms[[1]],
                     family = eval(x$fams[[1]]),
-                    data = dat)
+                    data = dat,
+                    cl = n_cl)
 
 
                 if(!is.null(mod)){
@@ -1833,7 +1839,7 @@ make_model_grid <- function(){
 
                   # SPATIAL + AGE x HEAT by Species
                   "mI_spatial_age_x_heat14_by_species" =
-                      dbh_cm ~ s(x,y, k = 200) + te(STANDALTER, T2M14HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected
+                      dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, T2M14HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected
     )
 
 

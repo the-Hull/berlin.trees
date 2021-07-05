@@ -190,14 +190,14 @@ plan <- drake_plan(
 
     model_grid = make_model_grid(),
 
-    bam_dbh_fulldf = apply_gam_mod(path = "./analysis/data/models/stat/fulldf/",
-                                   model_grid = model_grid, dat = model_df,
-                                   overwrite = FALSE),
-
-
-    bam_dbh_filtered = apply_gam_mod(path = "./analysis/data/models/stat/filtered/",
-        model_grid = model_grid, dat = model_df[model_df$diag_mad_select,],
-        overwrite = FALSE),
+    # bam_dbh_fulldf = apply_gam_mod(path = "./analysis/data/models/stat/fulldf/",
+    #                                model_grid = model_grid, dat = model_df,
+    #                                overwrite = FALSE),
+    #
+    #
+    # bam_dbh_filtered = apply_gam_mod(path = "./analysis/data/models/stat/filtered/",
+    #     model_grid = model_grid, dat = model_df[model_df$diag_mad_select,],
+    #     overwrite = FALSE),
 
 
 
