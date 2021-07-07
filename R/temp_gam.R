@@ -805,8 +805,10 @@ pdata <- with(model_df[model_df$provenance == "s_wfs_baumbestand",] %>%
                           X = 385785,
                           Y = 5816681,
                           # STANDALTER = c(30, 50, 80),
-                          STANDALTER = c(30:35, 45:50, 60:65, 75:80),
+                          STANDALTER = c(30:35, 45:50, 60:65, 75:80, 120:125),
                           species_corrected = as.factor(unique(species_corrected)),
+                          building_heigt_m = median(building_heigt_m, na.rm = TRUE),
+                          soil_nutrients_swert = median(soil_nutrients_swert, na.rm = TRUE),
                           BEZIRK = as.factor(unique(BEZIRK))
               ))
 # fit <- predict(mod9 , pdata, type = "response", se.fit = TRUE)
@@ -814,10 +816,12 @@ fit <- predict(mod9 , pdata, se.fit = TRUE)
 fit10 <- predict(mod10 , pdata, se.fit = TRUE)
 fit11 <- predict(mod10 , pdata, se.fit = TRUE)
 fit12 <- predict(mod12 , pdata, se.fit = TRUE, exclude = "s(BEZIRK)")
+fit12 <- predict(mod12 , pdata, se.fit = TRUE, exclude = "s(BEZIRK)")
+fit13 <- predict(mod13 , pdata, se.fit = TRUE, exclude = "s(BEZIRK)")
 # ind <- mgcv::exclude.too.far(pdata$day_2007, pdata$STANDALTER,
 #                              mdf_tilia[mad_select, ]$day_2007, mdf_tilia[mad_select, ]$STANDALTER, dist = 0.1)
 # fit[ind] <- NA
-pred <- cbind(pdata, Fitted = fit12)
+pred <- cbind(pdata, Fitted = fit13)
 pred$se.low <- pred$Fitted.fit - 1.96 * pred$Fitted.se.fit
 pred$se.high <- pred$Fitted.fit + 1.96 * pred$Fitted.se.fit
 
@@ -833,8 +837,8 @@ pred$response.high <- ifun(pred$se.high)
 
 
 pred_groups <- pred %>%
-    mutate(age_group = cut(STANDALTER, c(26, 36, 50, 66, 80))) %>%
-    filter(STANDALTER < 75) %>%
+    mutate(age_group = cut(STANDALTER, c(26, 36, 50, 66, 81, 126))) %>%
+    filter(STANDALTER < 100) %>%
     group_by(age_group, T2M14HMEA, species_corrected) %>%
     summarise(mean_dbh = mean(Fitted.fit, na.rm = TRUE),
               mean_se = sqrt(sum(Fitted.se.fit))/n()) %>%

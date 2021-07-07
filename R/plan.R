@@ -52,7 +52,11 @@ plan <- drake_plan(
                                     trigger = trigger(condition = redownload)),
 
 
+    urbclim_2010_06 = download_urbclim_uhi(path_dir = "./analysis/data/raw_data/spatial_ancillary/ecmwfr_urbclim"),
+
     ### Berlin UHI gridded data -------------------------------
+
+
 
 
 
@@ -136,6 +140,9 @@ plan <- drake_plan(
     berlin_heat_model = assess_mean_temps(full_data_set_clean,
                                           berlin_heat_model_2015,
                                           20),
+    berlin_urbclim_heat_model = assess_mean_temps(full_data_set_clean,
+                                                 urbclim_2010_06,
+                                          20),
 
     # Add UHI data from RasterLayer stack to sf data frame
     extract_uhi_values_to_list = add_uhi_hist_data(uhi_stack_list = uhi_stacks,
@@ -148,7 +155,8 @@ plan <- drake_plan(
                             soil_nutrients = soil_nutrient_data,
                             building_height_mean_m = building_height_mean_m,
                             lcz_cover_prop = lcz_cover_prop,
-                            berlin_heat_model = berlin_heat_model)),
+                            berlin_heat_model = berlin_heat_model,
+                            berlin_urbclim_heat_model = berlin_urbclim_heat_model)),
 
 
 
@@ -342,22 +350,23 @@ plan <- drake_plan(
     # Reporting ------------------------------
     paper_html = rmarkdown::render(
         knitr_in("./analysis/paper/paper.Rmd"),
-        # output_file = file_out(file.path(here::here(), "paper_knit.html")),
-        output_file = file_out("./paper_knit.html"),
+        output_dir = "./analysis/paper/",
+        output_file = file_out("paper_knit.html"),
         output_format = bookdown::html_document2(),
         quiet = TRUE
     ),
     paper_word = rmarkdown::render(
         knitr_in("./analysis/paper/paper.Rmd"),
-        output_file = file_out("./paper_knit.docx"),
+        output_dir = "./analysis/paper/",
+        output_file = file_out("paper_knit.docx"),
         # output_file = "./paper_knit.html",
         output_format = bookdown::word_document2(),
         quiet = TRUE
     ),
     paper_pdf = rmarkdown::render(
         knitr_in("./analysis/paper/paper.Rmd"),
-        output_file = file_out("./paper_knit.pdf"),
-        # output_file = "./paper_knit.html"),
+        output_dir = "./analysis/paper/",
+        output_file = file_out("paper_knit.pdf"),
         output_format = bookdown::pdf_document2(),
         quiet = TRUE
     )

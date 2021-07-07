@@ -526,7 +526,7 @@ download_heat_data <- function(){
 
 
 
-#' Download UrbClim data from ecmwf C3S
+#' Download UrbClim data from ecmwf CDS
 #'
 #' Download and unzip data set, file format is .zip/.nc;
 #' creates a directory "unzipped" in `path_dir`
@@ -536,8 +536,15 @@ download_heat_data <- function(){
 #' @param var character, defaults to 'air_temperature'
 #' @param path_dir character, folder to download and unzip directory
 #'
-#' @return character, path to unzipped file
-download_urbclim_uhi <- function(month = "06", year = "2010", var = air_temperature, path_dir){
+#' @source https://cds.climate.copernicus.eu/cdsapp#!/dataset/sis-urban-climate-cities
+#'
+#' @return rasterStack of UrbClim data
+download_urbclim_uhi <- function(month = "06", year = "2010", var = 'air_temperature', path_dir){
+
+    if(!dir.exists(path_dir)){
+        dir.create(path_dir)
+        cat(sprintf("Created download dir in %s \n", path_dir))
+    }
 
     if(!nchar(month) == 2 &&
        !class(month) == "character"){
@@ -564,23 +571,41 @@ download_urbclim_uhi <- function(month = "06", year = "2010", var = air_temperat
         target = fname
     )
 
+    # options(keyring_backend = "file")
+    # set a key to the keychain
 
+    options(keyring_backend = "file")
     # If you have stored your user login information
     # in the keyring by calling cds_set_key you can
+
+
+    if(!file.exists( normalizePath(file.path(path_dir, fname)))){
+
+
     # call:
-    file <- wf_request(user     = "92658",   # user ID (for authentification)
-                       request  = request,  # the request
-                       transfer = TRUE,     # download the file
-                       path     = path_dir)      # store data in current working directory
+    file <- ecmwfr::wf_request(
+        user     = "92658",   # user ID (for authentification)
+        request  = request,  # the request
+        transfer = TRUE,     # download the file
+        path     = path_dir)      # store data in current working directory
+    } else {
+        cat(sprintf("File %s already exists", fname))
+    }
 
 
     unzip_dir <- normalizePath(file.path(path_dir, "unzipped"))
+
+    if(!dir.exists(unzip_dir)){
+        dir.create(unzip_dir)
+    }
     unzip(normalizePath(file.path(path_dir, fname)), exdir = unzip_dir)
 
-    # path_file <- normalizePath(list.files(unzip_dir, pattern = "nc", full.names = TRUE)[grep(paste(year, month, sep = "_"), list.files(unzip_dir, pattern = "nc"))])
+    path_file <- normalizePath(list.files(unzip_dir, pattern = "nc", full.names = TRUE)[grep(paste(year, month, sep = "_"), list.files(unzip_dir, pattern = "nc"))])
 
+    out <- raster::brick(path_file)
+    raster::crs(out) <- "+init=EPSG:3035"
 
-    return(unzip_dir)
+    return(out)
 
 }
 
@@ -1624,7 +1649,77 @@ assess_mean_temps <- function(sf_data, heat_raster, buff_dist = 100, method = "s
 }
 
 
+#' Extract values from raster based on (point) sf
+#'
+#' @param sf_data sf dframe, e.g. berlin trees
+#' @param heat_raster, raster, berlin klimamodell temps (or other)
+#' @param buff_dist, buffer around points / polygons
+#' @param method character, "simple" (for categorical) or "bilinear"
+#'
+#' @return dframe, 1 row per sf geometry, with proportions of coverage
+#' @export
+assess_mean_temps_urbclim <- function(sf_data,
+                                      heat_raster,
+                                      buff_dist = 100,
+                                      method = "simple",
+                                      hour_av = list(morning = c(3,5), afternoon = c(13,15), night = c(21,23))){
 
+    # ensure both objects have same projection
+
+    if(!sf::st_crs(sf_data)$wkt ==
+       raster::wkt(heat_raster)){
+
+        sf_data <- sf::st_transform(sf_data,
+                                    crs = raster::crs(heat_raster))
+        message("adjusted CRS")
+    }
+
+    raster_mean_across_hours <- function(heat_raster, hour_av){
+
+        hour_idxs <- lapply(hour_av,
+                            function(x){
+                                out <- which(dplyr::between(as.numeric(format(as.POSIXct(heat_raster@z[[1]]), "%H")),
+                                                            x[1], x[2]))
+
+                                return(out)
+
+                            })
+
+
+        raster_mean_hours <- lapply(seq_along(hour_idxs),
+                                    function(x){
+                                        out <- raster::calc(subset(heat_raster, hour_idxs[[x]]), mean)
+                                        return(out)
+                                    }
+        )
+
+        return(raster_mean_hours)
+    }
+
+    heat_raster_means <- raster_mean_across_hours(heat_raster = heat_raster,
+                                                  hour_av = hour_av)
+
+
+
+    extracted_vals <- sapply(heat_raster_means,
+                             function(x){
+
+                                 raster::extract(x,
+                                                 sf_data,
+                                                 method = method,
+                                                 buffer = buff_dist,
+                                                 fun = mean,
+                                                 na.rm = TRUE,
+                                                 df = FALSE,
+                                                 factors = FALSE)})
+
+    colnames(extracted_vals) <- paste(names(hour_av),
+                                      sapply(list(morning = c(3,5), afternoon = c(13,15), night = c(21,23)), paste, collapse = "_"),
+                                      sep = "_")
+
+    return(extracted_vals)
+
+}
 
 # Stats -------------------------------------------------------------------
 
@@ -1923,25 +2018,25 @@ make_model_grid <- function(){
 
                   # AGE + Heat by Species
                   "mI_age_by_species_ADD_heat14_by_species" =
-                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(T2M14HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(mod2015_T2M14HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
                   "mI_age_by_species_ADD_heat04_by_species" =
-                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(T2M04HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(mod2015_T2M04HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
                   "mI_age_by_species_ADD_heat22_by_species" =
-                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(T2M22HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(mod2015_T2M22HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
 
                   # AGE x HEAT by Species
                   "mI_age_x_heat14_by_species" =
-                      dbh_cm ~ te(STANDALTER, T2M14HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected,
+                      dbh_cm ~ te(STANDALTER, mod2015_T2M14HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected,
                   "mI_age_x_heat04_by_species" =
-                      dbh_cm ~ te(STANDALTER, T2M04HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected,
+                      dbh_cm ~ te(STANDALTER, mod2015_T2M04HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected,
                   "mI_age_x_heat22_by_species" =
-                      dbh_cm ~ te(STANDALTER, T2M22HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected,
+                      dbh_cm ~ te(STANDALTER, mod2015_T2M22HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected,
                   "mI_age_x_heat14_by_species_reBEZIRK" =
-                      dbh_cm ~ te(STANDALTER, T2M14HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+                      dbh_cm ~ te(STANDALTER, mod2015_T2M14HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
 
                   # SPATIAL + AGE x HEAT by Species
                   "mI_spatial_age_x_heat14_by_species" =
-                      dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, T2M14HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected
+                      dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, mod2015_T2M14HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected
     )
 
 
@@ -2967,7 +3062,7 @@ prefix_names <- function(x, prefix){
         names(x)[-geometry_col] <- paste0(prefix, "_", names(x)[-geometry_col])
 
     } else {
-        names(x) <- paste0(prefix, "_", names(x))
+        colnames(x) <- paste0(prefix, "_", names(x))
 
     }
 
@@ -2993,7 +3088,8 @@ combine_covariates <- function(data_list){
                     "soil_nutrients",
                     "lcz_cover_prop",
                     "building_height_mean_m",
-                    "berlin_heat_model")
+                    "berlin_heat_model",
+                    "berlin_urbclim_heat_model")
 
     if(!all(names(data_list) %in% data_names)){
         stop("expecting different data set inputs. Check or change function to accommodate")
@@ -3009,7 +3105,9 @@ combine_covariates <- function(data_list){
                           prefix_names(sf::st_drop_geometry(data_list$soil_nutrients)[, soil_nutrient_cols], "soil_nutrients"),
                           building_heigt_m = data_list$building_height_mean_m,
                           prefix_names(data_list$lcz_cover_prop, "lcz_prop"),
-                          prefix_names(data_list$berlin_heat_model, "mod2015"))
+                          prefix_names(data_list$berlin_heat_model, "mod2015"),
+                          prefix_names(data_list$berlin_urbclim_heat_model, "urbclim_mod"),
+                          )
 
 
     return(covariate_df)
