@@ -39,6 +39,9 @@ plan <- drake_plan(
         lapply(., function(x)prop.table(table(x))) %>%
         setNames(berlin_polygons$NAMGEM) %>% dplyr::bind_rows(.id = "bezirk"),
 
+    corine_landcover_mask = make_corine_urban_rural_mask(path = "analysis/data/raw_data/spatial_ancillary/CORINE_CLC.zip",
+                                                          berlin_bbox = bounding_box),
+
     berlin_soil = target(download_soil_types(),
                          trigger = trigger(condition = redownload)),
 
@@ -52,7 +55,12 @@ plan <- drake_plan(
                                     trigger = trigger(condition = redownload)),
 
 
-    urbclim_2010_06 = download_urbclim_uhi(path_dir = "./analysis/data/raw_data/spatial_ancillary/ecmwfr_urbclim"),
+    urbclim = download_urbclim_uhi(month = "08",
+                                   year = "2015",
+                                   path_dir = "./analysis/data/raw_data/spatial_ancillary/ecmwfr_urbclim"),
+
+    uhi_urbclim = calc_urbclim_uhi_with_corine(urbclim$night_21_23, clc = corine_landcover_mask,natural_cover_val = 50, make_plot = FALSE),
+
 
     ### Berlin UHI gridded data -------------------------------
 
@@ -122,6 +130,10 @@ plan <- drake_plan(
     #                 join = sf::st_nearest_feature),
 
 
+
+
+
+
     lcz_cover_prop = furrr::future_map_dfr(split_by_n(full_data_set_clean,
                                                       5000),
                                            ~assess_relative_lcz_cover(.x, wudapt_lcz, 150),
@@ -140,9 +152,11 @@ plan <- drake_plan(
     berlin_heat_model = assess_mean_temps(full_data_set_clean,
                                           berlin_heat_model_2015,
                                           20),
-    berlin_urbclim_heat_model = assess_mean_temps(full_data_set_clean,
-                                                 urbclim_2010_06,
+    berlin_urbclim_heat_model = assess_mean_temps_urbclim(full_data_set_clean,
+                                                          urbclim,
                                           20),
+
+
 
     # Add UHI data from RasterLayer stack to sf data frame
     extract_uhi_values_to_list = add_uhi_hist_data(uhi_stack_list = uhi_stacks,
@@ -254,7 +268,7 @@ plan <- drake_plan(
 
     # Plotting --------------------------------
 
-   # Create overview-map of all data sets
+   ### map: Tree overview-----
 
     plot_overview_map = make_overview_map(full_data_set_clean,
                                                         berlin_polygons,
@@ -265,7 +279,7 @@ plan <- drake_plan(
 
 
 
-   # Spatially-binned tree counts
+   ### map: Binned tree counts -----
 
     plot_count_map = tree_count_map(full_data_set_clean,
                                                   berlin_polygons,file = drake::file_out("./analysis/figures/map_02_tree_sums_standardized.png"),
@@ -273,7 +287,7 @@ plan <- drake_plan(
                                                   width = 12,
                                                   dpi = 300),
 
-   # Plot UHI with Berlin districts
+   ### map: UHI Explorer ------------
 
     plot_uhi_map = make_uhi_plot(uhi_stacks = uhi_stacks,
                                                berlin_poly = berlin_polygons,
@@ -285,8 +299,18 @@ plan <- drake_plan(
 
 
 
+   ### map: UHI urbclim -------------
 
-   # Generate overview of records (bar plot)
+   plot_uhi_urbclim_map = make_uhi_urbclim_plot(uhi_rast = uhi_urbclim,
+                                                berlin_poly = berlin_polygons,
+                                                file = drake::file_out("./analysis/figures/map_03_uhi_urbclim.png"),
+                                                height = 10,
+                                                width = 10,
+                                                legend_label = expression(atop(Summer~21-23~hrs,
+                                                                               UHI~(degree*C)))),
+
+
+   ### bar: Tree counts ------------
 
     plot_tree_sums_bar = tree_sums_bar_plot(full_data_set_clean,
                                                           file = drake::file_out("./analysis/figures/plot_01_tree_sums_bar.png"),
@@ -295,7 +319,7 @@ plan <- drake_plan(
                                                           height = 12,
                                                           width = 12,
                                                           dpi = 300),
-   # Density plot overview
+   ### dens: trees by UHI -------------
 
     plot_density = dens_plot_trees(sf_data = full_data_set_clean,
                                                  extracted_uhi = extract_uhi_values_to_list,
@@ -314,7 +338,7 @@ plan <- drake_plan(
     #                 ),
 
 
-   # Make Random-effects effect-size plot
+   ### stat:  RanEf-size --------------
 
     plot_LME_age = make_ranef_plot(model_out = model_res$model,
                                                  model_name = "heat_age_RIspecies_RSspecies_RIprovenance",

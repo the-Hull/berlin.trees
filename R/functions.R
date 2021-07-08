@@ -529,17 +529,21 @@ download_heat_data <- function(){
 #' Download UrbClim data from ecmwf CDS
 #'
 #' Download and unzip data set, file format is .zip/.nc;
-#' creates a directory "unzipped" in `path_dir`
+#' creates a directory "unzipped" in `path_dir`, sets correct CRS
+#' and averages rasterlayers across hour_av elements.
+#' Note, function creates and writes a raster brick into the unzipped folder.
 #'
 #' @param month character, defaults to 06
 #' @param year character, 2008 - 2017, defaults to 2010
 #' @param var character, defaults to 'air_temperature'
 #' @param path_dir character, folder to download and unzip directory
+#' @param hour_av named list, with day-hour ranges for averaging rasterlayers (e.g. `list(afternoon = c(13,15))`)
 #'
 #' @source https://cds.climate.copernicus.eu/cdsapp#!/dataset/sis-urban-climate-cities
 #'
 #' @return rasterStack of UrbClim data
-download_urbclim_uhi <- function(month = "06", year = "2010", var = 'air_temperature', path_dir){
+download_urbclim_uhi <- function(month = "06", year = "2010", var = 'air_temperature', path_dir,
+                                 hour_av = list(morning = c(3,5), afternoon = c(13,15), night = c(21,23))){
 
     if(!dir.exists(path_dir)){
         dir.create(path_dir)
@@ -605,6 +609,51 @@ download_urbclim_uhi <- function(month = "06", year = "2010", var = 'air_tempera
     out <- raster::brick(path_file)
     raster::crs(out) <- "+init=EPSG:3035"
 
+
+    raster_mean_across_hours <- function(heat_raster, hour_av){
+
+        hour_idxs <- lapply(hour_av,
+                            function(x){
+                                out <- which(dplyr::between(as.numeric(format(as.POSIXct(heat_raster@z[[1]]), "%H")),
+                                                            x[1], x[2]))
+
+                                return(out)
+
+                            })
+
+
+        raster_mean_hours <- lapply(seq_along(hour_idxs),
+                                    function(x){
+                                        out <- raster::calc(subset(heat_raster, hour_idxs[[x]]), mean) - 273.15
+                                        return(raster::stack(out))
+                                    }
+        )
+
+        return(raster_mean_hours)
+    }
+
+    out <- raster_mean_across_hours(heat_raster = out,
+                                                  hour_av = hour_av)
+
+    out <- raster::stack(out)
+
+
+
+    raster::writeRaster(x = out,
+                        filename = fs::path(fs::path_ext_remove(path_file),ext = "grd"),
+                        overwrite = TRUE)
+
+    out <- raster::stack(fs::path(fs::path_ext_remove(path_file),ext = "grd"))
+
+    # saveRDS(object = out,
+    #         file = fs::path(fs::path_ext_remove(path_file),ext = "Rds"))
+
+    cat(sprintf("raster written to %s \n\n", fs::path(fs::path_ext_remove(path_file),ext = "grd")))
+
+    out <- raster::unstack(out)
+    names(out) <- paste(names(hour_av),
+                        sapply(hour_av, paste, collapse = "_"),
+                        sep = "_")
     return(out)
 
 }
@@ -687,7 +736,25 @@ download_berlin_lu <- function(path = "./analysis/data/raw_data/spatial_ancillar
     return(path)
 }
 
+#' Download Precip and Temp from KNMI Climate Explorer
+#'
+#' This downloads all station data (>1750 for temp, >1950 for precip) from Berlin Tegel
+#'
+#' @return tibble with climate data
+download_berlin_climate_data <- function(){
 
+    berlin_precip <- read.table(file = "https://climexp.knmi.nl/data/pa10384.dat") %>%
+        setNames(c("year", month.abb)) %>%
+        tidyr::pivot_longer(cols = -year, names_to = "month", values_to = "vals")
+
+    berlin_mean_temp <- read.table(file = "https://climexp.knmi.nl/data/ta10384.dat") %>%
+        setNames(c("year", month.abb)) %>%
+        tidyr::pivot_longer(cols = -year, names_to = "month", values_to = "vals")
+
+    berlin_climate <- dplyr::left_join(berlin_precip, berlin_mean_temp, by = c("year", "month"), suffix = c("_prec", "_temp"))
+
+    return(berlin_climate)
+}
 
 #' Load spatial-features data sets of all Berlin trees
 #'
@@ -1064,7 +1131,6 @@ split_df <- function(sfdf, save_dir = "./analysis/data/raw_data/tree_splits"){
 }
 
 
-loadd(full_data_set_clean_with_UHI_covariates)
 
 
 
@@ -1419,9 +1485,90 @@ get_uhi_rasters <- function(path){
 
 
 
+#' Derive CORINE Urban-Rural Mask
+#'
+#' @param path character, path to CORINE high-level zip
+#' @param berlin_bbox sf df, bounding box of greater berlin area
+#'
+#' @details See https://datastore.copernicus-climate.eu/documents/sis-european-health/C3S_422_Lot2.VITO.3.1_201909_Demo_Web_Application_URBAN.1_v4.pdf
+#' for calculation of UHI
+#'
+#' @return list with adjusted CLC raster, original land cover legend, and value table
+make_corine_urban_rural_mask <- function(path, berlin_bbox){
+
+    # nested zip files..
+    unzip(path, exdir = fs::path_dir(path))
+
+    path_nested_zip <- list.files(fs::path_dir(path), pattern = "clc2018.*zip$", full.names = TRUE, include.dirs = FALSE)
+
+    unzip(zipfile = path_nested_zip, exdir = fs::path_dir(path))
+
+    # read tif
+    path_data <- list.files(fs::path(fs::path_ext_remove(path_nested_zip), "DATA"),
+                            pattern = "tif$",
+                            full.names = TRUE)
+
+
+    # meta data
+
+    path_desc <- list.files(
+        fs::path(
+            fs::path_ext_remove(
+                path_nested_zip),
+            "Legend"),
+        pattern = "txt$",
+        full.names = TRUE)
+
+
+    clc_desc <- read.csv(path_desc, header = FALSE, stringsAsFactors = FALSE) %>%
+        setNames(nm = c("class", "r", "g", "b", "alpha", "name")) %>%
+        dplyr::mutate(class = as.factor(class))
+
+    clc_rast <- raster::raster(path_data)
+
+    # ensure same projection
+    berlin_bbox <- sf::st_transform(berlin_bbox, crs = raster::crs(clc_rast))
+
+
+    clc_rast <- raster::crop(clc_rast, berlin_bbox)
+
+    clc_rast[clc_rast >= 37] <- 100 # water
+    clc_rast[clc_rast < 37 & clc_rast > 21] <- 50 # natural
+    clc_rast[clc_rast <= 21 & clc_rast > 11] <- 25 # agricultural
+    clc_rast[clc_rast <= 11] <- 1 # urban
 
 
 
+    # rural land classes:
+    # CORINE covering grassland, cropland, shrubland, woodland, broadleaf forest and needleleaf forest
+
+    return(list(clc = clc_rast,
+                clc_legend = clc_desc,
+                clc_legend_adjust = c(water = 100, natural = 50, agricultural = 25, urban = 1)))
+}
+
+#' Calculate UHI for Berlin based on CLC land cover and UrbClim data
+#'
+#' @param urbclim raster(layer) of (averaged) urbclim data
+#' @param clc named list, contains clc, clc_legend and clc_legend_adjust
+#'
+#' @returns UHI raster
+#'
+#' @examples
+calc_urbclim_uhi_with_corine <- function(urbclim, clc, natural_cover_val = 50, make_plot = FALSE){
+
+    clc_crop <- crop(resample(clc, urbclim), urbclim)
+
+    if(make_plot){
+        raster::plot(mask(urbclim, clc_crop == natural_cover_val, maskvalue = 0))
+    }
+
+    mean_temp_natural <- cellStats(mask(urbclim, clc_crop == natural_cover_val, maskvalue = 0), mean)
+
+    urbclim_uhi <- urbclim - mean_temp_natural
+
+    return(urbclim_uhi)
+}
 
 #' Add UHI data from RasterLayer stack to sf data frame
 #'
@@ -1652,56 +1799,54 @@ assess_mean_temps <- function(sf_data, heat_raster, buff_dist = 100, method = "s
 #' Extract values from raster based on (point) sf
 #'
 #' @param sf_data sf dframe, e.g. berlin trees
-#' @param heat_raster, raster, berlin klimamodell temps (or other)
+#' @param heat_raster, list with rasters, berlin urbclim data temps (or other)
 #' @param buff_dist, buffer around points / polygons
 #' @param method character, "simple" (for categorical) or "bilinear"
 #'
-#' @return dframe, 1 row per sf geometry, with proportions of coverage
-#' @export
+#' @return dframe/matrix, 1 row per sf geometry, with proportions of coverage
 assess_mean_temps_urbclim <- function(sf_data,
                                       heat_raster,
                                       buff_dist = 100,
-                                      method = "simple",
-                                      hour_av = list(morning = c(3,5), afternoon = c(13,15), night = c(21,23))){
+                                      method = "simple"){
 
     # ensure both objects have same projection
 
     if(!sf::st_crs(sf_data)$wkt ==
-       raster::wkt(heat_raster)){
+       raster::wkt(heat_raster[[1]])){
 
         sf_data <- sf::st_transform(sf_data,
-                                    crs = raster::crs(heat_raster))
+                                    crs = raster::crs(heat_raster[[1]]))
         message("adjusted CRS")
     }
 
-    raster_mean_across_hours <- function(heat_raster, hour_av){
+    # raster_mean_across_hours <- function(heat_raster, hour_av){
+    #
+    #     hour_idxs <- lapply(hour_av,
+    #                         function(x){
+    #                             out <- which(dplyr::between(as.numeric(format(as.POSIXct(heat_raster@z[[1]]), "%H")),
+    #                                                         x[1], x[2]))
+    #
+    #                             return(out)
+    #
+    #                         })
+    #
+    #
+    #     raster_mean_hours <- lapply(seq_along(hour_idxs),
+    #                                 function(x){
+    #                                     out <- raster::calc(subset(heat_raster, hour_idxs[[x]]), mean)
+    #                                     return(out)
+    #                                 }
+    #     )
+    #
+    #     return(raster_mean_hours)
+    # }
+    #
+    # heat_raster_means <- raster_mean_across_hours(heat_raster = heat_raster,
+    #                                               hour_av = hour_av)
 
-        hour_idxs <- lapply(hour_av,
-                            function(x){
-                                out <- which(dplyr::between(as.numeric(format(as.POSIXct(heat_raster@z[[1]]), "%H")),
-                                                            x[1], x[2]))
-
-                                return(out)
-
-                            })
 
 
-        raster_mean_hours <- lapply(seq_along(hour_idxs),
-                                    function(x){
-                                        out <- raster::calc(subset(heat_raster, hour_idxs[[x]]), mean)
-                                        return(out)
-                                    }
-        )
-
-        return(raster_mean_hours)
-    }
-
-    heat_raster_means <- raster_mean_across_hours(heat_raster = heat_raster,
-                                                  hour_av = hour_av)
-
-
-
-    extracted_vals <- sapply(heat_raster_means,
+    extracted_vals <- sapply(heat_raster,
                              function(x){
 
                                  raster::extract(x,
@@ -1713,9 +1858,7 @@ assess_mean_temps_urbclim <- function(sf_data,
                                                  df = FALSE,
                                                  factors = FALSE)})
 
-    colnames(extracted_vals) <- paste(names(hour_av),
-                                      sapply(list(morning = c(3,5), afternoon = c(13,15), night = c(21,23)), paste, collapse = "_"),
-                                      sep = "_")
+    colnames(extracted_vals) <- names(heat_raster)
 
     return(extracted_vals)
 
@@ -2427,6 +2570,104 @@ make_uhi_plot <- function(uhi_stacks,
 
 }
 
+
+#' Plot UHI with Berlin districts
+#'
+#' @param uhi_rast Raster(layer) UHI
+#' @param berlin_poly Berlin District Polygon
+#' @param base_size Numeric, base char size for ggplot
+#' @param file Character, output file path
+#' @param height Numeric, for plot output (cm)
+#' @param width Numeric, for plot output (cm)
+#' @param dpi Numeric
+#' @import raster
+#'
+#' @return
+#' @export
+#'
+make_uhi_urbclim_plot <- function(uhi_rast,
+                                  berlin_poly,
+                                  legend_label = expression(atop(Summer~3-5~AM,
+                                                                 UHI~(degree*C))),
+                                  base_size = 18,
+                                  file,
+                                  height,
+                                  width,
+                                  dpi){
+
+    # extrafont::loadfonts(device = "win",quiet = TRUE)
+    # extrafont::loadfonts(device = "pdf",quiet = TRUE)
+
+
+    # uhi_stacks <- purrr::modify(uhi_stacks, raster::raster)
+
+    berlin_poly <- sf::st_transform(berlin_poly,
+                                    crs = raster::crs(uhi_rast))
+
+    mid_rescaler <- function(mid = 0) {
+        function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
+            scales::rescale_mid(x, to, from, mid)
+        }
+    }
+
+
+
+
+
+    p <- ggplot2::ggplot() +
+
+
+        ggplot2::geom_sf(data = berlin_poly,
+                         color = "gray60",
+                         fill = "gray80",
+                         size = 0.75,
+                         show.legend = FALSE) +
+
+
+        stars::geom_stars(data = stars::st_as_stars(uhi_rast)[berlin_poly]) +
+
+        # %>%
+        #     dplyr::slice(band, 1),
+        # na.rm = TRUE) +
+        #
+
+        ggplot2::geom_sf(data = berlin_poly,
+                         color = "gray20",
+                         fill = "transparent",
+                         size = 0.25,
+                         show.legend = FALSE) +
+
+        # ggplot2::scale_fill_viridis_c(na.value = "transparent", option = "inferno") +
+        ggplot2::scale_fill_distiller(palette = "RdBu",
+                                      rescaler = mid_rescaler(),
+                                      na.value = "transparent")   +
+
+        ggplot2::labs(fill = legend_label,
+                      x = NULL,
+                      # title = "Estimate of Urban Heat Loading",
+                      y = NULL) +
+
+
+        # ggplot2::theme_minimal(base_family = "Roboto Condensed",
+        ggplot2::theme_minimal(base_size = base_size) +
+        ggplot2::theme(legend.direction = "horizontal",
+                       legend.position = c(0.6, 0.95)) +
+        ggplot2::guides(fill = ggplot2::guide_colorbar(barwidth = ggplot2::unit(3.5, "cm"),
+                                                       title.vjust = 1,
+                                                       ticks.colour = "gray30"))
+
+    ggplot2::ggsave(filename = file,
+                    plot = p,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+    # print(p)
+
+
+}
+
+
 #' Density plot overview
 #'
 #' This function is hard-codes use of 2007 Summer, Day UHI data.
@@ -3050,10 +3291,10 @@ split_by_n <- function(dframe, cut_size){
 #'
 prefix_names <- function(x, prefix){
 
-    if(is.null(names(x))){
-
-        return(x)
-    }
+    # if(is.null(names(x))){
+    #
+    #     return(x)
+    # }
 
     # handle sf columns
     if(rlang::inherits_any(x, "sf")){
@@ -3062,6 +3303,7 @@ prefix_names <- function(x, prefix){
         names(x)[-geometry_col] <- paste0(prefix, "_", names(x)[-geometry_col])
 
     } else {
+        x <- as.data.frame(x)
         colnames(x) <- paste0(prefix, "_", names(x))
 
     }
@@ -3106,7 +3348,7 @@ combine_covariates <- function(data_list){
                           building_heigt_m = data_list$building_height_mean_m,
                           prefix_names(data_list$lcz_cover_prop, "lcz_prop"),
                           prefix_names(data_list$berlin_heat_model, "mod2015"),
-                          prefix_names(data_list$berlin_urbclim_heat_model, "urbclim_mod"),
+                          prefix_names(data_list$berlin_urbclim_heat_model, "urbclim_mod")
                           )
 
 
