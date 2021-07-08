@@ -14,6 +14,11 @@ plan <- drake_plan(
     # getting data
 
 
+    ## Climate time series data ---------------------------------------
+
+
+    berlin_climate = download_berlin_climate_data(),
+
 
     ## Spatial Ancillary -----------------------------------
 
@@ -27,6 +32,11 @@ plan <- drake_plan(
                                            12.712024, 14.238359,
                                            "greater_berlin",
                                            crs = 4326),
+
+    ### Berlin land-use from senate
+
+    berlin_lu = download_berlin_lu(),
+
 
     # obtained from http://www.wudapt.org/continental-lcz-maps/
     # downloaded with wget in Ubuntu shell
@@ -59,7 +69,7 @@ plan <- drake_plan(
                                    year = "2015",
                                    path_dir = "./analysis/data/raw_data/spatial_ancillary/ecmwfr_urbclim"),
 
-    uhi_urbclim = calc_urbclim_uhi_with_corine(urbclim$night_21_23, clc = corine_landcover_mask,natural_cover_val = 50, make_plot = FALSE),
+    uhi_urbclim = calc_urbclim_uhi_with_corine(urbclim, clc = corine_landcover_mask$clc ,natural_cover_val = 50, make_plot = FALSE),
 
 
     ### Berlin UHI gridded data -------------------------------
@@ -153,7 +163,7 @@ plan <- drake_plan(
                                           berlin_heat_model_2015,
                                           20),
     berlin_urbclim_heat_model = assess_mean_temps_urbclim(full_data_set_clean,
-                                                          urbclim,
+                                                          uhi_urbclim,
                                           20),
 
 
@@ -268,6 +278,17 @@ plan <- drake_plan(
 
     # Plotting --------------------------------
 
+
+   ### map: study area ------
+
+   plot_study_area_map = make_map_study_area(blu = berlin_lu,
+                                             berlin_poly = berlin_polygons,
+                                             path_out = drake::file_out("./analysis/figures/map_00_studyarea.png"),
+                                             height = 5.5,
+                                             width = 7,
+                                             dpi = 300),
+
+
    ### map: Tree overview-----
 
     plot_overview_map = make_overview_map(full_data_set_clean,
@@ -301,11 +322,12 @@ plan <- drake_plan(
 
    ### map: UHI urbclim -------------
 
-   plot_uhi_urbclim_map = make_uhi_urbclim_plot(uhi_rast = uhi_urbclim,
+   plot_uhi_urbclim_map = make_uhi_urbclim_plot(uhi_rast = uhi_urbclim[[3]],
                                                 berlin_poly = berlin_polygons,
                                                 file = drake::file_out("./analysis/figures/map_03_uhi_urbclim.png"),
-                                                height = 10,
-                                                width = 10,
+                                                height = 5.5,
+                                                width = 6,
+                                                dpi = 300,
                                                 legend_label = expression(atop(Summer~21-23~hrs,
                                                                                UHI~(degree*C)))),
 
@@ -337,6 +359,24 @@ plan <- drake_plan(
     #                 n_top_species = 3
     #                 ),
 
+
+   ### stat: Berlin Climate plot -------
+
+
+
+   plot_berlin_climate = make_berlin_climate_plot(
+       clim = berlin_climate,
+
+       col_temp = "#ed6a1f",
+       col_prec = "#3dd2e3",
+       col_prec_secondary = "#93d2d9",
+
+       base_size = 18,
+       file = drake::file_out("./analysis/figures/fig-berlin-climate.png"),
+       height = 8,
+       width = 6,
+       dpi = 300
+   ),
 
    ### stat:  RanEf-size --------------
 

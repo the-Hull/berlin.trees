@@ -1189,103 +1189,6 @@ combine_split_clean_data <- function(
 
 
 
-#' Prep model data frame
-#'
-#' Defines df with top species by abundance, max age and the median absolute
-#' deviance score used to remove gross outliers.
-#'
-#' @param dset
-#' @param model_params
-#' @param plot
-#' @param path
-#'
-#' @return dset filtered according to the model params and has two additional columns.
-#' One of these is `mad_select`, (logical), which can be used to subset the df.
-#' @export
-#'
-#' @examples
-prep_model_df <- function(dset,
-                          model_params,
-                          plot = TRUE,
-                          path = "./analysis/figures/diagnostic_01_model_data.png"){
-
-
-    dset <- sf::st_drop_geometry(dset)
-
-
-    top_species <- dset %>%
-        dplyr::group_by(species_corrected) %>%
-        dplyr::tally(sort = TRUE) %>%
-        dplyr::top_n(model_params$n_max_species)
-
-
-
-    df_nest <- dset %>%
-        dplyr::filter(species_corrected %in% top_species$species_corrected,
-                      STANDALTER <= model_params$age_cutoff) %>%
-        tidyr::nest(cols = -species_corrected) %>%
-        dplyr::mutate(
-            mod = purrr::map(
-                cols,
-                function(df){
-                    glm(dbh_cm ~ STANDALTER, family = Gamma(link = "identity"), data = df)
-                }),
-            cols = purrr::modify2(
-                cols,
-                mod,
-                ~dplyr::mutate(.x,
-                               diag_fitted_dat = predict(.y, .x, type = "response"),
-                               diag_resid_val = resid(.y),
-                               diag_mad_cutoff = +1 * model_params$mad_factor * mad(resid(.y)),
-                               diag_mad_select = abs(diag_resid_val) <= diag_mad_cutoff
-                )
-            )
-        ) %>%
-        dplyr::select(-mod) %>%
-        tidyr::unnest(cols = cols)
-
-
-    if(plot == TRUE){
-
-
-
-        p <- df_nest %>%
-            dplyr::arrange(desc(diag_mad_select)) %>%
-            ggplot(aes(x = STANDALTER,
-                       y = dbh_cm,
-                       color = diag_mad_select,
-                       group = species_corrected)) +
-            geom_point() +
-            geom_point(aes(y = diag_fitted_dat), col = "pink", size = 0.5) +
-            labs(color = "Retained point",
-                 subtitle = sprintf("dbh ~ STANDALTER^1; MAD Cutoff factor +/- %i x MAD", model_params$mad_factor)) +
-            # geom_line(color = "pink", aes(group = species_corrected)) +
-            facet_wrap(~species_corrected, scales = "free")
-
-        if(file.exists(path)){
-            cat("Plot already exists. Overwriting. \n\n")
-        }
-
-
-        ggsave(filename = path,
-               plot = p,
-               width = 35,
-               height = 30,
-               units = "cm")
-
-        if(file.exists(path)){
-            cat(sprintf("Created diagnostic plot successfully in %s \n\n", path))
-        }
-
-    }
-
-    df_nest$species_corrected <- as.factor(df_nest$species_corrected)
-
-    return(df_nest)
-
-}
-
-
 
 
 # Spatial -----------------------------------------------------------------
@@ -1557,15 +1460,25 @@ make_corine_urban_rural_mask <- function(path, berlin_bbox){
 #' @examples
 calc_urbclim_uhi_with_corine <- function(urbclim, clc, natural_cover_val = 50, make_plot = FALSE){
 
-    clc_crop <- crop(resample(clc, urbclim), urbclim)
+
+
+    clc_crop <- crop(resample(clc, urbclim[[1]]), urbclim[[1]])
 
     if(make_plot){
-        raster::plot(mask(urbclim, clc_crop == natural_cover_val, maskvalue = 0))
+        raster::plot(mask(stack(urbclim), clc_crop == natural_cover_val, maskvalue = 0))
     }
 
-    mean_temp_natural <- cellStats(mask(urbclim, clc_crop == natural_cover_val, maskvalue = 0), mean)
+    urbclim_uhi <- lapply(urbclim,
+           function(x){
 
-    urbclim_uhi <- urbclim - mean_temp_natural
+               mean_temp_natural <- cellStats(mask(x, clc_crop == natural_cover_val, maskvalue = 0), mean)
+
+               urbclim_uhi <- x - mean_temp_natural
+
+           }) %>%
+        setNames(nm = names(urbclim))
+
+
 
     return(urbclim_uhi)
 }
@@ -1814,9 +1727,14 @@ assess_mean_temps_urbclim <- function(sf_data,
     if(!sf::st_crs(sf_data)$wkt ==
        raster::wkt(heat_raster[[1]])){
 
-        sf_data <- sf::st_transform(sf_data,
-                                    crs = raster::crs(heat_raster[[1]]))
-        message("adjusted CRS")
+        # sf_data <- sf::st_transform(sf_data,
+                                    # crs = raster::crs(heat_raster[[1]]))
+        heat_raster <- purrr::modify(heat_raster,
+                                     ~raster::projectRaster(
+                                         from = .x,
+                                         crs = sf::st_crs(sf_data)$wkt))
+
+                message("adjusted CRS")
     }
 
     # raster_mean_across_hours <- function(heat_raster, hour_av){
@@ -2045,6 +1963,103 @@ apply_models <- function(df = test_df,
     return(list(model = model_out, test_data = test_set))
 
 
+
+}
+
+
+#' Prep model data frame
+#'
+#' Defines df with top species by abundance, max age and the median absolute
+#' deviance score used to remove gross outliers.
+#'
+#' @param dset
+#' @param model_params
+#' @param plot
+#' @param path
+#'
+#' @return dset filtered according to the model params and has two additional columns.
+#' One of these is `mad_select`, (logical), which can be used to subset the df.
+#' @export
+#'
+#' @examples
+prep_model_df <- function(dset,
+                          model_params,
+                          plot = TRUE,
+                          path = "./analysis/figures/diagnostic_01_model_data.png"){
+
+
+    dset <- sf::st_drop_geometry(dset)
+
+
+    top_species <- dset %>%
+        dplyr::group_by(species_corrected) %>%
+        dplyr::tally(sort = TRUE) %>%
+        dplyr::top_n(model_params$n_max_species)
+
+
+
+    df_nest <- dset %>%
+        dplyr::filter(species_corrected %in% top_species$species_corrected,
+                      STANDALTER <= model_params$age_cutoff) %>%
+        tidyr::nest(cols = -species_corrected) %>%
+        dplyr::mutate(
+            mod = purrr::map(
+                cols,
+                function(df){
+                    glm(dbh_cm ~ STANDALTER, family = Gamma(link = "identity"), data = df)
+                }),
+            cols = purrr::modify2(
+                cols,
+                mod,
+                ~dplyr::mutate(.x,
+                               diag_fitted_dat = predict(.y, .x, type = "response"),
+                               diag_resid_val = resid(.y),
+                               diag_mad_cutoff = +1 * model_params$mad_factor * mad(resid(.y)),
+                               diag_mad_select = abs(diag_resid_val) <= diag_mad_cutoff
+                )
+            )
+        ) %>%
+        dplyr::select(-mod) %>%
+        tidyr::unnest(cols = cols)
+
+
+    if(plot == TRUE){
+
+
+
+        p <- df_nest %>%
+            dplyr::arrange(desc(diag_mad_select)) %>%
+            ggplot(aes(x = STANDALTER,
+                       y = dbh_cm,
+                       color = diag_mad_select,
+                       group = species_corrected)) +
+            geom_point() +
+            geom_point(aes(y = diag_fitted_dat), col = "pink", size = 0.5) +
+            labs(color = "Retained point",
+                 subtitle = sprintf("dbh ~ STANDALTER^1; MAD Cutoff factor +/- %i x MAD", model_params$mad_factor)) +
+            # geom_line(color = "pink", aes(group = species_corrected)) +
+            facet_wrap(~species_corrected, scales = "free")
+
+        if(file.exists(path)){
+            cat("Plot already exists. Overwriting. \n\n")
+        }
+
+
+        ggsave(filename = path,
+               plot = p,
+               width = 35,
+               height = 30,
+               units = "cm")
+
+        if(file.exists(path)){
+            cat(sprintf("Created diagnostic plot successfully in %s \n\n", path))
+        }
+
+    }
+
+    df_nest$species_corrected <- as.factor(df_nest$species_corrected)
+
+    return(df_nest)
 
 }
 
@@ -2601,8 +2616,11 @@ make_uhi_urbclim_plot <- function(uhi_rast,
 
     # uhi_stacks <- purrr::modify(uhi_stacks, raster::raster)
 
-    berlin_poly <- sf::st_transform(berlin_poly,
-                                    crs = raster::crs(uhi_rast))
+    # berlin_poly <- sf::st_transform(berlin_poly,
+                                    # crs = raster::crs(uhi_rast))
+
+    uhi_rast <- raster::projectRaster(from = uhi_rast,
+                                      crs = sf::st_crs(berlin_poly)$wkt)
 
     mid_rescaler <- function(mid = 0) {
         function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
@@ -2636,6 +2654,10 @@ make_uhi_urbclim_plot <- function(uhi_rast,
                          fill = "transparent",
                          size = 0.25,
                          show.legend = FALSE) +
+
+        ggplot2::scale_y_continuous(breaks = seq(52.35, 52.65, by = 0.1)) +
+        ggplot2::scale_x_continuous(breaks = seq(13.1, 13.7, by = 0.2)) +
+
 
         # ggplot2::scale_fill_viridis_c(na.value = "transparent", option = "inferno") +
         ggplot2::scale_fill_distiller(palette = "RdBu",
@@ -3045,7 +3067,7 @@ make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
 
 
 
-    berlin_poly <- sf::st_read(berlin_poly) %>%
+    berlin_poly <- berlin_poly %>%
         sf::st_make_valid() %>%
         sf::st_union()
 
@@ -3086,7 +3108,6 @@ make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
            plot = plt,
            height = height,
            width = width,
-           units = "cm",
            dpi = dpi)
 
 
@@ -3094,6 +3115,137 @@ make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
 }
 
 
+
+#' Climate overview plot
+#'
+#' @param clim tibble, from `download_berlin_climate_data()`
+#' @param col_temp character, color val for temperature
+#' @param col_prec character, color val for precip mean
+#' @param col_prec_secondary character, color val for precip range
+#' @param base_size numeric, 18
+#' @param file character, save height
+#' @param height numeric,
+#' @param width numeric
+#' @param dpi numeric
+#'
+make_berlin_climate_plot <- function(
+    clim,
+
+    col_temp = "#ed6a1f",
+    col_prec = "#3dd2e3",
+    col_prec_secondary = "#93d2d9",
+
+    base_size = 18,
+    file,
+    height,
+    width,
+    dpi
+){
+
+    extrafont::loadfonts(device = "pdf", quiet = TRUE)
+
+
+
+    temp_plot <- clim %>%
+        mutate(across(where(is.numeric), ~ifelse(.x < -100, NA, .x))) %>%
+        mutate(month = forcats::fct_relevel(month, month.abb)) %>%
+
+        ggplot(aes(x = month)) +
+
+        geom_line(aes(y = vals_temp, group = year), col = col_temp, alpha = 0.2) +
+
+        stat_summary(aes(x = month, y = vals_temp, group = 1),
+                     geom = "ribbon",
+                     fill = col_temp,
+                     color = "transparent",
+                     alpha = 0.5,
+                     fun.data = "mean_cl_boot") +
+
+        stat_summary(aes(x = month,
+                         y = vals_temp,
+                         group = 1),
+                     geom = "line",
+                     color = col_temp,
+                     size = 1,
+                     fun = mean) +
+
+        theme_bw(base_size = base_size, base_family = "Roboto Condensed") +
+        theme(axis.line.x.top = element_line(color = "white")) +
+        guides(x.sec = guide_axis(NULL),
+               x = guide_axis(n.dodge = 2)) +
+        # scale_x_discrete(guide = guide_axis(n.dodge = 2))+
+        theme(axis.text.x.top = element_blank(),
+              axis.ticks.length.x.top = unit(0, "npc")) +
+
+        labs(x = NULL, y = expression(Temperature~(degree*C)))
+
+    prec_plot <- clim %>%
+        mutate(across(where(is.numeric), ~ifelse(.x < -100, NA, .x))) %>%
+        mutate(month = forcats::fct_relevel(month, month.abb)) %>%
+
+        ggplot(aes(x = month)) +
+
+        # geom_col(aes(y = vals_prec, group = year), col = col_temp, alpha = 0.2) +
+
+        stat_summary(aes(x = month, y = vals_prec, group = 1),
+                     geom = "linerange",
+                     # color = "gray60",
+                     color = col_prec_secondary,
+                     size = 3,
+                     alpha = 0.25,
+                     fun = mean,
+                     fun.max = max,
+                     fun.min = min) +
+        stat_summary(aes(x = month, y = vals_prec, group = 1),
+                     geom = "linerange",
+                     color = col_prec,
+                     size = 2,
+                     alpha = 1,
+                     fun.data = "mean_cl_boot") +
+        stat_summary(aes(x = month, y = vals_prec, group = 1),
+                     geom = "line",
+                     color = col_prec,
+                     size = 1,
+                     alpha = 1,
+                     fun = "mean") +
+        stat_summary(aes(x = month, y = vals_prec, group = 1),
+                     geom = "point",
+                     color = "white",
+                     size = 0.75,
+                     alpha = 1,
+                     fun = "mean") +
+        scale_y_reverse() +
+
+        theme_bw(base_size = base_size, base_family = "Roboto Condensed") +
+        theme(
+            axis.ticks.x = element_blank(),
+            axis.text.x = element_blank(),
+            axis.title.x = element_blank(),
+            # axis.line = element_line(),
+            # axis.line.y = element_line(),
+            # axis.line.x = element_line(),
+            axis.line.x.top = element_line(color = "black"),
+            axis.line.x.bottom = element_line(color = "white")) +
+        labs(y = expression(Precipitation~(mm)))
+
+
+    # library(patchwork)
+
+
+    patch_plot <- prec_plot + temp_plot  +
+        patchwork::plot_layout(ncol = 1) +
+        patchwork::plot_annotation(tag_levels = "A", tag_suffix = ")") &
+        theme(text = element_text(size = 16),
+              plot.tag.position = "topright",
+              plot.tag = element_text(margin = margin(l = 10)))
+
+    ggplot2::ggsave(filename = file,
+                    plot = patch_plot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+}
 
 
 # Tables ------------------------------------------------------------------
