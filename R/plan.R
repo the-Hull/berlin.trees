@@ -159,12 +159,15 @@ plan <- drake_plan(
         unname(),
 
 
+    # heat polygons based on block level - 20 m captures canopy
     berlin_heat_model = assess_mean_temps(full_data_set_clean,
                                           berlin_heat_model_2015,
                                           20),
+
+    # raster has 100 m resolution
     berlin_urbclim_heat_model = assess_mean_temps_urbclim(full_data_set_clean,
                                                           uhi_urbclim,
-                                          20),
+                                                          buff_dist = 150),
 
 
 
