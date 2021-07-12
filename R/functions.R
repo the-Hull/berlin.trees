@@ -1071,7 +1071,8 @@ clean_data <- function(sf_data){
                                                  paste(gattung_short, "spec.")),
 
 
-                      bezirk_num = as.numeric(as.factor(BEZIRK))) %>%
+                      bezirk_num = as.numeric(as.factor(BEZIRK)),
+                      BEZIRK = as.factor(BEZIRK)) %>%
         dplyr::rename(provenance = PROVENANCE)
 
     return(sf_data)
@@ -2084,7 +2085,7 @@ prep_model_df <- function(dset,
 apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/", overwrite = TRUE, n_cl = NULL){
 
 
-    safe_bam <- purrr::possibly(mgcv::bam, otherwise = NULL)
+    safe_bam <- purrr::possibly(mgcv::bam, otherwise = NULL, quiet = FALSE)
 
 
 
@@ -2092,8 +2093,8 @@ apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/"
                              seq_len(nrow(model_grid)))
 
 
-    out <- purrr::map_dfr(
-        # out <- furrr::future_map_dfr(
+    # out <- purrr::map_dfr(
+        out <- furrr::future_map_dfr(
         model_grid_list,
         function(x){
 
@@ -2150,12 +2151,9 @@ apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/"
 
 
             return(status_df)
-        })
-    # ,
-    # .options = furrr::furrr_options(seed = 123)
-    # }
-    # )
-
+        },
+        .options = furrr::furrr_options(seed = 123)
+        )
 
     return(out)
 }
@@ -2168,81 +2166,104 @@ apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/"
 make_model_grid <- function(){
 
 
-    k_uni <- 30
-    k_te <- c(5, 15)
+    # k_uni <- 30
+    # k_te <- c(5, 15)
+
+    model_params <- new.env()
+
+    model_params$k_uni <- 30
+    model_params$k_te <- c(5, 15)
+
+    # tempvars <- list('mod2015_T2M04HMEA', 'mod2015_T2M14HMEA', 'mod2015_T2M22HMEA', 'urbclim_mod_morning_3_5', 'urbclim_mod_afternoon_13_15', 'urbclim_mod_night_21_23')
+    tempvars <- list('mod2015_T2M04HMEA', 'mod2015_T2M14HMEA')
+    tensor_mods <- list("mI_age_x_temp_by_species_reBEZIRK" =
+                            "dbh_cm ~ te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')")
 
 
-    forms <- list(
-        "mI_age_by_species" =
-            dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
-        "mI_age_by_species_RE-district" =
-            dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re") +s(BEZIRK, bs = "re"),
+    forms <- make_formula(main_body = tensor_mods,
+                 placeholders = tempvars,
+                 n_depth = 2)
 
-                  # AGE + Heat by Species
-                  "mI_age_by_species_ADD_heat14_by_species" =
-                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(mod2015_T2M14HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
-                  "mI_age_by_species_ADD_heat04_by_species" =
-                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(mod2015_T2M04HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
-                  "mI_age_by_species_ADD_heat22_by_species" =
-                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(mod2015_T2M22HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    forms <- lapply(forms, formula, env = model_params)
 
-                  # AGE x HEAT by Species
-                  "mI_age_x_heat14_by_species" =
-                      dbh_cm ~ te(STANDALTER, mod2015_T2M14HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected,
-                  "mI_age_x_heat04_by_species" =
-                      dbh_cm ~ te(STANDALTER, mod2015_T2M04HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected,
-                  "mI_age_x_heat22_by_species" =
-                      dbh_cm ~ te(STANDALTER, mod2015_T2M22HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected,
-
-                  "mI_age_x_heat04_by_species_reBEZIRK" =
-                      dbh_cm ~ te(STANDALTER, mod2015_T2M04HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
-                  "mI_age_x_heat14_by_species_reBEZIRK" =
-                      dbh_cm ~ te(STANDALTER, mod2015_T2M14HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
-                  "mI_age_x_heat22_by_species_reBEZIRK" =
-                      dbh_cm ~ te(STANDALTER, mod2015_T2M22HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
-
-                  # SPATIAL + AGE x HEAT by Species
-                  "mI_spatial_age_x_heat14_by_species" =
-                      dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, mod2015_T2M14HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected
-                  # SPATIAL + AGE x HEAT by Species
-                  "mI_spatial_age_x_heat22_by_species" =
-                      dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, mod2015_T2M22HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected
+    print("----")
+    print(forms)
 
 
 
 
 
-
-                  # AGE + Heat by Species
-                  "mI_age_by_species_ADD_urbclim13-15_by_species" =
-                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(urbclim_mod_afternoon_13_15, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
-                  "mI_age_by_species_ADD_urbclim03-05_by_species" =
-                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(urbclim_mod_morning_3_5, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
-                  "mI_age_by_species_ADD_urbclim21-23_by_species" =
-                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(urbclim_mod_night_21_23, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
-
-                  # AGE x HEAT by Species
-                  "mI_age_x_urbclim13-15_by_species" =
-                      dbh_cm ~ te(STANDALTER, urbclim_mod_afternoon_13_15, by = species_corrected, m = 1, k = k_te) + species_corrected,
-                  "mI_age_x_urbclim03-05_by_species" =
-                      dbh_cm ~ te(STANDALTER, urbclim_mod_morning_3_5, by = species_corrected, m = 1, k = k_te) + species_corrected,
-                  "mI_age_x_urbclim21-23_by_species" =
-                      dbh_cm ~ te(STANDALTER, urbclim_mod_night_21_23, by = species_corrected, m = 1, k = k_te) + species_corrected,
-
-                  "mI_age_x_urbclim03-05_by_species_reBEZIRK" =
-                      dbh_cm ~ te(STANDALTER, urbclim_mod_morning_3_5, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
-                  "mI_age_x_urbclim13-15_by_species_reBEZIRK" =
-                      dbh_cm ~ te(STANDALTER, urbclim_mod_afternoon_13_15, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
-                  "mI_age_x_urbclim21-23_by_species_reBEZIRK" =
-                      dbh_cm ~ te(STANDALTER, urbclim_mod_night_21_23, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
-
-                  # SPATIAL + AGE x HEAT by Species
-                  "mI_spatial_age_x_urbclim13-15_by_species" =
-                      dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, urbclim_mod_afternoon_13_15, by = species_corrected, m = 1, k = k_te) + species_corrected
-                  # SPATIAL + AGE x HEAT by Species
-                  "mI_spatial_age_x_urbclim21-23_by_species" =
-                      dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, urbclim_mod_night_21_23, by = species_corrected, m = 1, k = k_te) + species_corrected
-    )
+    # forms <- list(
+    #     "mI_age_by_species" =
+    #         dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    #     "mI_age_by_species_RE-district" =
+    #         dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re") +s(BEZIRK, bs = "re"),
+    #
+    #               # AGE + Heat by Species
+    #               "mI_age_by_species_ADD_heat14_by_species" =
+    #                   dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(mod2015_T2M14HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    #               "mI_age_by_species_ADD_heat04_by_species" =
+    #                   dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(mod2015_T2M04HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    #               "mI_age_by_species_ADD_heat22_by_species" =
+    #                   dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(mod2015_T2M22HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    #
+    #               # AGE x HEAT by Species
+    #               "mI_age_x_heat14_by_species" =
+    #                   dbh_cm ~ te(STANDALTER, mod2015_T2M14HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected,
+    #               "mI_age_x_heat04_by_species" =
+    #                   dbh_cm ~ te(STANDALTER, mod2015_T2M04HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected,
+    #               "mI_age_x_heat22_by_species" =
+    #                   dbh_cm ~ te(STANDALTER, mod2015_T2M22HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected,
+    #
+    #               "mI_age_x_heat04_by_species_reBEZIRK" =
+    #                   dbh_cm ~ te(STANDALTER, mod2015_T2M04HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+    #               "mI_age_x_heat14_by_species_reBEZIRK" =
+    #                   dbh_cm ~ te(STANDALTER, mod2015_T2M14HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+    #               "mI_age_x_heat22_by_species_reBEZIRK" =
+    #                   dbh_cm ~ te(STANDALTER, mod2015_T2M22HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+    #
+    #               # SPATIAL + AGE x HEAT by Species
+    #               "mI_spatial_age_x_heat14_by_species" =
+    #                   dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, mod2015_T2M14HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected
+    #               # SPATIAL + AGE x HEAT by Species
+    #               "mI_spatial_age_x_heat22_by_species" =
+    #                   dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, mod2015_T2M22HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected
+    #
+    #
+    #
+    #
+    #
+    #
+    #               # AGE + Heat by Species
+    #               "mI_age_by_species_ADD_urbclim13-15_by_species" =
+    #                   dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(urbclim_mod_afternoon_13_15, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    #               "mI_age_by_species_ADD_urbclim03-05_by_species" =
+    #                   dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(urbclim_mod_morning_3_5, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    #               "mI_age_by_species_ADD_urbclim21-23_by_species" =
+    #                   dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(urbclim_mod_night_21_23, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    #
+    #               # AGE x HEAT by Species
+    #               "mI_age_x_urbclim13-15_by_species" =
+    #                   dbh_cm ~ te(STANDALTER, urbclim_mod_afternoon_13_15, by = species_corrected, m = 1, k = k_te) + species_corrected,
+    #               "mI_age_x_urbclim03-05_by_species" =
+    #                   dbh_cm ~ te(STANDALTER, urbclim_mod_morning_3_5, by = species_corrected, m = 1, k = k_te) + species_corrected,
+    #               "mI_age_x_urbclim21-23_by_species" =
+    #                   dbh_cm ~ te(STANDALTER, urbclim_mod_night_21_23, by = species_corrected, m = 1, k = k_te) + species_corrected,
+    #
+    #               "mI_age_x_urbclim03-05_by_species_reBEZIRK" =
+    #                   dbh_cm ~ te(STANDALTER, urbclim_mod_morning_3_5, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+    #               "mI_age_x_urbclim13-15_by_species_reBEZIRK" =
+    #                   dbh_cm ~ te(STANDALTER, urbclim_mod_afternoon_13_15, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+    #               "mI_age_x_urbclim21-23_by_species_reBEZIRK" =
+    #                   dbh_cm ~ te(STANDALTER, urbclim_mod_night_21_23, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+    #
+    #               # SPATIAL + AGE x HEAT by Species
+    #               "mI_spatial_age_x_urbclim13-15_by_species" =
+    #                   dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, urbclim_mod_afternoon_13_15, by = species_corrected, m = 1, k = k_te) + species_corrected
+    #               # SPATIAL + AGE x HEAT by Species
+    #               "mI_spatial_age_x_urbclim21-23_by_species" =
+    #                   dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, urbclim_mod_night_21_23, by = species_corrected, m = 1, k = k_te) + species_corrected
+    # )
 
 
 
@@ -3566,12 +3587,13 @@ combine_covariates <- function(data_list){
 #' @param main_body named character, string that can be parsed to formula with %s wildcards,
 #' name is base model name, to which placeholder var is appended
 #' @param placeholders list, values = variables spliced into main body via %s
+#' @param n_depth numeric, layers to search up for vars in formula
 #'
 #' @return
 #' @export
 #'
 #' @examples
-make_formula <- function(main_body, placeholders){
+make_formula <- function(main_body, placeholders, n_depth){
 
     if(is.null(names(main_body))){
         stop("Main body must be named character vector or list")
@@ -3581,7 +3603,6 @@ make_formula <- function(main_body, placeholders){
     # consider adding checks for formula syntax
 
     placeholder_counts_in_body <- stringr::str_count(main_body, "%s")
-    print(placeholder_counts_in_body)
 
 
 
@@ -3607,7 +3628,8 @@ make_formula <- function(main_body, placeholders){
 
 
 
-                            formula(do.call(sprintf, c(fmt = unname(main_body), as.list(pl))))
+                            formula(do.call(sprintf, c(fmt = unname(main_body), as.list(pl))), n = n_depth)
+                            do.call(sprintf, c(fmt = unname(main_body), as.list(pl)))
                         })
 
 
@@ -3635,14 +3657,6 @@ make_formula <- function(main_body, placeholders){
     return(forms_out)
 
 }
-
-pl <- list('mod2015_T2M04HMEA', 'mod2015_T2M14HMEA', 'mod2015_T2M22HMEA', 'urbclim_mod_morning_3_5', 'urbclim_mod_afternoon_13_15', 'urbclim_mod_night_21_23')
-tensor_mods <- list("mI_age_x_temp_by_species_reBEZIRK" =
-                        "dbh_cm ~ te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')")
-
-
-make_formula(main_body = tensor_mods,
-             placeholders = pl)
 
 
 

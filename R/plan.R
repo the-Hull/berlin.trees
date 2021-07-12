@@ -225,9 +225,10 @@ plan <- drake_plan(
 
     model_grid = make_model_grid(),
 
-    # bam_dbh_fulldf = apply_gam_mod(path = "./analysis/data/models/stat/fulldf/",
-    #                                model_grid = model_grid, dat = model_df,
-    #                                overwrite = FALSE),
+    bam_dbh_fulldf = apply_gam_mod(path = "./analysis/data/models/stat/fulldf/",
+                                   model_grid = model_grid, dat = model_df,
+                                   overwrite = FALSE,
+                                   n_cl = NULL),
     #
     #
     # bam_dbh_filtered = apply_gam_mod(path = "./analysis/data/models/stat/filtered/",
@@ -415,28 +416,28 @@ plan <- drake_plan(
 
 
     # Reporting ------------------------------
-    paper_html = rmarkdown::render(
-        knitr_in("./analysis/paper/paper.Rmd"),
-        output_dir = "./analysis/paper/",
-        output_file = file_out("paper_knit.html"),
-        output_format = bookdown::html_document2(),
-        quiet = TRUE
-    ),
-    paper_word = rmarkdown::render(
-        knitr_in("./analysis/paper/paper.Rmd"),
-        output_dir = "./analysis/paper/",
-        output_file = file_out("paper_knit.docx"),
-        # output_file = "./paper_knit.html",
-        output_format = bookdown::word_document2(),
-        quiet = TRUE
-    ),
-    paper_pdf = rmarkdown::render(
-        knitr_in("./analysis/paper/paper.Rmd"),
-        output_dir = "./analysis/paper/",
-        output_file = file_out("paper_knit.pdf"),
-        output_format = bookdown::pdf_document2(),
-        quiet = TRUE
-    )
+    # paper_html = rmarkdown::render(
+    #     knitr_in("./analysis/paper/paper.Rmd"),
+    #     output_dir = "./analysis/paper/",
+    #     output_file = file_out("paper_knit.html"),
+    #     output_format = bookdown::html_document2(),
+    #     quiet = TRUE
+    # ),
+    # paper_word = rmarkdown::render(
+    #     knitr_in("./analysis/paper/paper.Rmd"),
+    #     output_dir = "./analysis/paper/",
+    #     output_file = file_out("paper_knit.docx"),
+    #     # output_file = "./paper_knit.html",
+    #     output_format = bookdown::word_document2(),
+    #     quiet = TRUE
+    # ),
+    # paper_pdf = rmarkdown::render(
+    #     knitr_in("./analysis/paper/paper.Rmd"),
+    #     output_dir = "./analysis/paper/",
+    #     output_file = file_out("paper_knit.pdf"),
+    #     output_format = bookdown::pdf_document2(),
+    #     quiet = TRUE
+    # )
 
 )
 
