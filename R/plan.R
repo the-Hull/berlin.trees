@@ -172,8 +172,10 @@ plan <- drake_plan(
 
 
     # Add UHI data from RasterLayer stack to sf data frame
-    extract_uhi_values_to_list = add_uhi_hist_data(uhi_stack_list = uhi_stacks,
-                                                                 sf_data = full_data_set_clean[, ]),
+    extract_uhi_values_to_list = add_uhi_hist_data(
+        uhi_stack_list = uhi_stacks,
+        sf_data = full_data_set_clean[, ],
+        buff_dist = 150),
 
 
     # add lcz, soil, building height, mineral content to data set
@@ -207,33 +209,67 @@ plan <- drake_plan(
 
     combined_data = combine_split_clean_data(full_data_set_clean_with_UHI_covariates),
 
+    # Stat Descriptive -----------------------------------
 
-     # Model -------------------------------------------------------------------
+    uhi_stack_stats = calc_uhi_stats(uhi_stacks),
 
 
-    model_params = list(n_max_species = 10,
-                                        age_cutoff = 150,
-                                        mad_factor = 7),
+     # Stat Model -------------------------------------------------------------------
 
-    model_df = prep_model_df(
-        dset = combined_data,
+
+    model_params = list(
+        n_max_species = 10,
+        n_min_abundance = 10000,
+        age_cutoff = 125,
+        dbh_cutoff = 375, # cm
+        mad_factor = 7),
+
+    model_df_full = prep_model_df(
+        dset = combined_data[combined_data$provenance == "s_wfs_baumbestand",],
         model_params = model_params,
         plot = TRUE,
-        path = "./analysis/figures/diagnostic_01_model_data.png"),
+        path = "./analysis/figures/diagnostic_01_model_data.png",
+        stat_filter = FALSE),
+
+    model_df_stat_filtered = prep_model_df(
+        dset = combined_data[combined_data$provenance == "s_wfs_baumbestand",],
+        model_params = model_params,
+        plot = TRUE,
+        path = "./analysis/figures/diagnostic_01_model_data.png",
+        stat_filter = TRUE),
+
+    # full_df_street_trees_idx = filter_top_species_idx(
+    #     model_df[model_df$provenance == "s_wfs_baumbestand",],
+    #     model_params
+    #     ),
+    #
+    # filtered_df_street_trees_idx = filter_top_species_idx(
+    #     model_df[model_df$provenance == "s_wfs_baumbestand" & model_df$diag_mad_select,],
+    #     model_params
+    #     ),
+
+    # model_df_full = model_df[model_df$provenance == "s_wfs_baumbestand" &
+    #                              full_df_street_trees_idx, ],
+    #
+    # model_df_stat_filtered = model_df[model_df$provenance == "s_wfs_baumbestand" &
+    #                                       model_df$diag_mad_select &
+    #                                       filtered_df_street_trees_idx, ],
+
 
 
 
     model_grid = make_model_grid(),
 
     bam_dbh_fulldf = apply_gam_mod(path = "./analysis/data/models/stat/fulldf/",
-                                   model_grid = model_grid, dat = model_df,
-                                   overwrite = FALSE,
-                                   n_cl = NULL),
+                                   model_grid = model_grid,
+                                   dat = model_df_full,
+                                   overwrite = TRUE),
     #
     #
-    # bam_dbh_filtered = apply_gam_mod(path = "./analysis/data/models/stat/filtered/",
-    #     model_grid = model_grid, dat = model_df[model_df$diag_mad_select,],
-    #     overwrite = FALSE),
+    bam_dbh_filtered = apply_gam_mod(path = "./analysis/data/models/stat/filtered/",
+                                     model_grid = model_grid,
+                                     dat = model_df_stat_filtered,
+                                     overwrite = TRUE),
 
 
 

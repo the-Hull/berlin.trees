@@ -1488,6 +1488,8 @@ calc_urbclim_uhi_with_corine <- function(urbclim, clc, natural_cover_val = 50, m
 #'
 #' @param uhi_stack_list List, nested on time of year, time of day
 #' @param sf_data sf points, data frame with Berlin tree locations and meta data
+#' @param buff_dist numeric, buffer distance for data extraction
+#' @param method character, should be `simple`
 #'
 #' @return A nested list containing RasterLayers with the following levels:
 #' \enumerate{
@@ -1499,7 +1501,11 @@ calc_urbclim_uhi_with_corine <- function(urbclim, clc, natural_cover_val = 50, m
 #'
 #' @export
 #'
-add_uhi_hist_data <- function(uhi_stack_list, sf_data){
+add_uhi_hist_data <- function(
+    uhi_stack_list,
+    sf_data,
+    buff_dist = 100,
+    method = "simple"){
 
 
     # brief checks
@@ -1551,10 +1557,20 @@ add_uhi_hist_data <- function(uhi_stack_list, sf_data){
     extract_vals <- lapply(uhi_stack_list,
                            function(stacks){
                                lapply(stacks,
-                                      raster::extract,
-                                      sf_data,
-                                      # df = TRUE,
-                                      sp = FALSE)
+
+
+                                      function(x){
+                                          raster::extract(x,
+                                                          sf_data,
+                                                          method = method,
+                                                          buffer = buff_dist,
+                                                          fun = mean,
+                                                          na.rm = TRUE,
+                                                          df = FALSE,
+                                                          sp = FALSE,
+                                                          factors = FALSE)
+
+                                      })
                            })
 
 
@@ -1950,6 +1966,7 @@ apply_models <- function(df = test_df,
         dplyr::top_n(n_top_species)
 
 
+
     test_set <- test_set %>%
         dplyr::filter(ART_BOT %in% top_species$ART_BOT[top_species$n > min_individuals])
 
@@ -1977,6 +1994,7 @@ apply_models <- function(df = test_df,
 #' @param model_params
 #' @param plot
 #' @param path
+#' @param stat_filter logical, drop observations outside of median absolute dev threshold; uses `model_params$mad_factor`
 #'
 #' @return dset filtered according to the model params and has two additional columns.
 #' One of these is `mad_select`, (logical), which can be used to subset the df.
@@ -1986,22 +2004,25 @@ apply_models <- function(df = test_df,
 prep_model_df <- function(dset,
                           model_params,
                           plot = TRUE,
+                          stat_filter,
                           path = "./analysis/figures/diagnostic_01_model_data.png"){
 
 
     dset <- sf::st_drop_geometry(dset)
 
-
+#
     top_species <- dset %>%
         dplyr::group_by(species_corrected) %>%
         dplyr::tally(sort = TRUE) %>%
-        dplyr::top_n(model_params$n_max_species)
+        dplyr::top_n(model_params$n_max_species) %>%
+        dplyr::filter(n > model_params$n_min_abundance)
 
 
 
     df_nest <- dset %>%
         dplyr::filter(species_corrected %in% top_species$species_corrected,
-                      STANDALTER <= model_params$age_cutoff) %>%
+        STANDALTER <= model_params$age_cutoff,
+                      dbh_cm <= model_params$dbh_cutoff) %>%
         tidyr::nest(cols = -species_corrected) %>%
         dplyr::mutate(
             mod = purrr::map(
@@ -2060,6 +2081,14 @@ prep_model_df <- function(dset,
 
     df_nest$species_corrected <- as.factor(df_nest$species_corrected)
 
+
+    if(stat_filter){
+        df_nest <- df_nest[df_nest$diag_mad_select, ]
+
+
+
+    }
+
     return(df_nest)
 
 }
@@ -2093,6 +2122,7 @@ apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/"
                              seq_len(nrow(model_grid)))
 
 
+    future::plan(future::multisession(workers = 4))
     # out <- purrr::map_dfr(
         out <- furrr::future_map_dfr(
         model_grid_list,
@@ -2155,6 +2185,7 @@ apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/"
         .options = furrr::furrr_options(seed = 123)
         )
 
+        future::plan(future::sequential())
     return(out)
 }
 
@@ -2171,23 +2202,62 @@ make_model_grid <- function(){
 
     model_params <- new.env()
 
-    model_params$k_uni <- 30
-    model_params$k_te <- c(5, 15)
+    model_params$k_uni <- 35
+    model_params$k_te <- c(7, 20)
 
-    # tempvars <- list('mod2015_T2M04HMEA', 'mod2015_T2M14HMEA', 'mod2015_T2M22HMEA', 'urbclim_mod_morning_3_5', 'urbclim_mod_afternoon_13_15', 'urbclim_mod_night_21_23')
-    tempvars <- list('mod2015_T2M04HMEA', 'mod2015_T2M14HMEA')
-    tensor_mods <- list("mI_age_x_temp_by_species_reBEZIRK" =
-                            "dbh_cm ~ te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')")
+    tempvars <- list('mod2015_T2M04HMEA',
+                     'mod2015_T2M14HMEA',
+                     'mod2015_T2M22HMEA',
+
+                     'urbclim_mod_morning_3_5',
+                     'urbclim_mod_afternoon_13_15',
+                     'urbclim_mod_night_21_23',
+
+                     'day_2007')
+    # tempvars <- list('mod2015_T2M04HMEA', 'mod2015_T2M14HMEA')
+
+#
+    # tensor_mods <- list("mI_age_x_temp_by_species_reBEZIRK" =
+                            # "dbh_cm ~ te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')")
+#     tensor_mods_spatial <- list("mI_spatial_age_x_temp_by_species_reBEZIRK" =
+#                             "dbh_cm ~  s(X,Y, k = 200, bs = 'ds') + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')")
+#     tensor_mods_spatial_full <- list("mI_spatial_age_x_temp_by_species_reBEZIRK_full" =
+#                             "dbh_cm ~  s(X,Y, k = 200, bs = 'ds') + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're') + s(soil_nutrients_swert, k = k_uni) + s(building_heigt_m,  k = k_uni)")
 
 
-    forms <- make_formula(main_body = tensor_mods,
-                 placeholders = tempvars,
-                 n_depth = 2)
+
+
+    mods <- list(
+        list("mI_age_x_temp_by_species_reBEZIRK" =
+            "dbh_cm ~ te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = 200, bs = 'ds') + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_reBEZIRK_full" =
+            "dbh_cm ~  s(X,Y, k = 200, bs = 'ds') + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're') + s(soil_nutrients_swert, k = k_uni) + s(building_heigt_m,  k = k_uni)")
+    )
+
+
+
+
+
+
+
+    forms <- purrr::map(mods,
+           function(x){
+               make_formula(main_body = x,
+                            placeholders = tempvars,
+                            n_depth = 2)
+
+           }) %>%
+        purrr::flatten()
+
+
+
+
+
 
     forms <- lapply(forms, formula, env = model_params)
 
-    print("----")
-    print(forms)
 
 
 
@@ -2276,6 +2346,138 @@ make_model_grid <- function(){
     return(model_grid)
 
 }
+
+
+make_model_prediction_df <- function(
+    path_model, model_df,
+    fixed_vars = list(X = X, Y = Y, STANDALTER = STANDALTER),
+    crit_val = 1.96){
+
+
+    future::plan(future::multisession(workers = 4))
+
+
+    # extract model meta from file path
+    mod_names <- gsub(
+        pattern = "(.*[_]var[-])(.*)([.]Rds$)",
+        x =  path_model,
+        replacement = "\\2",
+        perl = TRUE)
+
+
+
+    # load model
+    mod_list <- purrr::map(path_model, ~readRDS(.x)) %>%
+        setNames(mod_names)
+
+
+
+    # make prediction df with each model var
+    # pdata <- purrr::map(
+    pdata <- furrr::future_map(
+        mod_names,
+        function(mn){
+
+            # mn <- rlang::sym(mn)
+
+            args_list <- list(
+                # temp var
+                seq(min(model_df[[mn]], na.rm = TRUE),
+                    max(model_df[[mn]], na.rm = TRUE), length.out = 200),
+                # X
+                fixed_vars$X,
+                # Y
+                fixed_vars$Y,
+                # STANDALTER
+                fixed_vars$STANDALTER,
+                # species_corrected
+                as.factor(unique(model_df[["species_corrected"]])),
+                # building_heigt_m
+                median(model_df[['building_heigt_m']], na.rm = TRUE),
+                # soil_nutrients_swert
+                median(model_df[['soil_nutrients_swert']], na.rm = TRUE),
+                # BEZIRK
+                as.factor(unique(model_df[['BEZIRK']]))
+            )
+
+            names(args_list) <- c(
+                mn,
+                "X",
+                "Y",
+                "STANDALTER",
+                "species_corrected",
+                "building_heigt_m",
+                "soil_nutrients_swert",
+                "BEZIRK"
+            )
+
+            tmp <- do.call(expand.grid, args_list)
+
+
+            #
+            # tmp <- with(model_df,
+            #     # tidyr::expand_grid({{mn}} := seq(min({{mn}}, na.rm = TRUE),
+            #                                         # max({{mn}}, na.rm = TRUE), length.out = 200),
+            #     tidyr::expand_grid(!!mn := seq(min(!!mn, na.rm = TRUE),
+            #                                         max(!!mn, na.rm = TRUE), length.out = 200),
+            #                 X = X,
+            #                 Y = Y,
+            #                 # STANDALTER = c(30, 50, 80),
+            #                 STANDALTER = STANDALTER,
+            #                 species_corrected = as.factor(unique(species_corrected)),
+            #                 building_heigt_m = median(building_heigt_m, na.rm = TRUE),
+            #                 soil_nutrients_swert = median(soil_nutrients_swert, na.rm = TRUE),
+            #                 BEZIRK = as.factor(unique(BEZIRK)))
+            #  )
+            #
+            return(tmp)
+
+
+
+
+        }) %>%
+        setNames(mod_names)
+
+    # predict for each model
+    # preds <- purrr::map2(
+    preds <- furrr::future_map2(
+        mod_list,
+        pdata,
+        function(mod, pd){
+
+            ifun <- family(mod)$linkinv
+
+            p <- mgcv::predict.bam(
+                object = mod,
+                newdata = pd,
+                se.fit = TRUE,
+                exclude = "s(BEZIRK)")
+
+
+            pd <- cbind(pd, pred = p) %>%
+                mutate(fit.low = pred.fit - crit_val * pred.se.fit,
+                       fit.high = pred.fit + crit_val * pred.se.fit,
+                       response = ifun(pred.fit),
+                       response.low = ifun(fit.low),
+                       response.high = ifun(fit.high)
+                )
+            return(as.data.frame(pd))
+        },
+        .options = furrr::furrr_options(seed=TRUE))
+
+
+    # define prediction groups, summarize
+
+    # combine results
+
+    # generate plot
+    future::plan(future::sequential())
+
+    return(preds)
+
+
+}
+
 
 
 # PLOTS -------------------------------------------------------------------
@@ -3467,6 +3669,30 @@ filter_maybe <- function(df, fargs){
 }
 
 
+#' Return boolean index for filtering
+#'
+#' Top species selected based on `model_params$n_max_species`
+#'
+#' @param dset
+#' @param model_params
+#'
+#' @return lgl
+filter_top_species_idx <- function(dset, model_params){
+
+
+    top_species <- dset %>%
+        dplyr::group_by(species_corrected) %>%
+        dplyr::tally(sort = TRUE) %>%
+        dplyr::top_n(model_params$n_max_species) %>%
+        dplyr::filter(n > model_params$n_min_abundance)
+
+    idx <- dset$species_corrected %in% top_species$species_corrected
+
+    return(idx)
+
+}
+
+
 #' Split df in chunks for mapping/looping
 #'
 #' @param dframe df, nrow > 0
@@ -3564,7 +3790,7 @@ combine_covariates <- function(data_list){
 
     covariate_df <- cbind(sf::st_drop_geometry(data_list$baumsch_data),
                           prefix_names(sf::st_drop_geometry(data_list$soil_type)[, soil_type_cols ], "soil_type"),
-                          prefix_names(sf::st_drop_geometry(data_list$soil_nutrients)[, soil_nutrient_cols], "soil_nutrients"),
+                          prefix_names(apply(sf::st_drop_geometry(data_list$soil_nutrients)[, soil_nutrient_cols], MAR = 2, as.numeric), "soil_nutrients"),
                           building_heigt_m = data_list$building_height_mean_m,
                           prefix_names(data_list$lcz_cover_prop, "lcz_prop"),
                           prefix_names(data_list$berlin_heat_model, "mod2015"),
@@ -3658,8 +3884,114 @@ make_formula <- function(main_body, placeholders, n_depth){
 
 }
 
+#' Generate indicator for within-group variable ranges of a coarse prediction grid
+#'
+#' @param prediction_df data.frame, prediction grid across full variable range and groups
+#' @param model_df data.frame, original model data frame for all groups and a given focal variable
+#' @param group_var character, column name of the grouping variable of interest (e.g., species)
+#' @param range_var character, column name of the numeric variable for which predictions are made (e.g., temperature)
+#' @param qtl numeric, one-tail percentile at which within-group variables should be truncated to (e.g., 0.95 for 0.0275 and 0.975 percentiles)
+#'
+#' @return prediction_df with additional variable "prediction_range"
+#' @export
+#'
+#' @examples
+augment_prediction_range <- function(prediction_df, model_df, group_var, range_var, qtl = 1){
 
 
+
+    if(any(!c(group_var, range_var) %in% colnames(prediction_df)) |
+       any(!c(group_var, range_var) %in% colnames(model_df))){
+
+        stop("Variables not in dfs")
+    }
+
+
+    # process original data to get ranges
+    # split into groups
+
+    split_df <- split(as.data.frame(model_df), model_df[, group_var])
+
+    print("here")
+
+    # get group variable range
+    group_range <- lapply(split_df,
+                          function(dset){
+
+
+
+                              r <- range(
+                                  quantile(
+                                      dset[ ,range_var],
+                                      probs = c(1 - qtl, qtl),
+                                      na.rm = TRUE),
+                                  na.rm = TRUE)
+
+                              print(r)
+
+                              return(r)
+                          })
+
+
+    # set indicators on prediction df
+
+    split_prediction_df <- split(prediction_df, prediction_df[, group_var])
+
+    prediction_df_adjusted <- purrr::map2_dfr(split_prediction_df,group_range,
+                                          function(x, y){
+
+                                              x$prediction_range <- "full"
+                                              within_idx <- dplyr::between(
+                                                  x[ ,range_var],
+                                                  y[1], y[2])
+
+                                              x$prediction_range[within_idx] <- "within"
+
+                                              return(x)
+
+                                          })
+
+    return(prediction_df_adjusted)
+
+
+}
+
+
+#' Summarize model predictions across age groups
+#'
+#' @param dset data.frame, predictions from
+#' @param tempvar character, temp var used in model
+#' @param age_breaks numeric, breaks for age variable
+#' @param age_break_expr expression
+#'
+#' @return data.frame, containing mean responses and pooled standard errors for each age group
+summarize_age_groups <- function(dset,model_df, tempvar, age_break_expr){
+
+    tempvar_sym <- rlang::sym(tempvar)
+
+    ifun <- Gamma(link = "log")$linkinv
+
+
+    pred_groups <- dset %>%
+        # mutate(age_group = cut(STANDALTER, age_breaks)) %>%
+        mutate(age_group = eval(age_break_expr)) %>%
+        # filter(STANDALTER < 100) %>%
+        group_by(age_group, !! tempvar_sym, species_corrected) %>%
+        summarise(mean_dbh = mean(pred.fit, na.rm = TRUE),
+                  mean_se = sqrt(sum(pred.se.fit))/n()) %>%
+        mutate(response.fit.mean = ifun(mean_dbh),
+               response.low.mean = ifun(mean_dbh - 1.96 * mean_se),
+               response.high.mean = ifun(mean_dbh + 1.96 * mean_se)) %>%
+        ungroup()
+
+    pred_groups <- augment_prediction_range(prediction_df = as.data.frame(pred_groups),
+                                            model_df = model_df,
+                                            group_var = "species_corrected",
+                                            range_var = tempvar,
+                                            qtl = 1)
+
+    return(pred_groups)
+}
 
 # BIWI analyses -----------------------------------------------------------
 

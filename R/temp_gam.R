@@ -791,26 +791,32 @@ mod13 <- mgcv::bam(dbh_cm ~ s(X, Y, k = 200, bs = "ds") +
                    # cl = cl
                    discrete = TRUE)
 
+mod14 <- readRDS("analysis/data/models/stat/fulldf/mI_age_x_temp_by_species_reBEZIRK_var-mod2015_T2M14HMEA.Rds")
+
 mgcv::gam.check(mod9)
 mgcv::gam.check(mod10)
 mgcv::gam.check(mod11)
 mgcv::gam.check(mod12)
 mgcv::gam.check(mod13)
+mgcv::gam.check(mod14)
 
 pdata <- with(model_df[model_df$provenance == "s_wfs_baumbestand",] %>%
 # pdata <- with(model_df[model_df$diag_mad_select & model_df$provenance == "s_wfs_baumbestand",, ] %>%
                   mutate(species_corrected = as.factor(species_corrected)),
-              expand.grid(T2M14HMEA = seq(min(T2M14HMEA, na.rm = TRUE),
-                                          max(T2M14HMEA, na.rm = TRUE), length.out = 200),
+              expand.grid(mod2015_T2M14HMEA = seq(min(mod2015_T2M14HMEA, na.rm = TRUE),
+                                          max(mod2015_T2M14HMEA, na.rm = TRUE), length.out = 200),
                           X = 385785,
                           Y = 5816681,
                           # STANDALTER = c(30, 50, 80),
-                          STANDALTER = c(30:35, 45:50, 60:65, 75:80, 120:125),
+                          STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
                           species_corrected = as.factor(unique(species_corrected)),
                           building_heigt_m = median(building_heigt_m, na.rm = TRUE),
-                          soil_nutrients_swert = median(soil_nutrients_swert, na.rm = TRUE),
+                          # soil_nutrients_swert = median(soil_nutrients_swert, na.rm = TRUE),
                           BEZIRK = as.factor(unique(BEZIRK))
               ))
+
+
+
 # fit <- predict(mod9 , pdata, type = "response", se.fit = TRUE)
 fit <- predict(mod9 , pdata, se.fit = TRUE)
 fit10 <- predict(mod10 , pdata, se.fit = TRUE)
@@ -818,10 +824,12 @@ fit11 <- predict(mod10 , pdata, se.fit = TRUE)
 fit12 <- predict(mod12 , pdata, se.fit = TRUE, exclude = "s(BEZIRK)")
 fit12 <- predict(mod12 , pdata, se.fit = TRUE, exclude = "s(BEZIRK)")
 fit13 <- predict(mod13 , pdata, se.fit = TRUE, exclude = "s(BEZIRK)")
+fit14 <- predict(mod14 , pdata, se.fit = TRUE, exclude = "s(BEZIRK)")
+fit15 <- predict(mod15 , pdata, se.fit = TRUE, exclude = "s(BEZIRK)")
 # ind <- mgcv::exclude.too.far(pdata$day_2007, pdata$STANDALTER,
 #                              mdf_tilia[mad_select, ]$day_2007, mdf_tilia[mad_select, ]$STANDALTER, dist = 0.1)
 # fit[ind] <- NA
-pred <- cbind(pdata, Fitted = fit13)
+pred <- cbind(pdata, Fitted = fit14)
 pred$se.low <- pred$Fitted.fit - 1.96 * pred$Fitted.se.fit
 pred$se.high <- pred$Fitted.fit + 1.96 * pred$Fitted.se.fit
 
@@ -829,6 +837,7 @@ pred$se.high <- pred$Fitted.fit + 1.96 * pred$Fitted.se.fit
 ifun <- family(mod9)$linkinv
 ifun <- family(mod10)$linkinv
 ifun <- family(mod11)$linkinv
+ifun <- family(mod15)$linkinv
 
 pred$response.fit <- ifun(pred$Fitted.fit)
 pred$response.low <- ifun(pred$se.low)
@@ -838,14 +847,20 @@ pred$response.high <- ifun(pred$se.high)
 
 pred_groups <- pred %>%
     mutate(age_group = cut(STANDALTER, c(26, 36, 50, 66, 81, 126))) %>%
-    filter(STANDALTER < 100) %>%
-    group_by(age_group, T2M14HMEA, species_corrected) %>%
+    # filter(STANDALTER < 100) %>%
+    group_by(age_group, mod2015_T2M14HMEA, species_corrected) %>%
     summarise(mean_dbh = mean(Fitted.fit, na.rm = TRUE),
               mean_se = sqrt(sum(Fitted.se.fit))/n()) %>%
     mutate(response.fit = ifun(mean_dbh),
            response.low = ifun(mean_dbh - 1.96 * mean_se),
-           response.high = ifun(mean_dbh + 1.96 * mean_se))
+           response.high = ifun(mean_dbh + 1.96 * mean_se),) %>%
+    ungroup()
 
+pred_groups <- augment_prediction_range(prediction_df = as.data.frame(pred_groups),
+                                  model_df = model_df[model_df$provenance == "s_wfs_baumbestand",],
+                                  group_var = "species_corrected",
+                                  range_var = "mod2015_T2M14HMEA",
+                                  qtl = 1)
 
 
 
@@ -869,11 +884,22 @@ plt
 
 
 
-plt <- ggplot(pred_groups, aes(y = response.fit, x = (T2M14HMEA), colour = as.factor(age_group), fill =  as.factor(age_group), group = as.factor(age_group))) +
+plt <- ggplot(data = data.frame(), aes(y = response.fit, x = (mod2015_T2M14HMEA), colour = as.factor(age_group), fill =  as.factor(age_group), group = as.factor(age_group))) +
 
-    geom_ribbon(alpha = 0.2,  aes(ymin = response.low, ymax = response.high), color = "transparent") +
+    geom_ribbon(data = pred_groups %>%
+                    filter(prediction_range =="within"),
+                alpha = 0.2,  aes(ymin = response.low, ymax = response.high), color = "transparent") +
     # geom_ribbon( aes(ymin = se.low, ymax = se.high), alpha = 0.4) +
-    geom_line()+
+    # geom_line(aes(size = prediction_range))+
+    geom_line(data = pred_groups %>%
+                  filter(prediction_range =="within"))+
+    geom_ribbon(data = pred_groups,
+                alpha = 0.2,  aes(ymin = response.low, ymax = response.high), color = "transparent",
+                linetype = 2) +
+    # geom_ribbon( aes(ymin = se.low, ymax = se.high), alpha = 0.4) +
+    # geom_line(aes(size = prediction_range))+
+    geom_line(data = pred_groups,
+              linetype = 2)+
     # facet_wrap(~ species_corrected, ncol = 2) +
     # scale_color_brewer(type = "qual", palette = "Set2") +
     theme(legend.position = 'right') +
