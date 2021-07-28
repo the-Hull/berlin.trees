@@ -902,6 +902,7 @@ prep_baumscheiben_flaeche <- function(fulldf, bms, max_dist_m = 10){
     #                                  NA)
 
     bms[baumsch_dist_m <= units::set_units(max_dist_m, m), ] <- NA
+    bms$baumsch_flaeche_m2 <- as.numeric(bms$baumsch_flaeche_m2)
     #
     # # join manually
     # fulldf <- cbind(fulldf,
@@ -2008,7 +2009,8 @@ prep_model_df <- function(dset,
                           path = "./analysis/figures/diagnostic_01_model_data.png"){
 
 
-    dset <- sf::st_drop_geometry(dset)
+    dset <- sf::st_drop_geometry(dset) %>%
+        mutate(species_corrected = as.factor(gsub("Tilia intermedia.*", "Tilia intermedia", x = species_corrected)))
 
 #
     top_species <- dset %>%
@@ -2203,7 +2205,8 @@ make_model_grid <- function(){
     model_params <- new.env()
 
     model_params$k_uni <- 35
-    model_params$k_te <- c(7, 20)
+    # model_params$k_te <- c(7, 20)
+    model_params$k_te <- c(5, 12)
 
     tempvars <- list('mod2015_T2M04HMEA',
                      'mod2015_T2M14HMEA',
@@ -2232,6 +2235,10 @@ make_model_grid <- function(){
             "dbh_cm ~ te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_reBEZIRK" =
             "dbh_cm ~  s(X,Y, k = 200, bs = 'ds') + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_building_height_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = 200, bs = 'ds') + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(building_heigt_m, k = k_uni) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_soil_nutrients_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = 200, bs = 'ds') + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(soil_nutrients_swert, k = k_uni) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_reBEZIRK_full" =
             "dbh_cm ~  s(X,Y, k = 200, bs = 'ds') + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're') + s(soil_nutrients_swert, k = k_uni) + s(building_heigt_m,  k = k_uni)")
     )
@@ -2251,6 +2258,10 @@ make_model_grid <- function(){
            }) %>%
         purrr::flatten()
 
+    print(forms)
+
+    forms$`mI_age_by_species_var-nullmodel` <-
+        "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
 
 
 
@@ -2383,7 +2394,7 @@ make_model_prediction_df <- function(
             args_list <- list(
                 # temp var
                 seq(min(model_df[[mn]], na.rm = TRUE),
-                    max(model_df[[mn]], na.rm = TRUE), length.out = 200),
+                    max(model_df[[mn]], na.rm = TRUE), length.out = 100),
                 # X
                 fixed_vars$X,
                 # Y

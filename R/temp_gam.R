@@ -925,3 +925,279 @@ testResiduals(simout)
 plotResiduals(simout,quantreg = TRUE)
 
 plotResiduals(simout, simple_spatial@frame$day_2007, quantreg = TRUE)
+
+
+
+
+
+# plotting multimodel ---------------------------------------------------------------
+
+drake::loadd(bam_dbh_fulldf)
+drake::loadd(model_df_full)
+drake::loadd(model_df_stat_filtered)
+
+
+
+bam_dbh_fulldf[18:21, "model_file_path"]
+
+
+
+
+testvar <- make_model_prediction_df(
+    path_model = bam_dbh_fulldf[8:14, "model_file_path"],
+    model_df = model_df_full,
+    fixed_vars = list(X = 385785,
+                      Y = 5816681,
+                      STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95))
+)
+
+
+age_expr <- expression(dplyr::case_when(
+    dplyr::between(STANDALTER, 30, 35) ~ "[30 - 35]",
+    dplyr::between(STANDALTER, 45, 50) ~ "[45 - 50]",
+    dplyr::between(STANDALTER, 60, 65) ~ "[60 - 65]",
+    dplyr::between(STANDALTER, 75, 80) ~ "[75 - 80]",
+    dplyr::between(STANDALTER, 90, 95) ~ "[90 - 95]",
+    TRUE ~ NA_character_
+))
+
+saveRDS(testvar, "testvar.Rds")
+testvar <- readRDS("testvar.Rds")
+
+
+# age_breaks <- c(29, 35, 44,50,59,65,74,80,89,95)
+
+# cut(1:100, age_breaks)
+
+
+
+pred_groups <- purrr::map2_dfr(
+    testvar,
+    names(testvar),
+    function(x,y){
+        summarize_age_groups(
+            x,
+            model_df_full,
+            y,
+            age_break_expr = age_expr)
+    },
+    .id = "tempvar"
+)
+
+#
+# plt <- ggplot(data = data.frame(), aes(y = response.fit.mean, x = (urbclim_mod_morning_3_5), colour = as.factor(age_group), fill =  as.factor(age_group), group = as.factor(age_group))) +
+#
+#     geom_ribbon(data = pred_groups %>%
+#                     filter(prediction_range =="within"),
+#                 alpha = 0.2,  aes(ymin = response.low.mean, ymax = response.high.mean), color = "transparent") +
+#     # geom_ribbon( aes(ymin = se.low, ymax = se.high), alpha = 0.4) +
+#     # geom_line(aes(size = prediction_range))+
+#     geom_line(data = pred_groups %>%
+#                   filter(prediction_range =="within"))+
+#     geom_ribbon(data = pred_groups,
+#                 alpha = 0.2,  aes(ymin = response.low.mean, ymax = response.high.mean), color = "transparent",
+#                 linetype = 2) +
+#     # geom_ribbon( aes(ymin = se.low, ymax = se.high), alpha = 0.4) +
+#     # geom_line(aes(size = prediction_range))+
+#     geom_line(data = pred_groups,
+#               linetype = 2)+
+#     # facet_wrap(~ species_corrected, ncol = 2) +
+#     # scale_color_brewer(type = "qual", palette = "Set2") +
+#     theme(legend.position = 'right') +
+#     # facet_wrap(~species_corrected) +
+#     # geom_smooth(method = "lm")
+#     # geom_smooth() +
+#     theme_minimal(base_size = 16) +
+#     facet_wrap(~species_corrected, scales = "free_y") +
+#     scale_color_brewer(palette = 2, type = "qual") +
+#     scale_fill_brewer(palette = 2, type = "qual") +
+#     labs(color = "Age", fill = "Age", x = expression(UHI~Magnitude~(degree~C)), y = "Mean DBH (cm)")
+# plt
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+
+plot_data <- pred_groups %>%
+    select(-tempvar) %>%
+    tidyr::pivot_longer(cols = dplyr::all_of(names(testvar)),
+                        names_to = "uhi_tempvar",
+                        values_to = "temp_degc") %>%
+    dplyr::filter(age_group == "[60 - 65]", prediction_range == "within") %>%
+    dplyr::arrange(uhi_tempvar) %>%
+    tidyr::drop_na(temp_degc) %>%
+    group_by(species_corrected, uhi_tempvar) %>%
+    mutate(temp_degc_scaled = scales::rescale(temp_degc, to = c(0,1)))
+
+grand_means <- plot_data %>%
+    filter(grepl("mod2015", uhi_tempvar)) %>%
+    group_by(species_corrected, temp_degc_scaled) %>%
+    summarise(grand_mean = mean(response.fit.mean, na.rm = TRUE),
+              n = n())
+
+
+plt <- ggplot(data = plot_data %>%
+                  filter(prediction_range == "within",
+                         grepl("mod2015", uhi_tempvar)) %>%
+                  ungroup(),
+              aes(y = response.fit.mean,
+                  # x = temp_degc,
+                  x = temp_degc_scaled,
+                  colour = as.factor(uhi_tempvar),
+                  fill =  as.factor(uhi_tempvar),
+                  group = as.factor(uhi_tempvar),
+                  ymin = response.low.mean,
+                  ymax = response.high.mean)) +
+
+    geom_ribbon(color = "transparent", alpha = 0.2) +
+    geom_line(linetype = 1)  +
+    # geom_line(inherit.aes = FALSE,
+    #              data = grand_means,
+    #              aes(y = grand_mean,
+    #                  # x = temp_degc,
+    #                  x = temp_degc_scaled)) +
+
+    geom_smooth(aes(group = 1), fill = "transparent", color = "black") +
+
+    #
+    # geom_ribbon(data = pred_groups %>%
+    #                 filter(prediction_range =="within"),
+    #             alpha = 0.2,
+    #             aes(),
+    #             color = "transparent") +
+    #
+    # geom_line(data = pred_groups %>%
+    #               filter(prediction_range =="within"))+
+    #
+# geom_ribbon(data = pred_groups,
+#             alpha = 0.2,  aes(ymin = response.low.mean, ymax = response.high.mean), color = "transparent",
+#             linetype = 2) +
+#
+# geom_line(data = pred_groups,
+#           linetype = 2) +
+#
+
+theme(legend.position = 'right') +
+    theme_minimal(base_size = 16) +
+    # facet_grid(uhi_tempvar ~species_corrected, scales = "free_y") +
+    facet_wrap(~species_corrected, scales = "free_y") +
+    scale_color_brewer(palette = 2, type = "qual") +
+    scale_fill_brewer(palette = 2, type = "qual") +
+    labs(color = "Model", fill = "Model", x = "Standardized UHI Magnitude", y = "Mean DBH (cm)")
+plt
+
+
+# multi model summarz -----------------------------------------------------
+
+drake::loadd(model_df_stat_filtered)
+mod_df <-model_df_stat_filtered
+
+# Identify model groups ---------------------------------------------------
+path_model_dir <- "analysis/data/models/stat/filtered/"
+
+path_files <- list.files(path_model_dir, full.names = TRUE)
+
+mod_groups <- list.files(path_model_dir) %>%
+    gsub("_var-.*Rds$", "", .) %>%
+    as.factor()
+
+# get model summaries -------------------------------------------------------
+mod_summary_list <-
+    purrr::map(
+        levels(mod_groups),
+        function(mg){
+
+            idx <- which(mod_groups == mg)
+
+            mods <- lapply(path_files[idx],
+                           function(x){
+                               readRDS(x) %>%
+                                  summary()
+
+                           }) %>%
+                setNames(
+                    fs::path_ext_remove(
+                        list.files(path_model_dir)[idx]
+                    )  %>%
+                        gsub(pattern = ".*var-",
+                             replacement = "",
+                             x = .)
+                )
+        }) %>%
+    setNames(levels(mod_groups))
+
+
+# grab model paths --------------------------------------------------------
+
+
+mod_group_list <-
+    purrr::map(
+        levels(mod_groups),
+        function(mg){
+
+            idx <- which(mod_groups == mg)
+
+            mods <- lapply(path_files[idx],
+                           function(x){
+                               return(x)
+                           }) %>%
+                setNames(
+                    fs::path_ext_remove(
+                        list.files(path_model_dir)[idx]
+                    )  %>%
+                        gsub(pattern = ".*var-",
+                             replacement = "",
+                             x = .)
+                )
+        }) %>%
+    setNames(levels(mod_groups))
+
+
+# Predict for each model --------------------------------------------------
+mod_test_list <- mod_group_list[1]
+mod_test_list[[1]] <- mod_group_list[[1]][1:3]
+
+purrr::map_depth(
+    mod_test_list,
+    .depth = 1,
+    .f = function(mod){
+        make_model_prediction_df(
+            path_model = mod,
+            model_df = mod_df,
+            fixed_vars = list(X = 385785,
+                              Y = 5816681,
+                              STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95))
+        )
+
+
+    })
+
+
+
+# Scale model predictions [0,1] -------------------------------------------
+
+
+# Average across model groups ---------------------------------------------
+
+
+# Average within models ---------------------------------------------------
+
+
+# Plot for each species, across age groups --------------------------------
+
+
+# Plot for each species, one age group and all models ---------------------
+
+
+
