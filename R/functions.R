@@ -2204,9 +2204,12 @@ make_model_grid <- function(){
 
     model_params <- new.env()
 
-    model_params$k_uni <- 35
+    model_params$k_uni <- 25
     # model_params$k_te <- c(7, 20)
-    model_params$k_te <- c(5, 12)
+    model_params$k_te <- c(5, 15)
+    model_params$k_spatial <- 75
+    model_params$k_spatial_soilnutmodel <- 100
+    model_params$k_soilnut <- 25
 
     tempvars <- list('mod2015_T2M04HMEA',
                      'mod2015_T2M14HMEA',
@@ -2223,9 +2226,9 @@ make_model_grid <- function(){
     # tensor_mods <- list("mI_age_x_temp_by_species_reBEZIRK" =
                             # "dbh_cm ~ te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')")
 #     tensor_mods_spatial <- list("mI_spatial_age_x_temp_by_species_reBEZIRK" =
-#                             "dbh_cm ~  s(X,Y, k = 200, bs = 'ds') + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')")
+#                             "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')")
 #     tensor_mods_spatial_full <- list("mI_spatial_age_x_temp_by_species_reBEZIRK_full" =
-#                             "dbh_cm ~  s(X,Y, k = 200, bs = 'ds') + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're') + s(soil_nutrients_swert, k = k_uni) + s(building_heigt_m,  k = k_uni)")
+#                             "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're') + s(soil_nutrients_swert, k = k_uni) + s(building_heigt_m,  k = k_uni)")
 
 
 
@@ -2234,13 +2237,30 @@ make_model_grid <- function(){
         list("mI_age_x_temp_by_species_reBEZIRK" =
             "dbh_cm ~ te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_reBEZIRK" =
-            "dbh_cm ~  s(X,Y, k = 200, bs = 'ds') + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
+            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_building_height_reBEZIRK" =
-            "dbh_cm ~  s(X,Y, k = 200, bs = 'ds') + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(building_heigt_m, k = k_uni) + s(BEZIRK, bs = 're')"),
+            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(building_heigt_m, k = k_uni) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_soil_nutrients_reBEZIRK" =
-            "dbh_cm ~  s(X,Y, k = 200, bs = 'ds') + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(soil_nutrients_swert, k = k_uni) + s(BEZIRK, bs = 're')"),
+            "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(log10(soil_nutrients_swert), k = k_soilnut) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_baumsch_flaeche_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(log10(baumsch_flaeche_m2), k = k_soilnut) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_reBEZIRK_full" =
-            "dbh_cm ~  s(X,Y, k = 200, bs = 'ds') + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're') + s(soil_nutrients_swert, k = k_uni) + s(building_heigt_m,  k = k_uni)")
+            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're') + s(log10(soil_nutrients_swert), k = k_soilnut) + s(building_heigt_m,  k = k_uni) + +s(log10(baumsch_flaeche_m2), k = k_soilnut)"),
+
+
+
+        list("mI_age_ADD_temp_by_species_reBEZIRK" =
+            "dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) +s(%s, by = species_corrected, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_ADD_temp_by_species_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_uni) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_ADD_temp_by_species_building_height_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_uni) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(building_heigt_m, k = k_uni) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_soil_nutrients_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_uni) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(log10(soil_nutrients_swert), k = k_soilnut) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_baumsch_flaeche_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) +s(STANDALTER, by = species_corrected, k = k_uni) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(log10(baumsch_flaeche_m2), k = k_soilnut) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_reBEZIRK_full" =
+            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_uni) +s(%s, by = species_corrected, k = k_uni) + species_corrected + s(BEZIRK, bs = 're') + s(log10(soil_nutrients_swert), k = k_soilnut) + s(building_heigt_m,  k = k_uni) + +s(log10(baumsch_flaeche_m2), k = k_soilnut)")
     )
 
 
@@ -2258,10 +2278,26 @@ make_model_grid <- function(){
            }) %>%
         purrr::flatten()
 
-    print(forms)
+    # print(forms)
 
-    forms$`mI_age_by_species_var-nullmodel` <-
+    forms$`mI_age_by_species_NOTEMP_var-nullmodel` <-
         "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_age_by_species_NOTEMP_var-soil_nutrients` <-
+        "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + s(log10(soil_nutrients_swert),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_age_by_species_NOTEMP_var-building_height` <-
+        "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + s(building_heigt_m,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_age_by_species_NOTEMP_var-baumsch_flaeche` <-
+        "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + s(log10(baumsch_flaeche_m2),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+
+
+    forms$`mI_spatial_age_by_species_NOTEMP_var-nullmodel` <-
+        "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_spatial_age_by_species_NOTEMP_var-soil_nutrients` <-
+        "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + s(log10(soil_nutrients_swert),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_spatial_age_by_species_NOTEMP_var-building_height` <-
+        "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + s(building_heigt_m,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_spatial_age_by_species_NOTEMP_var-baumsch_flaeche` <-
+        "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + s(log10(baumsch_flaeche_m2),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
 
 
 
@@ -2305,10 +2341,10 @@ make_model_grid <- function(){
     #
     #               # SPATIAL + AGE x HEAT by Species
     #               "mI_spatial_age_x_heat14_by_species" =
-    #                   dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, mod2015_T2M14HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected
+    #                   dbh_cm ~ s(X,Y, k = k_spatial, bs = "ds") + te(STANDALTER, mod2015_T2M14HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected
     #               # SPATIAL + AGE x HEAT by Species
     #               "mI_spatial_age_x_heat22_by_species" =
-    #                   dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, mod2015_T2M22HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected
+    #                   dbh_cm ~ s(X,Y, k = k_spatial, bs = "ds") + te(STANDALTER, mod2015_T2M22HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected
     #
     #
     #
@@ -2340,10 +2376,10 @@ make_model_grid <- function(){
     #
     #               # SPATIAL + AGE x HEAT by Species
     #               "mI_spatial_age_x_urbclim13-15_by_species" =
-    #                   dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, urbclim_mod_afternoon_13_15, by = species_corrected, m = 1, k = k_te) + species_corrected
+    #                   dbh_cm ~ s(X,Y, k = k_spatial, bs = "ds") + te(STANDALTER, urbclim_mod_afternoon_13_15, by = species_corrected, m = 1, k = k_te) + species_corrected
     #               # SPATIAL + AGE x HEAT by Species
     #               "mI_spatial_age_x_urbclim21-23_by_species" =
-    #                   dbh_cm ~ s(X,Y, k = 200, bs = "ds") + te(STANDALTER, urbclim_mod_night_21_23, by = species_corrected, m = 1, k = k_te) + species_corrected
+    #                   dbh_cm ~ s(X,Y, k = k_spatial, bs = "ds") + te(STANDALTER, urbclim_mod_night_21_23, by = species_corrected, m = 1, k = k_te) + species_corrected
     # )
 
 
@@ -2374,6 +2410,9 @@ make_model_prediction_df <- function(
         x =  path_model,
         replacement = "\\2",
         perl = TRUE)
+
+    # only grab TEMP models!
+    mod_names <- mod_names[!grepl(pattern = "NOTEMP", x = mod_names)]
 
 
 

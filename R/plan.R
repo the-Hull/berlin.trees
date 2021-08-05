@@ -221,7 +221,7 @@ plan <- drake_plan(
         n_max_species = 10,
         n_min_abundance = 10000,
         age_cutoff = 125,
-        dbh_cutoff = 375, # cm
+        dbh_cutoff = 350, # cm
         mad_factor = 7),
 
     model_df_full = prep_model_df(

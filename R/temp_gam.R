@@ -1113,17 +1113,35 @@ mod_groups <- list.files(path_model_dir) %>%
     as.factor()
 
 # get model summaries -------------------------------------------------------
+future::plan(future::multisession(workers = 8))
 mod_summary_list <-
-    purrr::map(
-        levels(mod_groups),
+    furrr::future_map(
+        levels(mod_groups)[4],
         function(mg){
 
             idx <- which(mod_groups == mg)
 
             mods <- lapply(path_files[idx],
                            function(x){
-                               readRDS(x) %>%
+                               m <- readRDS(x)
+
+                               s <- m %>%
                                   summary()
+
+                               m <- broom::augment(m,
+                                                   type.residuals = "response",
+                                                   type.response = "response")
+
+                               v <- {
+                                   if(grepl("mI_spatial", x = x)){
+                                       gstat::variogram(.resid ~ 1, locations = ~ X + Y, m)
+                                   } else {
+                                       NULL
+                                   }}
+
+                               return(
+                                   list(summary = s,
+                                        variogramm = v))
 
                            }) %>%
                 setNames(
@@ -1168,7 +1186,8 @@ mod_group_list <-
 mod_test_list <- mod_group_list[1]
 mod_test_list[[1]] <- mod_group_list[[1]][1:3]
 
-purrr::map_depth(
+
+mod_prediction_list <- purrr::map_depth(
     mod_test_list,
     .depth = 1,
     .f = function(mod){
@@ -1189,6 +1208,34 @@ purrr::map_depth(
 
 
 # Average across model groups ---------------------------------------------
+
+
+age_expr <- expression(dplyr::case_when(
+    dplyr::between(STANDALTER, 30, 35) ~ "[30 - 35]",
+    dplyr::between(STANDALTER, 45, 50) ~ "[45 - 50]",
+    dplyr::between(STANDALTER, 60, 65) ~ "[60 - 65]",
+    dplyr::between(STANDALTER, 75, 80) ~ "[75 - 80]",
+    dplyr::between(STANDALTER, 90, 95) ~ "[90 - 95]",
+    TRUE ~ NA_character_
+))
+
+
+
+
+pred_groups <- purrr::map_depth(
+    .x = mod_test_list,
+    .depth = 1,
+    ... = names(mod_test_list),
+    .f = function(x,y){
+        summarize_age_groups(
+            x,
+            mod_df,
+            y,
+            age_break_expr = age_expr)
+    })
+
+
+
 
 
 # Average within models ---------------------------------------------------
