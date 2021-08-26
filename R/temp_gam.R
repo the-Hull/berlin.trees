@@ -1116,7 +1116,7 @@ mod_groups <- list.files(path_model_dir) %>%
 future::plan(future::multisession(workers = 8))
 mod_summary_list <-
     furrr::future_map(
-        levels(mod_groups)[4],
+        levels(mod_groups),
         function(mg){
 
             idx <- which(mod_groups == mg)
@@ -1134,14 +1134,15 @@ mod_summary_list <-
 
                                v <- {
                                    if(grepl("mI_spatial", x = x)){
-                                       gstat::variogram(.resid ~ 1, locations = ~ X + Y, m)
+                                       gstat::variogram(.resid ~ 1, locations = ~ X + Y, width = 50, cutoff = 5000, data = m)
                                    } else {
                                        NULL
                                    }}
 
                                return(
                                    list(summary = s,
-                                        variogramm = v))
+                                        variogramm = v,
+                                        fitted_response = m[ , c("dbh_cm", ".fitted", ".resid")]))
 
                            }) %>%
                 setNames(
@@ -1152,9 +1153,11 @@ mod_summary_list <-
                              replacement = "",
                              x = .)
                 )
-        }) %>%
+        }, .options = furrr::furrr_options(seed = TRUE)) %>%
     setNames(levels(mod_groups))
+future::plan(future::sequential())
 
+saveRDS(mod_summary_list, "TEMP_mod_summary_list.Rds")
 
 # grab model paths --------------------------------------------------------
 
@@ -1247,4 +1250,198 @@ pred_groups <- purrr::map_depth(
 # Plot for each species, one age group and all models ---------------------
 
 
+
+
+# Supplemental ------------------------------------------------------------
+
+## semivariograms ---------------------------------
+
+
+vgram_fits <- purrr::map_depth(mod_summary_list[], .depth = 2, "variogramm") %>%
+    purrr::map_depth(.depth = 1, purrr::compact) %>%
+    purrr::compact() %>%
+# vgram_fits <- purrr::map(mod_summary_list[[1]], "variogramm") %>%
+    purrr::map_depth(.depth = 2, ~dplyr::mutate(.x, gamma = gamma / max(gamma))) %>%
+    purrr::map_depth(.depth = 2, ~gstat::fit.variogram(.x, gstat::vgm(psill = 1, "Exp", range = 1000, nugget = 0.2))) %>%
+    purrr::map(~purrr::map_dfr(.x, function(x){gstat::variogramLine(x, maxdist = 5000, n = 100)},
+                   .id = "tempvar")) %>%
+    bind_rows(.id = "mod_group")
+
+# %>%
+    # dplyr::group_by(tempvar) %>%
+    # dplyr::mutate(gamma_adj = gamma / max(gamma))
+
+
+var_spat <- gstat::variogram(dbh_cm ~ 1, locations = ~ X + Y, data =  model_df_stat_filtered, width = 50, cutoff = 5000)
+var_spat_new <- var_spat
+var_spat_new$gamma <- var_spat_new$gamma / max(var_spat_new$gamma)
+
+
+vgram_raw <- purrr::map_depth(mod_summary_list[], .depth = 2, "variogramm") %>%
+    purrr::map_depth(.depth = 1, purrr::compact) %>%
+    purrr::compact() %>%
+    # vgram_fits <- purrr::map(mod_summary_list[[1]], "variogramm") %>%
+    purrr::map_depth(.depth = 2, ~dplyr::mutate(.x, gamma = gamma / max(gamma))) %>%
+    purrr::map(~bind_rows(.x, .id = "tempvar")) %>%
+    bind_rows(.id = "mod_group")
+
+
+vgram_raw %>%
+    # dplyr::mutate(gamma_adj = gamma / max(gamma)) %>%
+    ggplot(aes(x = dist, y = gamma, color = tempvar)) +
+    geom_point() +
+    geom_line(data = vgram_fits,
+              aes(x = dist, y = gamma, color = tempvar)) +
+    lims(y = c(0, 1.1)) +
+    facet_wrap(~mod_group)+
+    geom_point(data = var_spat_new, aes(x = dist, y = gamma, color = "raw"))
+
+
+
+
+# extract smooth p-vals ---------------------------------------------------
+
+extract_smooth_pval <- function(mlist){
+
+    # mod_vars <- purrr::map_depth(mlist, 1, names) %>%
+    #     unlist() %>%
+    #     as.character()
+
+
+    pvals <- purrr::map_depth(mlist, 2, "summary") %>%
+        purrr::map_depth(2, "s.table") %>%
+        # purrr::map2(mod_vars, function(mod, vn){
+        purrr::map(function(mod){
+
+            purrr::map2(mod, names(mod), function(m, vn){
+                # idx <- grepl(vn, rownames(m))
+
+
+                m <- cbind(smooth = rownames(m),
+                           as.data.frame(m))
+                # m$smooth <-
+                m$model <- vn
+                m$species_corrected <- gsub(pattern = "(.*species_corrected)(.*$)",
+                                            replacement = "\\2",
+                                            m$smooth,
+                                            perl = TRUE)
+                m$smooth <- gsub("(.*)([:].*)", "\\1", m$smooth, perl = TRUE)
+                m <- m[!grepl("BEZIRK", m$smooth), ]
+
+                # if(!any(idx)){
+                # m$model <- vn
+                # idx <- 0
+                # }
+                # print(idx)
+
+
+
+                # return(m[idx, ])
+                return(m)
+
+            }
+            )
+
+
+        })
+
+    return(pvals)
+}
+
+
+smooth_vals <- extract_smooth_pval(mod_summary_list) %>%
+    purrr::map(purrr::compact) %>%
+    purrr::map(~dplyr::bind_rows(.x, .id = "model_var")) %>%
+    bind_rows(.id = "model_group") %>%
+    mutate(model_id = paste0(model_group, "_", model),
+           expvar = case_when(
+               species_corrected %in% c('s(X,Y)',
+                                        's(log10(baumsch_flaeche_m2))',
+                                        's(log10(soil_nutrients_swert))',
+                                        's(building_height_m)))',
+                                        's(building_height_m)') ~ "var",
+               TRUE ~ species_corrected),
+           expvar = forcats::fct_relevel(as.factor(expvar),
+                                         "var",
+                                         ),
+           # expvar = forcats::fct_relevel(as.factor(species_corrected),
+           #                               's(X,Y)',
+           #                               's(log10(baumsch_flaeche_m2))',
+           #                               's(log10(soil_nutrients_swert))',
+           #                               's(building_height_m)',
+           #                               ),
+           smooth = forcats::fct_relevel(as.factor(smooth),
+                                         's(X,Y)',
+                                         's(log10(baumsch_flaeche_m2))',
+                                         's(log10(soil_nutrients_swert))',
+                                         's(building_height_m)',
+           ))
+
+
+
+
+
+mod_plot <- ggplot(smooth_vals, aes(x = expvar, y = smooth, fill = `p-value`)) +
+    geom_tile(color = "white") +
+    geom_text(color = "white", aes(label =round(`p-value`,2))) +
+    facet_wrap(~model_id, scales = "free_y", ncol = 1) +
+    scale_fill_viridis_c(option = "inferno") +
+    scale_x_discrete(guide = guide_axis(n.dodge = 2))
+
+
+ggsave(plot = mod_plot, filename = "./analysis/figures/eda/model_sign_smooth.png",
+       width = 45,
+       height = 200,
+       units = "cm",
+       dpi = 300,
+       limitsize = FALSE)
+
+
+
+# extract mod R2 ----------------------------------------------------------
+
+mod_n <- mod_summary_list %>%
+    purrr::map_depth(2, "summary") %>%
+    purrr::map_depth(2, "n") %>%
+    purrr::map_depth(2, .f = as.data.frame) %>%
+    purrr::map(dplyr::bind_rows, .id = "expvar")  %>%
+    purrr::map2(names(.),
+                ~mutate(.x, mod_group = .y)) %>%
+    do.call(rbind, .) %>%
+    `rownames<-`(NULL) %>%
+    rename(n_sample = 2)
+
+
+mod_dev <- mod_summary_list %>%
+    purrr::map_depth(2, "summary") %>%
+    purrr::map_depth(2, "dev.expl") %>%
+    purrr::map_depth(2, .f = as.data.frame) %>%
+    purrr::map(dplyr::bind_rows, .id = "expvar")  %>%
+    purrr::map2(names(.),
+                ~mutate(.x, mod_group = .y)) %>%
+    do.call(rbind, .) %>%
+    `rownames<-`(NULL) %>%
+    rename(deviance_explained = 2) %>%
+    left_join(mod_n, by = c("mod_group", 'expvar'))
+
+mod_means <- mod_dev %>%
+    group_by(mod_group) %>%
+    summarise(ggplot2:::mean_se(deviance_explained)) %>%
+    arrange(desc(y))
+
+mod_dev$mod_group <- forcats::fct_relevel(mod_dev$mod_group, mod_means$mod_group)
+mod_means$mod_group <- forcats::fct_relevel(mod_means$mod_group, mod_means$mod_group)
+
+ggplot(mod_dev,
+       aes(y = mod_group,
+           x = deviance_explained)) +
+    geom_line(data = mod_means, aes(x = y),  color = "black", group = 1, alpha = 0.3) +
+    geom_jitter( shape = 21,height = .1, aes(size = n_sample,
+                                             fill = expvar), alpha = 0.8) +
+    # geom_jitter( shape = 21, color = "white", fill = "gray60",height = .1, aes(size = n_sample), alpha = 0.5) +
+    geom_linerange(data = mod_means, aes(x = y, xmin = ymin, xmax = ymax), color = "black") +
+    geom_point(data = mod_means, aes(x = y), size = 3, shape = 21, color = "white", fill = "black") +
+    guides(fill = guide_legend(override.aes = list(size = 5))) +
+    theme_minimal() +
+    scale_fill_brewer(type = "qual", palette = "Set3")
 
