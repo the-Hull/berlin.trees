@@ -1,0 +1,662 @@
+---
+title: "Species-specific effects of the Urban Heat Island on tree growth across Berlin"
+author:
+  - Alexander G. Hurley$^{a *}$, Ingo Heinrich$^a$, ...
+  - $^a$ *Geoforschungszentrum Potsdam, Section 4.3, Germany*
+  - "* Corresponding author: hurley@gfz-potsdam.de"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+always_allow_html: true
+output: 
+    bookdown::html_document2:
+      fig_caption: yes
+      toc: true
+    bookdown::word_document2:
+      fig_caption: yes
+      reference_docx: "../templates/template.docx" # Insert path for the DOCX file
+      pandoc_args:
+      - --lua-filter=../templates/scholarly-metadata.lua
+      - --lua-filter=../templates/author-info-blocks.lua
+      - --lua-filter=../templates/pagebreak.lua
+    bookdown::pdf_document2:
+      fig_caption: yes
+      toc: yes
+header-includes:
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage[normalem]{ulem}
+bibliography: 
+  - uhi_references.bib
+  - 04_gfz_UHI.bib
+  - 07_phenoTram.bib
+csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
+abstract: |
+  **This document outlines the rationale for an analysis of tree growth (potential) and its relationship with the Urban Heat Island (UHI) effect in Berlin using an extensive, publicly available data set. It introduces preliminary results and provides an outlook for up-coming and potential work.**
+keywords: |
+  Uferbaeume; Anlagenbaeume; Strassenbaeume; 
+highlights: |
+  We will see. 
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+<!-- This is the format for text comments that will be ignored during renderings. Do not put R code in these comments because it will not be ignored. -->
+
+```{r setup, echo = FALSE, cache = FALSE, include = FALSE}
+knitr::opts_knit$set(root.dir = here::here(),
+                     base.dir = here::here())
+
+knitr::opts_chunk$set(
+  fig.align = "center",
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  echo = FALSE,
+  comment = "#>",
+  # fig.path = "../figures/",
+  fig.path = paste0(file.path(here::here(), "analysis", "figures"), "/"),
+  dpi = 300
+)
+
+
+out_format <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+
+pgbreak <- function() {
+  if (grepl("docx", out_format)) {
+    return("##### pagebreak")
+  } else if (knitr::is_latex_output()) {
+    return("\\newpage")
+  }
+}
+
+
+library(drake)
+library(kableExtra)
+# library(ggplot2)
+# library(patchwork)
+```
+
+# Introduction {#sec:intro}
+
+Berlin features the most intense Urban Heat Island (UHI) in Germany due to its large extent and development intensity [@kuttler2015], with temperature increases of up to $12~K$ during day-time and $6~K$ on average for night-times [2001-2010, @fenner2014] in urban $vs.$ rural areas.
+Consequently, urban green (infrastructure) systems are subjected to increased heat more frequently, potentially affecting their process dynamics - either positively or adversely. 
+Their performance and health, however, is closely tied to local energy budgets [@grimmond1996 ; @hertel2019], which in turn are decisive for controlling human wellbeing [e.g. @maras2016], amongst other factors.
+Assessing the effect of increased temperatures on green infrastructure, as part of the urban landscape, is therefore instrumental for understanding, and ultimately mitigating, the potential impact of future warming on increasingly urban societies [@norton2015]. 
+
+
+Trees, in particular, provide shading as well as transpirative cooling in their vicinity [@gillner2015;@oke1982;@endlicher2016], and therefore can reduce ambient temperatures, infrastructure power-consumption and (human) thermal discomfort  [e.g. @gulyas2006; @akbari2001; @mayer1987; @hoyano1988];
+simultaneously, they provide numerous other environmental, cultural and psychological services and/or benefits [see @tzoulas2007 for review].
+Further, recent tree growth dynamics as a proxy for on-going and future warming may provide an additional line of evidence to support the growing knowledge base on future climate-vegetation dynamics [@zhao2016] and may aid in mitigation and adaptation efforts [@pretzsch2017;@brune2016].
+
+
+Trees and green infrastructure in urban areas show a tendency for enhanced growth rates and/or productivity compared to rural counterparts [@jia2018; @pretzsch2017], yet feature a broad range of effect size ranges and, in some cases, signs specific to species and locality.
+@zhao2016 showed that growth rates increased within urban clusters as urbanization intensifies using remotely sensed vegetation indices.
+Similarly, for Berlin, @dahlhausen2018, identified positive growth modulation in highly urbanized environments (using growth increments) for *Tilia cordata* Mill, the most abundant tree of the city, which they attributed to the UHI effect, while intermediate development intensity showed indications of being least favorable for tree growth.
+<!-- For Berlin, @dahlhausen2018, showed divergent patterns for young and old trees dependent on urban development intensity for *Tilia cordata* Mill, the most abundant tree of the city, but overall reported an increased growth rate which they attributed to the UHI effect. -->
+Further, @moser-reischl2019a identified positive associations between air temperature and radial growth for two species commonly selected by urban planners (*T. cordata*, *Rubinia pseudoacacia*) in Munich.
+By contrast, @gillner2014 highlight decreased growth for *Acer* species  (*A. platanoides* and *pseudoplatanus*), *Platanus x hispanica* and *Quercus rubra* with higher summer temperatures of the preceding year, especially when compounded with drought, in another German metropolis (Dresden). 
+Differences in growth trends may result from contrasting species-specific characteristics, but are indeed affected by other processes and factors, such as water availability, pollution and road-salt loading, structural impedance through infrastructure or management, etc. [@rhoades1999; @quigley2004; @randrup2001; @pauleit2002].
+Under climate change, atmospheric drought will likely be compounded with high temperatures - and intensified UHIs - more frequently, adding further stress to current urban disturbance regimes [@roloff2009].
+
+
+Conditions affecting tree growth can vary greatly within urban areas or regions, and need to be accounted for when establishing relationships with pertinent drivers, such as the UHI effect.
+This typically complicates the extrapolation from individual sampling sites toward predicting effect sizes across entire urban areas and tree stocks.
+This is especially the case for studies reliant on labour-intensive methods which are limited logistically by sampling effort, reducing sample sizes, as well as species and spatial coverage.
+<!-- While multiple (locally) important species have been assessed along urban and UHI gradients reflecting a range of conditions, studies reliant on labour-intensive methods are limited logistically by sampling effort, reducing sample size and coverage (i.e. genera and/or species, and space). -->
+<!-- However, urban tree growth in urban settings is affected by various processes, which  -->
+<!-- However, growth in urban settings is affected by other processes and factors, such as water availability, pollution and road-salt loading, structural impedance through infrastructure or management, etc. [@rhoades1999; @quigley2004; @randrup2001; @pauleit2002]. -->
+<!-- While multiple (locally) important species have been assessed along urban and UHI gradients reflecting a range of conditions, studies reliant on labour-intensive methods are limited logistically by sampling effort, reducing sample size and coverage (i.e. genera and/or species, and space). -->
+<!-- This typically hinders the extrapolation from individual sampling sites toward prediction of effect sizes across entire urban areas and tree stocks.  -->
+<!-- Therefore, studies reliant on labor-intensive sampling, must carefully address confounding factors to ensure effect sizes are estimated adequately. -->
+
+
+<!-- Detailed, but spatially-limited dendroecological analyses of climate-growth relationships in Berlin for key species can be enhanced by inferring growth modulation from a large data set in excess of 650000 individuals provided by the Berlin Senate Administration (Senatsverwaltung). -->
+
+To complement (existing) detailed dendroecological analyses of climate-growth relationships in Berlin for key species, we propose inferring growth modulation from a large data set in excess of 650000 individuals covering 94 genera and at least 600 species and/or cultivars provided by the Berlin Senate Administration (Senatsverwaltung).
+This data set contains information on location, species, trunk diameter (at breast height; $DBH$; see Tab.$~$\@ref(tab:tab-tree-overview)), and height, amongst other variables for the majority of street and park trees.
+
+
+```{r tab-tree-overview}
+drake::loadd(overview_table)
+
+
+caption_ov <- "Available records by category in entire data set (n), and those with age and $DBH$ entries (n$_{full}$)."
+caption_ov_short <- "Available records in Berlin tree database."
+
+
+if (grepl("docx", out_format) ||
+    knitr::is_latex_output() ) {
+  table_ov <- overview_table %>% 
+  knitr::kable(booktabs = TRUE,
+              
+             caption = caption_ov,
+             caption.short = caption_ov_short,
+             format = "latex",
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             escape = FALSE) 
+  
+} else {
+table_ov <- overview_table %>% 
+  knitr::kable(booktabs = TRUE,
+               format = "html",
+               
+             caption = caption_ov,
+             caption.short = caption_ov_short,
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             escape = FALSE) 
+}
+
+
+ table_ov %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 11,
+                            latex_options = c("hold_position")) %>% 
+  kableExtra::row_spec(0, bold = TRUE, font_size = 12) 
+
+```
+
+
+In a space-for-time substitution, growth of individual species can be assessed across the entire city of Berlin, and related to effects of the UHI, while accounting for other location-specific factors, such as street characteristics, development intensity, available soil volume, etc.
+Comparable applications are found, for example, in @quigley2004 and @pretzsch2017.
+The former  inferred absolute growth potential for species across successional groups (early, mid, late stage), and between rural and urban conspecifics, yet lacked spatially-explicit effect size estimates across the urban-rural space and was limited to comparatively small sample sizes per group ($n_{total}~=~230$ divided in 15 species, 3 groups and 2 locations).
+@pretzsch2017 applied linear hierarchical models to infer growth modulation on annual basis for different time periods and urban $vs.$ rural locations while accounting for stand-level variability;
+however, for Berlin only 145 individuals of one species (*T. cordata*) were assessed.
+As mentioned previously, climate-growth relationships can vary substantially between species, and in fact, @quigley2004 and @pretzsch2017 report contrasting results regarding average tree diameter, i.e. smaller or larger for urban $vs.$ rural trees of same age.
+Consequently, this variability of effect sizes and directions calls for a more comprehensive assessment across species and with greater spatial coverage throughout Berlin.
+
+**We therefore propose applying a statistical model that is fully spatially explicit, while also allowing to account for the nested nature of the data set (e.g. streets and districts) as well as other pertinent factors using hierarchical, generalized additive models (see Section$~$\@ref(sec:methods)).
+As a result, the absolute growth potential of a species can be inferred given, for example, a specific location, age or UHI magnitude. 
+Further, the impact of UHI loading can be predicted for a single species across all of Berlin as a continuous surface.**
+The inclusion of independent, tree-level growth data, however, is paramount as it allows:  
+
+1) validating the publicly-available Senate dataset ($DBH$) while providing a more reliable estimate of tree age,  
+2) applying the model with annual basal area as a response (enabling incorporating effects of varying climate/UHI intensities over time), and  
+3) comparing $DBH$ (Senate data) and basal area-derived models for a subset of locations and species, increasing confidence in Berlin-wide predictions. 
+
+<!-- We acknolwedge results from [@gregg2003], which indicated impeded growth adjacent to intense urban clusters, rather than enhancement within them. -->
+
+
+
+
+
+
+# Methods {#sec:methods}
+
+## Study area
+
+Berlin is one of the largest metropolitan areas in Central Europe (892$~km^2$) with a population of approximately 3.6 million, and a maximum extent of 38$~km$ in North-South and 45$~km$ in East-West directions. 
+It is located in North-Eastern Germany, and lies in the temperate zone with warm-humid climate (Dfb) according to the updated Köppen-Geiger classification [@beck2018], with mean annual temperature of approximately 10$^\circ C$ and precipitation of 575$~mm$ (Tempelhof weather station, German Weather Service DWD).
+Berlin has low relief (approximately 30$~m$ to 60$~m$ with 120$~m$ at solitary peaks), and is centered around a glacial outwash valley (sands, gravel), bordered by two plateaus consisting of glacial till and clay in the North-East and South, as well as sands in the South-West.
+The city provides extensive public green space covering around 30$~\%$ of its area [@suvkberlin2019], with an extensive urban forest of nearly 700000 publically-managed trees along streets, in parks and in riparian areas.
+It has a pronounced urban heat island, owing to its high degree of built-up and sealed surfaces, with air temperatures up to 12$^\circ C$ higher in urban compared to adjacent rural areas at night times [@fenner2014].
+
+# General approach
+
+- Assess differences in mean growth across age for individual species produced by environmental factors, including air temperature (or measure of urban heat island loading), soil characteristics and rooting area, adjacent building height) in a space-for-time approach
+- Focus on street trees where species have a minimum of X individuals
+- Account for potential differences in tree management by authorities
+- Use flexible models that can produce curves of varying modality 
+- Understand / confirm urban tree growth (assessed for single species)
+
+
+## Data sources and processing
+
+An overview of all data used in this study, including sources, types, and application, is provided in Table X.
+Most notably, characteristics of street trees and their respective environments were collated from the city's tree inventory, as well as various elements of the Berlin Environment Atlas, which are openly available via daten.berlin.de and curated by the city's government.
+The data used from the inventory includes species, location, age, and diameter at breast height (dbh).
+The environment atlas holds information on several variables relevant to tree growth, such as soil type and nutrient exchange capacity, distance to groundwater, surface area of tree planting beds ("Baumscheibe"), as well as general characteristics of the urban environment like building height.
+It also includes spatially-explicit model outputs for local climate simulations representative of typical conditions, such as air temperature (2 m) on a 2015 summer's day at different hours (0400, 1400, 2200). 
+These model outputs were preferred over *in situ* measurements as **more representative based on averaged conditions, physiologically more relevant than surface urban heat island products**.
+These outputs are available at city block or planning unit level, and were used as a proxy for the general temperature distribution influenced by urbanization across the investigated growth period across the previous 80 years (see section X for details).
+This was deemed reasonable as Berlin's built-up area has not changed markedly over the past 50 years, i.e., about 52 to 61$\%$ [@mohamed2017]. 
+Further insight into the role of the urban environment was assessed by including local climate zone classes derived by WUDAPT.
+These describe the proportion of urban area with a specific cover, such as dense high rises, sealed surfaces, etc. 
+For this study, the LCZ 6, representing dense mid-rise built up cover was used as a proxy for the degree of urbanization, and is the most frequent LCZ for Berlin [@fenner2017] (found ref in .
+Use percent sealed surface instead?
+
+- datacleanr
+- adjusting bad records
+- final original, final data set available online, with cleaning scripts
+
+```{r dsources-prep, include=FALSE}
+
+options(knitr.kable.NA = "")
+
+
+dsources_path <- "analysis/data/tables/data_sources.xlsx"
+dsources <- readxl::read_excel(dsources_path, na = "NA")
+dsources$Accessed <- format(dsources$Accessed, "%b '%y")
+
+```
+
+```{r dsources-tab, eval = TRUE}
+
+caption <- "Data description used for generating maps and route optimization. Resolution and radius are provided in $m$, the latter referring to the buffer size across which data was averaged to estimate trees' environmental conditions. A zero-radius refers to a point extraction from categorical and location specific data. **Planting Bed Area, and Soil type are not currently used.**"
+
+
+dsources <- dsources %>%
+  dplyr::select(Name = `Name-eng`, Accessed, Type, Unit = `Unit-latex`, Resolution, Radius, Source = `Source-short`, Reference = TextRef) %>%
+  dplyr::filter(Name != "UHI Berlin",
+                Name != "Park Trees",
+                Name != "Riparian Trees") 
+
+
+if (grepl("docx", out_format) ||
+    knitr::is_latex_output() ) {
+  table_ds <- dsources %>% 
+  knitr::kable(booktabs = TRUE,
+              
+             caption = caption,
+             caption.short = caption,
+             format = "latex",
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             escape = FALSE) %>% 
+      kableExtra::landscape()
+  
+} else {
+table_ds <- dsources %>% 
+  knitr::kable(booktabs = TRUE,
+               format = "html",
+               
+             caption = caption,
+             caption.short = caption_ov_short,
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             escape = FALSE) 
+}
+
+
+table_ds %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 11,
+                            latex_options = c("hold_position")) %>% 
+  kableExtra::row_spec(0, bold = TRUE, font_size = 12) 
+
+
+# dsources %>%
+#   
+#   knitr::kable(caption = caption, escape = FALSE) %>%
+#   kableExtra::kable_styling(full_width = TRUE,
+#                             bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+
+# flextable::set_flextable_defaults(padding.left = 0)
+# 
+# dsources %>%
+#   dplyr::select(`Name-eng`, Accessed, Type, Source, TextRef) %>%
+#   flextable::flextable() %>%
+#   flextable::autofit()
+
+
+```
+
+
+
+## General analyses
+
+The proposed statistical method is from the class of hierarchical, generalized additive models (GAM, or GAMM for mixed models/hierarchical models).
+In these models combinations of continuous and categorical predictor variables can be summed to estimate a response. 
+In particular, continuous variables that are linearly, as well as non-linearly related to the response can be represented by applying a transfer function, typically termed "smoothing function" [@wood2017]; these are constructed using a number of base functions of varying complexity and form, which provides a high degree of flexibility, ideal for fitting ecosystem dynamics which are rarely linear [@pedersen2019], or correctly represented with deterministic functional forms (e.g. quadratic equations). 
+In general, a GAM can be written as:
+
+\begin{equation}
+E (Y)~=~g^{-1}\left( \beta_0 + \sum_{i = 1}^{n} f_i (x_i) \right),
+(\#eq:gam-general)
+\end{equation}
+
+and
+
+\begin{equation}
+y~=~E (Y) + \epsilon,
+(\#eq:gam-expectation)
+\end{equation}
+
+where $Y$ is taken from an appropriate distribution and corresponding link function $g$, $\beta_0$ is the intercept and $f_i$ represents a smooth function of a predictor [@pedersen2019], and $\epsilon \sim \mathcal{N}(0, \sigma ^2)$. 
+Note, that $f_i$ consists of a smooth (e.g. spline) constructed via basis functions of different form and complexity, multiplied by a coefficient:
+
+\begin{equation}
+f_i(x_i)~=~\sum_{k = 1}^{K} \beta_{i, k} b_{i,k}(x_i).
+(\#eq:gam-smoothers)
+\end{equation}
+
+Nested data structures (e.g. due to similar road [type]) can be accounted for by introducing random effects [@wood2017], while spatial dependence between observations can be included by constructing smoothing functions with e.g. northings and eastings, as for example done in [@augustin2009].
+Ultimately, the implementation of a such a GAMM will allow for establishing continuous prediction surfaces of growth potential (approximated via $DBH$) for individual species across urban areas (including parks) of Berlin.
+
+Currently, $DBH$ has been modeled using a hierarchical linear model (linear mixed effects model) with `lme4` [@bates2015] in @rcoreteam2020 (see Section$~$\@ref(sec:results)).
+The general form of this model is:
+
+\begin{equation}
+Y_{i,j} = (\beta_0 + b_{0,i,j}) + (\beta_1 + b_{1,i,j}) \cdot x_i  + \epsilon_{i,j},
+(\#eq:lme)
+\end{equation}
+where $\beta_0$ is the intercept with its random component $b_0$, and $\beta_1$ the slope with its random component $b_1$.
+The random errors are assumed i.i.d. and distributed as $b \sim \mathcal{N}(0, \tau ^2)$. 
+The model for which results are presented in Figure$~$\@ref(fig:fig-lmestat) estimates $DBH$ from tree age and the local UHI intensity as continuous covariates with random slopes and intercepts for each species;
+note, that for computational efficiency each genera was modeled separately.
+Further, models were established for the three most abundant species per genera with at least 1000 individuals.
+
+
+<!-- We caution, that 1) the presented model results are preliminary, 2) initial diagnostics indicate that modification of the current model structure (e.g. by accounting for individual-level variability) may be required and 3) that further, time-intensive data cleaning is necessary.  -->
+<!-- First tests, however, showed that while the magnitude of effects changes with different model structures, their direction appears stable. -->
+
+## Available and required data
+
+
+Additional remote sensing data for local context, higher resolution UHI data, and most important, temporally-resolved tree growth data are still required and/or would greatly improve the confidence in effect size estimates (see Section$~$\@ref(sec:intro)).
+See Tab.$~$\@ref(tab:tab-data-req) for details on data sets.
+
+
+
+
+```{r tab-data-req,echo=FALSE}
+
+dat_req <- read.csv(here::here("analysis", "data", "tables", "01_data_requirements.csv"), header = TRUE)
+
+
+
+caption_data_req <- "Data requirements for analysis, including currently available/accessed and required/desired data."
+caption_data_req_short <- "Data requirements for analysis."
+
+if (grepl("docx", out_format) ||
+    knitr::is_latex_output() ) {
+  table_dat_req <- dat_req %>% 
+  dplyr::select(-owned) %>% 
+  knitr::kable(booktabs = TRUE,
+              
+             caption = caption_data_req,
+             caption.short = caption_data_req_short,
+             format = "latex",
+             col.names = c("Subject / Relevance",
+                          "Desc.",
+                          "Type",
+                          "Obsv. (n)",
+                          "Resolution (m)",
+                          "Source")) %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 11) %>% 
+  kableExtra::row_spec(0, bold = TRUE, font_size = 12) %>% 
+  kableExtra::row_spec(9,italic =  TRUE) %>% 
+  kableExtra::pack_rows("available or accessed", 1, 4) %>%
+  kableExtra::pack_rows("required and/or desired", 5, 9) %>% kableExtra::landscape()
+  
+} else {
+  table_dat_req <- dat_req %>% 
+  dplyr::select(-owned) %>% 
+  knitr::kable(booktabs = TRUE,
+               format = "html",
+               caption = "Data requirements for analysis, including currently available/accessed and required/desired data.",
+             caption.short = "Data requirements for analysis",
+             col.names = c("Subject/Relevance",
+                          "Desc.",
+                          "Type",
+                          "Obsv. (n)",
+                          "Resolution (m)",
+                          "Source")) %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 10) %>% 
+  kableExtra::row_spec(0, bold = TRUE) %>% 
+  kableExtra::pack_rows("available or accessed", 1, 4) %>%
+  kableExtra::pack_rows("required and/or desired", 5, 9)
+  
+}
+
+ table_dat_req
+
+
+```
+
+
+
+# Results {#sec:results}
+
+
+Tree locations are clustered and structured based on their category, i.e. riparian, street and park trees (Fig.$~$\@ref(fig:fig-tree-overview-map)).
+Planting in space and time shows species-specific patterns (by districts), often related to major events, such as the start and end of armed and/or political conflict.
+Table$~$\@ref(tab:tab-age) shows the binned distribution of genera across age classes.
+
+
+
+```{r tab-age}
+
+drake::loadd(age_tables)
+
+age_tables <- age_tables %>% 
+  dplyr::arrange(desc(n_total))
+colnames(age_tables)[c(1,7,8, 9)] <- c("Genera", "150+", "Total (n)", "Missing (n)") 
+
+age_tables <- dplyr::bind_rows(age_tables[age_tables$Genera!="Other",],
+                        age_tables[age_tables$Genera=="Other",])
+
+  
+add_row <- as.data.frame(matrix(c(NA, colSums(age_tables[,-1])), nrow = 1))
+add_row[1,1] <- "Marg. Totals"
+colnames(add_row) <- colnames(age_tables)
+
+age_tables <- dplyr::bind_rows(age_tables,
+                    add_row)
+
+
+caption_trees <- "Binned age-distribution for trees in Berlin data set, and entries missing age information."
+caption_trees_short <- "Binned age-distribution for trees in Berlin data set."
+
+
+if (grepl("docx", out_format) ||
+    knitr::is_latex_output() ) {
+  table_dat_req_kable <- age_tables %>% 
+  knitr::kable(booktabs = TRUE,
+               format = "latex",
+             caption = caption_trees,
+             caption.short = caption_trees_short
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             ) %>% 
+  kableExtra::row_spec(13, hline_after = TRUE) 
+  
+} else {
+table_dat_req_kable <- age_tables %>% 
+  knitr::kable(booktabs = TRUE,
+               format = "html",
+              caption = caption_trees,
+             caption.short = caption_trees_short
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             ) %>% 
+  kableExtra::row_spec(13, extra_css = "border-bottom: 1px solid")
+
+# %>% 
+#   kableExtra::kable_styling(full_width = TRUE, 
+#                             font_size = 10) %>% 
+#   kableExtra::column_spec(1, italic = TRUE) %>%
+#   kableExtra::row_spec(0, bold = TRUE) %>% 
+#     kableExtra::row_spec(13, hline_after = TRUE) 
+
+}
+
+
+   table_dat_req_kable %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 11) %>% 
+  kableExtra::column_spec(1, italic = TRUE) %>%  
+  kableExtra::row_spec(0, italic = FALSE, bold = TRUE, font_size = 12) 
+
+```
+
+
+
+
+<!-- ```{r fig-bar-tree, fig.cap="A plot of random numbers",fig.width = 15, fig.height = 8, out.width="100%", include=FALSE, eval=FALSE} -->
+
+<!-- readd(plot_tree_sums_bar) -->
+
+<!-- ``` -->
+
+
+```{r fig-tree-overview-map, fig.cap="Individual tree locations for three categories available in Berlin Senate urban tree data set. Note, that for each category 7000 observations were subsampled from the available pool to facilitate visualization.",fig.width = 15, fig.height = 8, out.width="100%", include=TRUE, eval=TRUE}
+
+# loadd(full_data_set_clean)
+# loadd(plot_overview_map)
+# print(class(full_data_set_clean))
+
+
+knitr::include_graphics(here::here("analysis/figures/map_01_overview.png"))
+
+# readd(plot_overview_map) + 
+#      +
+#     labs(caption = NULL)
+
+# plot_overview_map
+
+```
+
+
+```{r fig-tree-count-map, fig.cap="Gridded counts for the 11 most frequent genera, as well as *Pinus* and remaining genera. Note, that counts are standardized to unity for individual genera.",fig.width = 12, fig.height = 14, out.width="100%"}
+
+
+
+
+knitr::include_graphics(here::here("analysis/figures/map_02_tree_sums_standardized.png"))
+
+  
+
+# plot_count_map
+
+# plot(1:10)
+```
+
+The distribution of the UHI effect is highly irregular and clustered in space (Fig.$~$\@ref(fig:fig-uhi-map)), and also shows variability through time (data not shown, refer to the [urban heat island explorer](https://yceo.users.earthengine.app/view/uhimap)).
+
+(ref:chakraborty2019) [@chakraborty2019]
+
+
+```{r fig-uhi-map, fig.cap="Estimate of UHI intensity based on the algorithm in (ref:chakraborty2019), comparing urban with rural pixels within the greater metropolitan cluster. Presented values are averaged over the summer of 2007.",fig.width = 12, fig.height = 14, out.width="50%"}
+
+
+
+
+knitr::include_graphics(here::here("analysis/figures/map_03_uhi.png"))
+
+  
+
+# plot_count_map
+
+# plot(1:10)
+```
+
+
+The exposure to increased heat-loading of individual genera (and consequently species) is highly uneven throughout the city (Fig.$~$\@ref(fig:fig-density)).
+Street and park trees of most genera are clustered in urban areas with intermediate to high UHI loading, while riparian trees, and some street and park trees of other genera tend to be spread more evenly across Berlin's UHI range.
+
+
+```{r fig-density, fig.cap="Empirical density distribution of all individuals within the presented genera along the UHI continuum. UHI intensities were extracted for each tree location, and the distribution hence represents the first detailed overview of the exposure of Berlin's trees to urban heat loading. The black line is the density across all three categories. Insets show corresponding tree totals.",fig.width = 12, fig.height = 12, out.width="100%"}
+knitr::include_graphics(here::here("analysis/figures/plot_02_genus_UHI_dens.png"))
+
+
+
+# plot_count_map
+
+# plot(1:10)
+```
+
+**Note, that results below are preliminary and should be considered as a template for future outputs, rather than used for inference.**
+The effect of UHI loading on absolute growth potential varies between genera and species (Fig.$~$\@ref(fig:fig-lmestat)).
+Most notably, *Quercus*, the 3rd-most frequent genera, shows decreased absolute growth with increasing UHI loading,
+while the most frequent genera, *Tilia*, features contrasting relationships between species.
+The estimated effect sizes presented here are linear.
+However, temperature may exert a non-linear control on absolute growth and, hence, applying a  method able to capture such dynamics may result in somewhat different effect sizes / behavior.
+Additionally, if temperatures increase in the future under climate warming, any non-linear effects may become more enhanced, stressing the need for a more flexible model fit and structure (i.e. using GAMM over linear models-).
+
+
+```{r fig-lmestat, fig.cap="Impact of UHI loading on tree diameter (\\(DBH\\)), accounting for age and inter-specific differences from the linear mixed model (via random slopes and intercepts). Line-ranges are standard errors of predicted effect sizes (i.e. slopes). Differences between street and park trees are considerable for some species, and may be due to local clustering and/or spatial under-representation across the UHI continuum. Further investigations need to address the degree of spatial autocorrelation and account for it where required in linear mixed models, and with smoothing interactions in a GAMM implementation.",fig.width = 20, fig.height = 12, out.width="100%"}
+knitr::include_graphics(here::here("analysis/figures/plot_03_ranef_species_dbh_uhi.png"))
+# plot_count_map
+
+# plot(1:10)
+```
+
+
+# Discussion
+
+1. Temperature, environmental and urban controls on tree growth  
+	+ Urban tree growth accelerated (BIWI data)
+	+ Intra specific differences in UHI response (note temp. products)
+	+ Sensitive trees in hot spots
+	+ Other controls: soil, urban fabric, 
+	+ Validity and limitations (spatial auto-correlation, data quality, coverage)
+	
+	
+	
+2. Implications:  
+  + Policy / planning:  
+    - tree species
+	  - Increase temporal coverage and accuracy of surveys
+		- which trees to prioritize for measurement campaigns (low-abundance species, highly sensitive)
+		- Compare and Supplement species matrix etc. with these analyses  
+		- Generate co-located environmental observations (e.g., micro-climate)
+  + Open data important --> drives innovation
+
+# Conclusion
+
+
+
+<!-- # Acknowledgements -->
+
+<!-- <!-- The following line inserts a page break  --> 
+<!-- `r pgbreak()` -->
+
+# References 
+<!-- The following line ensures the references appear here for the MS Word or HTML output files, rather than right at the end of the document (this will not work for PDF files):  -->
+<div id="refs"></div>
+
+`r pgbreak()`
+
+### Colophon
+
+This report was generated on `r Sys.time()` using the following computational environment and dependencies: 
+
+```{r colophon, cache = FALSE}
+# which R packages and versions?
+if ("devtools" %in% installed.packages()) devtools::session_info()
+```
+
+The current Git commit details are:
+
+```{r}
+# what commit is this file at? 
+if ("git2r" %in% installed.packages() & git2r::in_repository(path = ".")) git2r::repository(here::here())  
+```
