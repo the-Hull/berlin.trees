@@ -938,7 +938,7 @@ drake::loadd(model_df_stat_filtered)
 
 
 
-bam_dbh_fulldf[18:21, "model_file_path"]
+# bam_dbh_fulldf[18:21, "model_file_path"]
 
 
 
@@ -1157,7 +1157,8 @@ mod_summary_list <-
     setNames(levels(mod_groups))
 future::plan(future::sequential())
 
-saveRDS(mod_summary_list, "TEMP_mod_summary_list.Rds")
+# saveRDS(mod_summary_list, "TEMP_mod_summary_list.Rds")
+# readRDS("TEMP_mod_summary_list.Rds")
 
 # grab model paths --------------------------------------------------------
 
@@ -1186,8 +1187,8 @@ mod_group_list <-
 
 
 # Predict for each model --------------------------------------------------
-mod_test_list <- mod_group_list[1]
-mod_test_list[[1]] <- mod_group_list[[1]][1:3]
+# mod_test_list <- mod_group_list[1]
+# mod_test_list[[1]] <- mod_group_list[[1]][1:3]
 
 
 mod_prediction_list <- purrr::map_depth(
@@ -1412,6 +1413,8 @@ mod_n <- mod_summary_list %>%
     rename(n_sample = 2)
 
 
+
+
 mod_dev <- mod_summary_list %>%
     purrr::map_depth(2, "summary") %>%
     purrr::map_depth(2, "dev.expl") %>%
@@ -1445,3 +1448,96 @@ ggplot(mod_dev,
     theme_minimal() +
     scale_fill_brewer(type = "qual", palette = "Set3")
 
+
+
+
+
+
+ggplot(mod_dev %>%
+           mutate(is_spatial = grepl("spatial", mod_group)),
+       aes(x = expvar,
+           y = deviance_explained)) +
+    # geom_line(data = mod_means, aes(x = y),  color = "black", group = 1, alpha = 0.3) +
+    geom_boxplot() +
+    geom_jitter( shape = 21,width = .1, aes(size = n_sample,
+                                             fill = mod_group), alpha = 0.8) +
+    # geom_linerange(data = mod_means, aes(x = y, xmin = ymin, xmax = ymax), color = "black") +
+    # geom_point(data = mod_means, aes(y = y), size = 3, shape = 21, color = "white", fill = "black") +
+    guides(fill = guide_legend(override.aes = list(size = 3),
+                               ncol = 3)) +
+    theme_minimal() +
+    theme(legend.position = "top",
+          legend.direction = "vertical") +
+    # scale_fill_brewer(type = "qual", palette = "Set3") +
+    scale_fill_manual(values = pals::kelly(n = n_distinct(mod_dev$mod_group))) +
+    scale_x_discrete(guide = guide_axis(n.dodge = 2) ) +
+    facet_wrap(~is_spatial)
+
+
+
+
+
+# extract Moran's I -------------------------------------------------------
+gridp <- sf::st_read("analysis/data/raw_data/spatial_ancillary/grid_2x2.geojson")
+
+has_spatial <- grepl("spatial", names(mod_group_list))
+
+short_mod <- mod_group_list[has_spatial][1]
+short_mod[[1]] <- short_mod[[1]][1:2]
+
+# cycle through model groups
+# future::plan(future::multiprocess(workers = 3))
+
+moran_mods <- purrr::map2(mod_group_list[has_spatial],
+            names(mod_group_list[has_spatial]),
+# purrr::map2(short_mod[has_spatial],
+#             names(short_mod[has_spatial]),
+            function(x,y){
+
+
+
+                # get to individual models
+                morans <- purrr::map2(x,names(x),
+                            function(mod, varname){
+
+                                message(sprintf("current mod is: %s\n",y))
+                                message(sprintf("current var is: %s\n",varname))
+                                message(sprintf("current path is: %s\n",mod))
+
+                                temp_mod <- readRDS(mod)
+                                temp_mod <- broom::augment(temp_mod)
+                                temp_mod <- sf::st_as_sf(temp_mod, coords = c("X", "Y"), crs = sf::st_crs(gridp))
+                                temp_mod <- cbind(temp_mod, sf::st_coordinates(temp_mod))
+
+                                moran_temp <- purrr::map(.x = unique(gridp$grid_region),
+                                           .f = function(gr){
+
+                                               moran_non_spat <- check_moran(df = temp_mod,
+                                                           grid = sf::st_union(gridp[gridp$grid_region==unlist(gr), ]),
+                                                           min_obs = 1000,
+                                                           var = "dbh_cm")
+                                               moran_spat <- check_moran(df = temp_mod,
+                                                           grid = sf::st_union(gridp[gridp$grid_region==unlist(gr), ]),
+                                                           min_obs = 1000,
+                                                           var = ".resid")
+
+                                               return(list(non_spat = moran_non_spat,
+                                                      spat = moran_spat,
+                                                      var = varname,
+                                                      grid_area = gr))
+                                           })
+                                rm(temp_mod)
+
+                                # add grid names
+                                names(moran_temp) <- purrr::map_chr(moran_temp, "grid_area")
+
+                                return(moran_temp)
+                            })
+                gc()
+                # print()
+                # names(morans) <- purrr::map_chr(morans, "grid_area")
+                return(morans)
+            })
+
+
+    purrr::keep(.p = function(x) grepl("spatial", x = names(.)))

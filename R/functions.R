@@ -4044,6 +4044,50 @@ summarize_age_groups <- function(dset,model_df, tempvar, age_break_expr){
     return(pred_groups)
 }
 
+
+
+
+#' Calculate Moran's I for spatial subset
+#'
+#' @param dframe sf data frame
+#' @param grid sf polygon to subset dframe
+#' @param min_obs numeric, fail-safe to ensure enough data is assessed
+#' @param var character, variable name in dframe to be assessed
+#'
+#' @return list, output from `ape::Moran.I()`
+check_moran <- function(dframe, grid, min_obs = 1000, var){
+
+    if(!{var %in% colnames(dframe)}){
+        stop(sprintf("%s is not a column in dframe.", var))
+    }
+
+    subdf <- dframe[grid, ]
+    subdf <- tidyr::drop_na(subdf, tidyselect::all_of(var))
+
+
+    if(nrow(subdf) < min_obs){
+        message("not enough observations, inrease min_obs")
+        return(NULL)
+    }
+    if(length(unique(diff(as.numeric(subdf[ , var, drop = TRUE])))) > 1 &&
+       unique(diff(as.numeric(subdf[ , var, drop = TRUE]))) == 0){
+        message("all obs are equal")
+        return(NULL)
+    }
+
+    # calc inverse distance
+    dists <- 1/as.matrix(dist(cbind(subdf$X, subdf$Y)))
+    diag(dists) <- 0
+    dists[is.infinite(dists)] <- 0
+
+
+    calc_weights <- ape::Moran.I(x = subdf[ , var, drop = TRUE], weight = dists, scaled = TRUE)
+
+    return(calc_weights)
+}
+
+
+
 # BIWI analyses -----------------------------------------------------------
 
 #' Moving or sliding windows for rwl time series
