@@ -707,3 +707,544 @@ test <- apply_gam_mod(model_grid = model_grid_bad[1:3, ], dat = model_df[model_d
 
 
 
+# explore spatial ---------------------------------------------------------
+
+
+
+
+apply_gam_mod(path = "./analysis/data/models/stat/filtered/test",
+              model_grid = model_grid, dat = model_df[model_df$diag_mad_select,],
+              overwrite = FALSE)
+
+
+dir.create("./analysis/data/models/stat/filtered/test")
+
+
+library(parallel)
+
+###see if you have multiple cores
+
+detectCores()
+
+###indicate number of cores used for parallel processing
+if (detectCores()>1) {
+    cl <- makeCluster(detectCores()-1)
+} else cl <- NULL
+
+cl
+
+
+
+model_df$soil_nutrients_swert <- as.numeric(model_df$soil_nutrients_swert)
+
+
+apply_gam_mod(path = "./analysis/data/models/stat/filtered/test",
+              model_grid = model_grid[9,], dat = model_df[model_df$diag_mad_select,],
+              overwrite = FALSE)
+
+
+
+mod9 <- mgcv::bam(formula = model_grid[9,]$forms[[1]],
+                  data = model_df[model_df$diag_mad_select,],
+                  family = Gamma(link = "log"),
+                  # cl = cl
+                  discrete = TRUE
+)
+
+
+mod10 <- mgcv::bam(formula = model_grid[9,]$forms[[1]],
+                  data = model_df[model_df$diag_mad_select & model_df$provenance == "s_wfs_baumbestand",],
+                  family = Gamma(link = "log"),
+                  # cl = cl
+                  discrete = TRUE
+)
+
+mod11 <- mgcv::bam(dbh_cm ~ s(X, Y, k = 200, bs = "ds") +
+                       te(STANDALTER, T2M14HMEA, by = species_corrected, m = 1, k = c(10, 30)) + species_corrected,
+                   data = model_df[model_df$diag_mad_select & model_df$provenance == "s_wfs_baumbestand",],
+                   family = Gamma(link = "log"),
+                   # cl = cl
+                   discrete = TRUE)
+
+mod11 <- mgcv::bam(dbh_cm ~ s(X, Y, k = 200, bs = "ds") +
+                       te(STANDALTER, T2M14HMEA, by = species_corrected, m = 1, k = c(5, 15)) + species_corrected,
+                   data = model_df[model_df$provenance == "s_wfs_baumbestand",],
+                   family = Gamma(link = "log"),
+                   # cl = cl
+                   discrete = TRUE)
+
+model_df$BEZIRK <- as.factor(model_df$BEZIRK)
+mod12 <- mgcv::bam(dbh_cm ~ s(X, Y, k = 200, bs = "ds") +
+                       te(STANDALTER, T2M14HMEA, by = species_corrected, m = 1, k = c(5, 15)) + species_corrected + s(BEZIRK, bs = "re"),
+                   data = model_df[model_df$provenance == "s_wfs_baumbestand",],
+                   family = Gamma(link = "log"),
+                   # cl = cl
+                   discrete = TRUE)
+mod13 <- mgcv::bam(dbh_cm ~ s(X, Y, k = 200, bs = "ds") +
+                       te(STANDALTER, T2M14HMEA, by = species_corrected, m = 1, k = c(5, 15)) +
+                       species_corrected +
+                       s(BEZIRK, bs = "re") +
+                       s(soil_nutrients_swert, k = 20) +
+                       s(building_heigt_m,  k = 20),
+                   data = model_df[model_df$provenance == "s_wfs_baumbestand",],
+                   family = Gamma(link = "log"),
+                   # cl = cl
+                   discrete = TRUE)
+
+mod14 <- readRDS("analysis/data/models/stat/fulldf/mI_age_x_temp_by_species_reBEZIRK_var-mod2015_T2M14HMEA.Rds")
+
+mgcv::gam.check(mod9)
+mgcv::gam.check(mod10)
+mgcv::gam.check(mod11)
+mgcv::gam.check(mod12)
+mgcv::gam.check(mod13)
+mgcv::gam.check(mod14)
+
+pdata <- with(model_df[model_df$provenance == "s_wfs_baumbestand",] %>%
+# pdata <- with(model_df[model_df$diag_mad_select & model_df$provenance == "s_wfs_baumbestand",, ] %>%
+                  mutate(species_corrected = as.factor(species_corrected)),
+              expand.grid(mod2015_T2M14HMEA = seq(min(mod2015_T2M14HMEA, na.rm = TRUE),
+                                          max(mod2015_T2M14HMEA, na.rm = TRUE), length.out = 200),
+                          X = 385785,
+                          Y = 5816681,
+                          # STANDALTER = c(30, 50, 80),
+                          STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
+                          species_corrected = as.factor(unique(species_corrected)),
+                          building_heigt_m = median(building_heigt_m, na.rm = TRUE),
+                          # soil_nutrients_swert = median(soil_nutrients_swert, na.rm = TRUE),
+                          BEZIRK = as.factor(unique(BEZIRK))
+              ))
+
+
+
+# fit <- predict(mod9 , pdata, type = "response", se.fit = TRUE)
+fit <- predict(mod9 , pdata, se.fit = TRUE)
+fit10 <- predict(mod10 , pdata, se.fit = TRUE)
+fit11 <- predict(mod10 , pdata, se.fit = TRUE)
+fit12 <- predict(mod12 , pdata, se.fit = TRUE, exclude = "s(BEZIRK)")
+fit12 <- predict(mod12 , pdata, se.fit = TRUE, exclude = "s(BEZIRK)")
+fit13 <- predict(mod13 , pdata, se.fit = TRUE, exclude = "s(BEZIRK)")
+fit14 <- predict(mod14 , pdata, se.fit = TRUE, exclude = "s(BEZIRK)")
+fit15 <- predict(mod15 , pdata, se.fit = TRUE, exclude = "s(BEZIRK)")
+# ind <- mgcv::exclude.too.far(pdata$day_2007, pdata$STANDALTER,
+#                              mdf_tilia[mad_select, ]$day_2007, mdf_tilia[mad_select, ]$STANDALTER, dist = 0.1)
+# fit[ind] <- NA
+pred <- cbind(pdata, Fitted = fit14)
+pred$se.low <- pred$Fitted.fit - 1.96 * pred$Fitted.se.fit
+pred$se.high <- pred$Fitted.fit + 1.96 * pred$Fitted.se.fit
+
+
+ifun <- family(mod9)$linkinv
+ifun <- family(mod10)$linkinv
+ifun <- family(mod11)$linkinv
+ifun <- family(mod15)$linkinv
+
+pred$response.fit <- ifun(pred$Fitted.fit)
+pred$response.low <- ifun(pred$se.low)
+pred$response.high <- ifun(pred$se.high)
+
+
+
+pred_groups <- pred %>%
+    mutate(age_group = cut(STANDALTER, c(26, 36, 50, 66, 81, 126))) %>%
+    # filter(STANDALTER < 100) %>%
+    group_by(age_group, mod2015_T2M14HMEA, species_corrected) %>%
+    summarise(mean_dbh = mean(Fitted.fit, na.rm = TRUE),
+              mean_se = sqrt(sum(Fitted.se.fit))/n()) %>%
+    mutate(response.fit = ifun(mean_dbh),
+           response.low = ifun(mean_dbh - 1.96 * mean_se),
+           response.high = ifun(mean_dbh + 1.96 * mean_se),) %>%
+    ungroup()
+
+pred_groups <- augment_prediction_range(prediction_df = as.data.frame(pred_groups),
+                                  model_df = model_df[model_df$provenance == "s_wfs_baumbestand",],
+                                  group_var = "species_corrected",
+                                  range_var = "mod2015_T2M14HMEA",
+                                  qtl = 1)
+
+
+
+
+plt <- ggplot(pred, aes(y = response.fit, x = (T2M14HMEA), color = as.factor(STANDALTER)), fill =  as.factor(STANDALTER)) +
+
+    geom_ribbon(aes(ymin = response.low, ymax = response.high,  color = as.factor(STANDALTER), fill =  as.factor(STANDALTER)), alpha = 0.4) +
+    geom_line()+
+    # facet_wrap(~ species_corrected, ncol = 2) +
+    # scale_color_brewer(type = "qual", palette = "Set2") +
+    theme(legend.position = 'right') +
+    # facet_wrap(~species_corrected) +
+    # geom_smooth(method = "lm")
+    # geom_smooth() +
+    theme_minimal(base_size = 16) +
+    facet_wrap(~species_corrected, scales = "free_y") +
+    # scale_color_brewer(palette = 1) +
+    labs(linetype = "Age Class", color = "Age", fill = "Age", x = expression(UHI~Magnitude~(degree~C)), y = "Mean DBH (cm)")
+plt
+
+
+
+
+plt <- ggplot(data = data.frame(), aes(y = response.fit, x = (mod2015_T2M14HMEA), colour = as.factor(age_group), fill =  as.factor(age_group), group = as.factor(age_group))) +
+
+    geom_ribbon(data = pred_groups %>%
+                    filter(prediction_range =="within"),
+                alpha = 0.2,  aes(ymin = response.low, ymax = response.high), color = "transparent") +
+    # geom_ribbon( aes(ymin = se.low, ymax = se.high), alpha = 0.4) +
+    # geom_line(aes(size = prediction_range))+
+    geom_line(data = pred_groups %>%
+                  filter(prediction_range =="within"))+
+    geom_ribbon(data = pred_groups,
+                alpha = 0.2,  aes(ymin = response.low, ymax = response.high), color = "transparent",
+                linetype = 2) +
+    # geom_ribbon( aes(ymin = se.low, ymax = se.high), alpha = 0.4) +
+    # geom_line(aes(size = prediction_range))+
+    geom_line(data = pred_groups,
+              linetype = 2)+
+    # facet_wrap(~ species_corrected, ncol = 2) +
+    # scale_color_brewer(type = "qual", palette = "Set2") +
+    theme(legend.position = 'right') +
+    # facet_wrap(~species_corrected) +
+    # geom_smooth(method = "lm")
+    # geom_smooth() +
+    theme_minimal(base_size = 16) +
+    facet_wrap(~species_corrected, scales = "free_y") +
+    scale_color_brewer(palette = 2, type = "qual") +
+    scale_fill_brewer(palette = 2, type = "qual") +
+    labs(color = "Age", fill = "Age", x = expression(UHI~Magnitude~(degree~C)), y = "Mean DBH (cm)")
+plt
+
+
+
+library(DHARMa)
+
+simout  <-  simulateResiduals(mod11,  n=500, plot = TRUE)
+# simout  <-  simulateResiduals(model_mad,  n=250, plot = TRUE)
+# simout  <-  simulateResiduals(mod2,  n=250, plot = TRUE)
+plot(simout)
+testResiduals(simout)
+plotResiduals(simout,quantreg = TRUE)
+
+plotResiduals(simout, simple_spatial@frame$day_2007, quantreg = TRUE)
+
+
+
+
+
+# plotting multimodel ---------------------------------------------------------------
+
+drake::loadd(bam_dbh_fulldf)
+drake::loadd(model_df_full)
+drake::loadd(model_df_stat_filtered)
+
+
+
+bam_dbh_fulldf[18:21, "model_file_path"]
+
+
+
+
+testvar <- make_model_prediction_df(
+    path_model = bam_dbh_fulldf[8:14, "model_file_path"],
+    model_df = model_df_full,
+    fixed_vars = list(X = 385785,
+                      Y = 5816681,
+                      STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95))
+)
+
+
+age_expr <- expression(dplyr::case_when(
+    dplyr::between(STANDALTER, 30, 35) ~ "[30 - 35]",
+    dplyr::between(STANDALTER, 45, 50) ~ "[45 - 50]",
+    dplyr::between(STANDALTER, 60, 65) ~ "[60 - 65]",
+    dplyr::between(STANDALTER, 75, 80) ~ "[75 - 80]",
+    dplyr::between(STANDALTER, 90, 95) ~ "[90 - 95]",
+    TRUE ~ NA_character_
+))
+
+saveRDS(testvar, "testvar.Rds")
+testvar <- readRDS("testvar.Rds")
+
+
+# age_breaks <- c(29, 35, 44,50,59,65,74,80,89,95)
+
+# cut(1:100, age_breaks)
+
+
+
+pred_groups <- purrr::map2_dfr(
+    testvar,
+    names(testvar),
+    function(x,y){
+        summarize_age_groups(
+            x,
+            model_df_full,
+            y,
+            age_break_expr = age_expr)
+    },
+    .id = "tempvar"
+)
+
+#
+# plt <- ggplot(data = data.frame(), aes(y = response.fit.mean, x = (urbclim_mod_morning_3_5), colour = as.factor(age_group), fill =  as.factor(age_group), group = as.factor(age_group))) +
+#
+#     geom_ribbon(data = pred_groups %>%
+#                     filter(prediction_range =="within"),
+#                 alpha = 0.2,  aes(ymin = response.low.mean, ymax = response.high.mean), color = "transparent") +
+#     # geom_ribbon( aes(ymin = se.low, ymax = se.high), alpha = 0.4) +
+#     # geom_line(aes(size = prediction_range))+
+#     geom_line(data = pred_groups %>%
+#                   filter(prediction_range =="within"))+
+#     geom_ribbon(data = pred_groups,
+#                 alpha = 0.2,  aes(ymin = response.low.mean, ymax = response.high.mean), color = "transparent",
+#                 linetype = 2) +
+#     # geom_ribbon( aes(ymin = se.low, ymax = se.high), alpha = 0.4) +
+#     # geom_line(aes(size = prediction_range))+
+#     geom_line(data = pred_groups,
+#               linetype = 2)+
+#     # facet_wrap(~ species_corrected, ncol = 2) +
+#     # scale_color_brewer(type = "qual", palette = "Set2") +
+#     theme(legend.position = 'right') +
+#     # facet_wrap(~species_corrected) +
+#     # geom_smooth(method = "lm")
+#     # geom_smooth() +
+#     theme_minimal(base_size = 16) +
+#     facet_wrap(~species_corrected, scales = "free_y") +
+#     scale_color_brewer(palette = 2, type = "qual") +
+#     scale_fill_brewer(palette = 2, type = "qual") +
+#     labs(color = "Age", fill = "Age", x = expression(UHI~Magnitude~(degree~C)), y = "Mean DBH (cm)")
+# plt
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+
+plot_data <- pred_groups %>%
+    select(-tempvar) %>%
+    tidyr::pivot_longer(cols = dplyr::all_of(names(testvar)),
+                        names_to = "uhi_tempvar",
+                        values_to = "temp_degc") %>%
+    dplyr::filter(age_group == "[60 - 65]", prediction_range == "within") %>%
+    dplyr::arrange(uhi_tempvar) %>%
+    tidyr::drop_na(temp_degc) %>%
+    group_by(species_corrected, uhi_tempvar) %>%
+    mutate(temp_degc_scaled = scales::rescale(temp_degc, to = c(0,1)))
+
+grand_means <- plot_data %>%
+    filter(grepl("mod2015", uhi_tempvar)) %>%
+    group_by(species_corrected, temp_degc_scaled) %>%
+    summarise(grand_mean = mean(response.fit.mean, na.rm = TRUE),
+              n = n())
+
+
+plt <- ggplot(data = plot_data %>%
+                  filter(prediction_range == "within",
+                         grepl("mod2015", uhi_tempvar)) %>%
+                  ungroup(),
+              aes(y = response.fit.mean,
+                  # x = temp_degc,
+                  x = temp_degc_scaled,
+                  colour = as.factor(uhi_tempvar),
+                  fill =  as.factor(uhi_tempvar),
+                  group = as.factor(uhi_tempvar),
+                  ymin = response.low.mean,
+                  ymax = response.high.mean)) +
+
+    geom_ribbon(color = "transparent", alpha = 0.2) +
+    geom_line(linetype = 1)  +
+    # geom_line(inherit.aes = FALSE,
+    #              data = grand_means,
+    #              aes(y = grand_mean,
+    #                  # x = temp_degc,
+    #                  x = temp_degc_scaled)) +
+
+    geom_smooth(aes(group = 1), fill = "transparent", color = "black") +
+
+    #
+    # geom_ribbon(data = pred_groups %>%
+    #                 filter(prediction_range =="within"),
+    #             alpha = 0.2,
+    #             aes(),
+    #             color = "transparent") +
+    #
+    # geom_line(data = pred_groups %>%
+    #               filter(prediction_range =="within"))+
+    #
+# geom_ribbon(data = pred_groups,
+#             alpha = 0.2,  aes(ymin = response.low.mean, ymax = response.high.mean), color = "transparent",
+#             linetype = 2) +
+#
+# geom_line(data = pred_groups,
+#           linetype = 2) +
+#
+
+theme(legend.position = 'right') +
+    theme_minimal(base_size = 16) +
+    # facet_grid(uhi_tempvar ~species_corrected, scales = "free_y") +
+    facet_wrap(~species_corrected, scales = "free_y") +
+    scale_color_brewer(palette = 2, type = "qual") +
+    scale_fill_brewer(palette = 2, type = "qual") +
+    labs(color = "Model", fill = "Model", x = "Standardized UHI Magnitude", y = "Mean DBH (cm)")
+plt
+
+
+# multi model summarz -----------------------------------------------------
+
+drake::loadd(model_df_stat_filtered)
+mod_df <-model_df_stat_filtered
+
+# Identify model groups ---------------------------------------------------
+path_model_dir <- "analysis/data/models/stat/filtered/"
+
+path_files <- list.files(path_model_dir, full.names = TRUE)
+
+mod_groups <- list.files(path_model_dir) %>%
+    gsub("_var-.*Rds$", "", .) %>%
+    as.factor()
+
+# get model summaries -------------------------------------------------------
+future::plan(future::multisession(workers = 8))
+mod_summary_list <-
+    furrr::future_map(
+        levels(mod_groups)[4],
+        function(mg){
+
+            idx <- which(mod_groups == mg)
+
+            mods <- lapply(path_files[idx],
+                           function(x){
+                               m <- readRDS(x)
+
+                               s <- m %>%
+                                  summary()
+
+                               m <- broom::augment(m,
+                                                   type.residuals = "response",
+                                                   type.response = "response")
+
+                               v <- {
+                                   if(grepl("mI_spatial", x = x)){
+                                       gstat::variogram(.resid ~ 1, locations = ~ X + Y, m)
+                                   } else {
+                                       NULL
+                                   }}
+
+                               return(
+                                   list(summary = s,
+                                        variogramm = v))
+
+                           }) %>%
+                setNames(
+                    fs::path_ext_remove(
+                        list.files(path_model_dir)[idx]
+                    )  %>%
+                        gsub(pattern = ".*var-",
+                             replacement = "",
+                             x = .)
+                )
+        }) %>%
+    setNames(levels(mod_groups))
+
+
+# grab model paths --------------------------------------------------------
+
+
+mod_group_list <-
+    purrr::map(
+        levels(mod_groups),
+        function(mg){
+
+            idx <- which(mod_groups == mg)
+
+            mods <- lapply(path_files[idx],
+                           function(x){
+                               return(x)
+                           }) %>%
+                setNames(
+                    fs::path_ext_remove(
+                        list.files(path_model_dir)[idx]
+                    )  %>%
+                        gsub(pattern = ".*var-",
+                             replacement = "",
+                             x = .)
+                )
+        }) %>%
+    setNames(levels(mod_groups))
+
+
+# Predict for each model --------------------------------------------------
+mod_test_list <- mod_group_list[1]
+mod_test_list[[1]] <- mod_group_list[[1]][1:3]
+
+
+mod_prediction_list <- purrr::map_depth(
+    mod_test_list,
+    .depth = 1,
+    .f = function(mod){
+        make_model_prediction_df(
+            path_model = mod,
+            model_df = mod_df,
+            fixed_vars = list(X = 385785,
+                              Y = 5816681,
+                              STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95))
+        )
+
+
+    })
+
+
+
+# Scale model predictions [0,1] -------------------------------------------
+
+
+# Average across model groups ---------------------------------------------
+
+
+age_expr <- expression(dplyr::case_when(
+    dplyr::between(STANDALTER, 30, 35) ~ "[30 - 35]",
+    dplyr::between(STANDALTER, 45, 50) ~ "[45 - 50]",
+    dplyr::between(STANDALTER, 60, 65) ~ "[60 - 65]",
+    dplyr::between(STANDALTER, 75, 80) ~ "[75 - 80]",
+    dplyr::between(STANDALTER, 90, 95) ~ "[90 - 95]",
+    TRUE ~ NA_character_
+))
+
+
+
+
+pred_groups <- purrr::map_depth(
+    .x = mod_test_list,
+    .depth = 1,
+    ... = names(mod_test_list),
+    .f = function(x,y){
+        summarize_age_groups(
+            x,
+            mod_df,
+            y,
+            age_break_expr = age_expr)
+    })
+
+
+
+
+
+# Average within models ---------------------------------------------------
+
+
+# Plot for each species, across age groups --------------------------------
+
+
+# Plot for each species, one age group and all models ---------------------
+
+
+

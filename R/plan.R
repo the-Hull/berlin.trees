@@ -14,6 +14,11 @@ plan <- drake_plan(
     # getting data
 
 
+    ## Climate time series data ---------------------------------------
+
+
+    berlin_climate = download_berlin_climate_data(),
+
 
     ## Spatial Ancillary -----------------------------------
 
@@ -28,6 +33,11 @@ plan <- drake_plan(
                                            "greater_berlin",
                                            crs = 4326),
 
+    ### Berlin land-use from senate
+
+    berlin_lu = download_berlin_lu(),
+
+
     # obtained from http://www.wudapt.org/continental-lcz-maps/
     # downloaded with wget in Ubuntu shell
     wudapt_lcz = crop_raster("./analysis/data/raw_data/spatial_ancillary/WUDAPT_LCZ.geotiff",
@@ -38,6 +48,9 @@ plan <- drake_plan(
                                      berlin_polygons) %>%
         lapply(., function(x)prop.table(table(x))) %>%
         setNames(berlin_polygons$NAMGEM) %>% dplyr::bind_rows(.id = "bezirk"),
+
+    corine_landcover_mask = make_corine_urban_rural_mask(path = "analysis/data/raw_data/spatial_ancillary/CORINE_CLC.zip",
+                                                          berlin_bbox = bounding_box),
 
     berlin_soil = target(download_soil_types(),
                          trigger = trigger(condition = redownload)),
@@ -52,7 +65,16 @@ plan <- drake_plan(
                                     trigger = trigger(condition = redownload)),
 
 
+    urbclim = download_urbclim_uhi(month = "08",
+                                   year = "2015",
+                                   path_dir = "./analysis/data/raw_data/spatial_ancillary/ecmwfr_urbclim"),
+
+    uhi_urbclim = calc_urbclim_uhi_with_corine(urbclim, clc = corine_landcover_mask$clc ,natural_cover_val = 50, make_plot = FALSE),
+
+
     ### Berlin UHI gridded data -------------------------------
+
+
 
 
 
@@ -118,6 +140,10 @@ plan <- drake_plan(
     #                 join = sf::st_nearest_feature),
 
 
+
+
+
+
     lcz_cover_prop = furrr::future_map_dfr(split_by_n(full_data_set_clean,
                                                       5000),
                                            ~assess_relative_lcz_cover(.x, wudapt_lcz, 150),
@@ -133,13 +159,23 @@ plan <- drake_plan(
         unname(),
 
 
+    # heat polygons based on block level - 20 m captures canopy
     berlin_heat_model = assess_mean_temps(full_data_set_clean,
                                           berlin_heat_model_2015,
                                           20),
 
+    # raster has 100 m resolution
+    berlin_urbclim_heat_model = assess_mean_temps_urbclim(full_data_set_clean,
+                                                          uhi_urbclim,
+                                                          buff_dist = 150),
+
+
+
     # Add UHI data from RasterLayer stack to sf data frame
-    extract_uhi_values_to_list = add_uhi_hist_data(uhi_stack_list = uhi_stacks,
-                                                                 sf_data = full_data_set_clean[, ]),
+    extract_uhi_values_to_list = add_uhi_hist_data(
+        uhi_stack_list = uhi_stacks,
+        sf_data = full_data_set_clean[, ],
+        buff_dist = 150),
 
 
     # add lcz, soil, building height, mineral content to data set
@@ -148,7 +184,8 @@ plan <- drake_plan(
                             soil_nutrients = soil_nutrient_data,
                             building_height_mean_m = building_height_mean_m,
                             lcz_cover_prop = lcz_cover_prop,
-                            berlin_heat_model = berlin_heat_model)),
+                            berlin_heat_model = berlin_heat_model,
+                            berlin_urbclim_heat_model = berlin_urbclim_heat_model)),
 
 
 
@@ -172,32 +209,67 @@ plan <- drake_plan(
 
     combined_data = combine_split_clean_data(full_data_set_clean_with_UHI_covariates),
 
+    # Stat Descriptive -----------------------------------
 
-     # Model -------------------------------------------------------------------
+    uhi_stack_stats = calc_uhi_stats(uhi_stacks),
 
 
-    model_params = list(n_max_species = 10,
-                                        age_cutoff = 150,
-                                        mad_factor = 7),
+     # Stat Model -------------------------------------------------------------------
 
-    model_df = prep_model_df(
-        dset = combined_data,
+
+    model_params = list(
+        n_max_species = 10,
+        n_min_abundance = 10000,
+        age_cutoff = 125,
+        dbh_cutoff = 350, # cm
+        mad_factor = 7),
+
+    model_df_full = prep_model_df(
+        dset = combined_data[combined_data$provenance == "s_wfs_baumbestand",],
         model_params = model_params,
         plot = TRUE,
-        path = "./analysis/figures/diagnostic_01_model_data.png"),
+        path = "./analysis/figures/diagnostic_01_model_data.png",
+        stat_filter = FALSE),
+
+    model_df_stat_filtered = prep_model_df(
+        dset = combined_data[combined_data$provenance == "s_wfs_baumbestand",],
+        model_params = model_params,
+        plot = TRUE,
+        path = "./analysis/figures/diagnostic_01_model_data.png",
+        stat_filter = TRUE),
+
+    # full_df_street_trees_idx = filter_top_species_idx(
+    #     model_df[model_df$provenance == "s_wfs_baumbestand",],
+    #     model_params
+    #     ),
+    #
+    # filtered_df_street_trees_idx = filter_top_species_idx(
+    #     model_df[model_df$provenance == "s_wfs_baumbestand" & model_df$diag_mad_select,],
+    #     model_params
+    #     ),
+
+    # model_df_full = model_df[model_df$provenance == "s_wfs_baumbestand" &
+    #                              full_df_street_trees_idx, ],
+    #
+    # model_df_stat_filtered = model_df[model_df$provenance == "s_wfs_baumbestand" &
+    #                                       model_df$diag_mad_select &
+    #                                       filtered_df_street_trees_idx, ],
+
 
 
 
     model_grid = make_model_grid(),
 
     bam_dbh_fulldf = apply_gam_mod(path = "./analysis/data/models/stat/fulldf/",
-                                   model_grid = model_grid, dat = model_df,
-                                   overwrite = FALSE),
-
-
+                                   model_grid = model_grid,
+                                   dat = model_df_full,
+                                   overwrite = TRUE),
+    #
+    #
     bam_dbh_filtered = apply_gam_mod(path = "./analysis/data/models/stat/filtered/",
-        model_grid = model_grid, dat = model_df[model_df$diag_mad_select,],
-        overwrite = FALSE),
+                                     model_grid = model_grid,
+                                     dat = model_df_stat_filtered,
+                                     overwrite = TRUE),
 
 
 
@@ -246,7 +318,18 @@ plan <- drake_plan(
 
     # Plotting --------------------------------
 
-   # Create overview-map of all data sets
+
+   ### map: study area ------
+
+   plot_study_area_map = make_map_study_area(blu = berlin_lu,
+                                             berlin_poly = berlin_polygons,
+                                             path_out = drake::file_out("./analysis/figures/map_00_studyarea.png"),
+                                             height = 5.5,
+                                             width = 7,
+                                             dpi = 300),
+
+
+   ### map: Tree overview-----
 
     plot_overview_map = make_overview_map(full_data_set_clean,
                                                         berlin_polygons,
@@ -257,7 +340,7 @@ plan <- drake_plan(
 
 
 
-   # Spatially-binned tree counts
+   ### map: Binned tree counts -----
 
     plot_count_map = tree_count_map(full_data_set_clean,
                                                   berlin_polygons,file = drake::file_out("./analysis/figures/map_02_tree_sums_standardized.png"),
@@ -265,7 +348,7 @@ plan <- drake_plan(
                                                   width = 12,
                                                   dpi = 300),
 
-   # Plot UHI with Berlin districts
+   ### map: UHI Explorer ------------
 
     plot_uhi_map = make_uhi_plot(uhi_stacks = uhi_stacks,
                                                berlin_poly = berlin_polygons,
@@ -277,8 +360,19 @@ plan <- drake_plan(
 
 
 
+   ### map: UHI urbclim -------------
 
-   # Generate overview of records (bar plot)
+   plot_uhi_urbclim_map = make_uhi_urbclim_plot(uhi_rast = uhi_urbclim[[3]],
+                                                berlin_poly = berlin_polygons,
+                                                file = drake::file_out("./analysis/figures/map_03_uhi_urbclim.png"),
+                                                height = 5.5,
+                                                width = 6,
+                                                dpi = 300,
+                                                legend_label = expression(atop(Summer~21-23~hrs,
+                                                                               UHI~(degree*C)))),
+
+
+   ### bar: Tree counts ------------
 
     plot_tree_sums_bar = tree_sums_bar_plot(full_data_set_clean,
                                                           file = drake::file_out("./analysis/figures/plot_01_tree_sums_bar.png"),
@@ -287,7 +381,7 @@ plan <- drake_plan(
                                                           height = 12,
                                                           width = 12,
                                                           dpi = 300),
-   # Density plot overview
+   ### dens: trees by UHI -------------
 
     plot_density = dens_plot_trees(sf_data = full_data_set_clean,
                                                  extracted_uhi = extract_uhi_values_to_list,
@@ -306,7 +400,25 @@ plan <- drake_plan(
     #                 ),
 
 
-   # Make Random-effects effect-size plot
+   ### stat: Berlin Climate plot -------
+
+
+
+   plot_berlin_climate = make_berlin_climate_plot(
+       clim = berlin_climate,
+
+       col_temp = "#ed6a1f",
+       col_prec = "#3dd2e3",
+       col_prec_secondary = "#93d2d9",
+
+       base_size = 18,
+       file = drake::file_out("./analysis/figures/fig-berlin-climate.png"),
+       height = 8,
+       width = 6,
+       dpi = 300
+   ),
+
+   ### stat:  RanEf-size --------------
 
     plot_LME_age = make_ranef_plot(model_out = model_res$model,
                                                  model_name = "heat_age_RIspecies_RSspecies_RIprovenance",
@@ -340,27 +452,28 @@ plan <- drake_plan(
 
 
     # Reporting ------------------------------
-    paper_html = rmarkdown::render(
-        knitr_in("./analysis/paper/paper.Rmd"),
-        # output_file = file_out(file.path(here::here(), "paper_knit.html")),
-        output_file = file_out("./paper_knit.html"),
-        output_format = bookdown::html_document2(),
-        quiet = TRUE
-    ),
-    paper_word = rmarkdown::render(
-        knitr_in("./analysis/paper/paper.Rmd"),
-        output_file = file_out("./paper_knit.docx"),
-        # output_file = "./paper_knit.html",
-        output_format = bookdown::word_document2(),
-        quiet = TRUE
-    ),
-    paper_pdf = rmarkdown::render(
-        knitr_in("./analysis/paper/paper.Rmd"),
-        output_file = file_out("./paper_knit.pdf"),
-        # output_file = "./paper_knit.html"),
-        output_format = bookdown::pdf_document2(),
-        quiet = TRUE
-    )
+    # paper_html = rmarkdown::render(
+    #     knitr_in("./analysis/paper/paper.Rmd"),
+    #     output_dir = "./analysis/paper/",
+    #     output_file = file_out("paper_knit.html"),
+    #     output_format = bookdown::html_document2(),
+    #     quiet = TRUE
+    # ),
+    # paper_word = rmarkdown::render(
+    #     knitr_in("./analysis/paper/paper.Rmd"),
+    #     output_dir = "./analysis/paper/",
+    #     output_file = file_out("paper_knit.docx"),
+    #     # output_file = "./paper_knit.html",
+    #     output_format = bookdown::word_document2(),
+    #     quiet = TRUE
+    # ),
+    # paper_pdf = rmarkdown::render(
+    #     knitr_in("./analysis/paper/paper.Rmd"),
+    #     output_dir = "./analysis/paper/",
+    #     output_file = file_out("paper_knit.pdf"),
+    #     output_format = bookdown::pdf_document2(),
+    #     quiet = TRUE
+    # )
 
 )
 

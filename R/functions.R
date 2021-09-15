@@ -526,18 +526,29 @@ download_heat_data <- function(){
 
 
 
-#' Download UrbClim data from ecmwf C3S
+#' Download UrbClim data from ecmwf CDS
 #'
 #' Download and unzip data set, file format is .zip/.nc;
-#' creates a directory "unzipped" in `path_dir`
+#' creates a directory "unzipped" in `path_dir`, sets correct CRS
+#' and averages rasterlayers across hour_av elements.
+#' Note, function creates and writes a raster brick into the unzipped folder.
 #'
 #' @param month character, defaults to 06
 #' @param year character, 2008 - 2017, defaults to 2010
 #' @param var character, defaults to 'air_temperature'
 #' @param path_dir character, folder to download and unzip directory
+#' @param hour_av named list, with day-hour ranges for averaging rasterlayers (e.g. `list(afternoon = c(13,15))`)
 #'
-#' @return character, path to unzipped file
-download_urbclim_uhi <- function(month = "06", year = "2010", var = air_temperature, path_dir){
+#' @source https://cds.climate.copernicus.eu/cdsapp#!/dataset/sis-urban-climate-cities
+#'
+#' @return rasterStack of UrbClim data
+download_urbclim_uhi <- function(month = "06", year = "2010", var = 'air_temperature', path_dir,
+                                 hour_av = list(morning = c(3,5), afternoon = c(13,15), night = c(21,23))){
+
+    if(!dir.exists(path_dir)){
+        dir.create(path_dir)
+        cat(sprintf("Created download dir in %s \n", path_dir))
+    }
 
     if(!nchar(month) == 2 &&
        !class(month) == "character"){
@@ -564,23 +575,86 @@ download_urbclim_uhi <- function(month = "06", year = "2010", var = air_temperat
         target = fname
     )
 
+    # options(keyring_backend = "file")
+    # set a key to the keychain
 
+    options(keyring_backend = "file")
     # If you have stored your user login information
     # in the keyring by calling cds_set_key you can
+
+
+    if(!file.exists( normalizePath(file.path(path_dir, fname)))){
+
+
     # call:
-    file <- wf_request(user     = "92658",   # user ID (for authentification)
-                       request  = request,  # the request
-                       transfer = TRUE,     # download the file
-                       path     = path_dir)      # store data in current working directory
+    file <- ecmwfr::wf_request(
+        user     = "92658",   # user ID (for authentification)
+        request  = request,  # the request
+        transfer = TRUE,     # download the file
+        path     = path_dir)      # store data in current working directory
+    } else {
+        cat(sprintf("File %s already exists", fname))
+    }
 
 
     unzip_dir <- normalizePath(file.path(path_dir, "unzipped"))
+
+    if(!dir.exists(unzip_dir)){
+        dir.create(unzip_dir)
+    }
     unzip(normalizePath(file.path(path_dir, fname)), exdir = unzip_dir)
 
-    # path_file <- normalizePath(list.files(unzip_dir, pattern = "nc", full.names = TRUE)[grep(paste(year, month, sep = "_"), list.files(unzip_dir, pattern = "nc"))])
+    path_file <- normalizePath(list.files(unzip_dir, pattern = "nc", full.names = TRUE)[grep(paste(year, month, sep = "_"), list.files(unzip_dir, pattern = "nc"))])
+
+    out <- raster::brick(path_file)
+    raster::crs(out) <- "+init=EPSG:3035"
 
 
-    return(unzip_dir)
+    raster_mean_across_hours <- function(heat_raster, hour_av){
+
+        hour_idxs <- lapply(hour_av,
+                            function(x){
+                                out <- which(dplyr::between(as.numeric(format(as.POSIXct(heat_raster@z[[1]]), "%H")),
+                                                            x[1], x[2]))
+
+                                return(out)
+
+                            })
+
+
+        raster_mean_hours <- lapply(seq_along(hour_idxs),
+                                    function(x){
+                                        out <- raster::calc(subset(heat_raster, hour_idxs[[x]]), mean) - 273.15
+                                        return(raster::stack(out))
+                                    }
+        )
+
+        return(raster_mean_hours)
+    }
+
+    out <- raster_mean_across_hours(heat_raster = out,
+                                                  hour_av = hour_av)
+
+    out <- raster::stack(out)
+
+
+
+    raster::writeRaster(x = out,
+                        filename = fs::path(fs::path_ext_remove(path_file),ext = "grd"),
+                        overwrite = TRUE)
+
+    out <- raster::stack(fs::path(fs::path_ext_remove(path_file),ext = "grd"))
+
+    # saveRDS(object = out,
+    #         file = fs::path(fs::path_ext_remove(path_file),ext = "Rds"))
+
+    cat(sprintf("raster written to %s \n\n", fs::path(fs::path_ext_remove(path_file),ext = "grd")))
+
+    out <- raster::unstack(out)
+    names(out) <- paste(names(hour_av),
+                        sapply(hour_av, paste, collapse = "_"),
+                        sep = "_")
+    return(out)
 
 }
 
@@ -662,7 +736,25 @@ download_berlin_lu <- function(path = "./analysis/data/raw_data/spatial_ancillar
     return(path)
 }
 
+#' Download Precip and Temp from KNMI Climate Explorer
+#'
+#' This downloads all station data (>1750 for temp, >1950 for precip) from Berlin Tegel
+#'
+#' @return tibble with climate data
+download_berlin_climate_data <- function(){
 
+    berlin_precip <- read.table(file = "https://climexp.knmi.nl/data/pa10384.dat") %>%
+        setNames(c("year", month.abb)) %>%
+        tidyr::pivot_longer(cols = -year, names_to = "month", values_to = "vals")
+
+    berlin_mean_temp <- read.table(file = "https://climexp.knmi.nl/data/ta10384.dat") %>%
+        setNames(c("year", month.abb)) %>%
+        tidyr::pivot_longer(cols = -year, names_to = "month", values_to = "vals")
+
+    berlin_climate <- dplyr::left_join(berlin_precip, berlin_mean_temp, by = c("year", "month"), suffix = c("_prec", "_temp"))
+
+    return(berlin_climate)
+}
 
 #' Load spatial-features data sets of all Berlin trees
 #'
@@ -810,6 +902,7 @@ prep_baumscheiben_flaeche <- function(fulldf, bms, max_dist_m = 10){
     #                                  NA)
 
     bms[baumsch_dist_m <= units::set_units(max_dist_m, m), ] <- NA
+    bms$baumsch_flaeche_m2 <- as.numeric(bms$baumsch_flaeche_m2)
     #
     # # join manually
     # fulldf <- cbind(fulldf,
@@ -979,7 +1072,8 @@ clean_data <- function(sf_data){
                                                  paste(gattung_short, "spec.")),
 
 
-                      bezirk_num = as.numeric(as.factor(BEZIRK))) %>%
+                      bezirk_num = as.numeric(as.factor(BEZIRK)),
+                      BEZIRK = as.factor(BEZIRK)) %>%
         dplyr::rename(provenance = PROVENANCE)
 
     return(sf_data)
@@ -1039,7 +1133,6 @@ split_df <- function(sfdf, save_dir = "./analysis/data/raw_data/tree_splits"){
 }
 
 
-loadd(full_data_set_clean_with_UHI_covariates)
 
 
 
@@ -1077,8 +1170,10 @@ combine_split_clean_data <- function(
         dplyr::filter(is.na(.annotation)) %>%
         dplyr::select(berlin_id, check_id) %>%
         dplyr::left_join(origdf, by = "berlin_id") %>%
-        tidyr::drop_na(STANDALTER, dbh_cm)
-    # %>% sf::st_set_geometry(.$geometry)
+        tidyr::drop_na(STANDALTER, dbh_cm) %>%
+        sf::st_set_geometry(.$geometry)
+
+    cleaned_data_join <- cbind(cleaned_data_join, sf::st_coordinates(cleaned_data_join))
 
 
     if(
@@ -1094,101 +1189,6 @@ combine_split_clean_data <- function(
     return(cleaned_data_join)
 }
 
-
-
-#' Prep model data frame
-#'
-#' Defines df with top species by abundance, max age and the median absolute
-#' deviance score used to remove gross outliers.
-#'
-#' @param dset
-#' @param model_params
-#' @param plot
-#' @param path
-#'
-#' @return dset filtered according to the model params and has two additional columns.
-#' One of these is `mad_select`, (logical), which can be used to subset the df.
-#' @export
-#'
-#' @examples
-prep_model_df <- function(dset,
-                          model_params,
-                          plot = TRUE,
-                          path = "./analysis/figures/diagnostic_01_model_data.png"){
-
-
-
-    top_species <- dset %>%
-        dplyr::group_by(species_corrected) %>%
-        dplyr::tally(sort = TRUE) %>%
-        dplyr::top_n(model_params$n_max_species)
-
-
-
-    df_nest <- dset %>%
-        dplyr::filter(species_corrected %in% top_species$species_corrected,
-                      STANDALTER <= model_params$age_cutoff) %>%
-        tidyr::nest(cols = -species_corrected) %>%
-        dplyr::mutate(
-            mod = purrr::map(
-                cols,
-                function(df){
-                    glm(dbh_cm ~ STANDALTER, family = Gamma(link = "identity"), data = df)
-                }),
-            cols = purrr::modify2(
-                cols,
-                mod,
-                ~dplyr::mutate(.x,
-                               diag_fitted_dat = predict(.y, .x, type = "response"),
-                               diag_resid_val = resid(.y),
-                               diag_mad_cutoff = +1 * model_params$mad_factor * mad(resid(.y)),
-                               diag_mad_select = abs(diag_resid_val) <= diag_mad_cutoff
-                )
-            )
-        ) %>%
-        dplyr::select(-mod) %>%
-        tidyr::unnest(cols = cols)
-
-
-    if(plot == TRUE){
-
-
-
-        p <- df_nest %>%
-            dplyr::arrange(desc(diag_mad_select)) %>%
-            ggplot(aes(x = STANDALTER,
-                       y = dbh_cm,
-                       color = diag_mad_select,
-                       group = species_corrected)) +
-            geom_point() +
-            geom_point(aes(y = diag_fitted_dat), col = "pink", size = 0.5) +
-            labs(color = "Retained point",
-                 subtitle = sprintf("dbh ~ STANDALTER^1; MAD Cutoff factor +/- %i x MAD", model_params$mad_factor)) +
-            # geom_line(color = "pink", aes(group = species_corrected)) +
-            facet_wrap(~species_corrected, scales = "free")
-
-        if(file.exists(path)){
-            cat("Plot already exists. Overwriting. \n\n")
-        }
-
-
-        ggsave(filename = path,
-               plot = p,
-               width = 35,
-               height = 30,
-               units = "cm")
-
-        if(file.exists(path)){
-            cat(sprintf("Created diagnostic plot successfully in %s \n\n", path))
-        }
-
-    }
-
-    df_nest$species_corrected <- as.factor(df_nest$species_corrected)
-
-    return(df_nest)
-
-}
 
 
 
@@ -1390,14 +1390,107 @@ get_uhi_rasters <- function(path){
 
 
 
+#' Derive CORINE Urban-Rural Mask
+#'
+#' @param path character, path to CORINE high-level zip
+#' @param berlin_bbox sf df, bounding box of greater berlin area
+#'
+#' @details See https://datastore.copernicus-climate.eu/documents/sis-european-health/C3S_422_Lot2.VITO.3.1_201909_Demo_Web_Application_URBAN.1_v4.pdf
+#' for calculation of UHI
+#'
+#' @return list with adjusted CLC raster, original land cover legend, and value table
+make_corine_urban_rural_mask <- function(path, berlin_bbox){
+
+    # nested zip files..
+    unzip(path, exdir = fs::path_dir(path))
+
+    path_nested_zip <- list.files(fs::path_dir(path), pattern = "clc2018.*zip$", full.names = TRUE, include.dirs = FALSE)
+
+    unzip(zipfile = path_nested_zip, exdir = fs::path_dir(path))
+
+    # read tif
+    path_data <- list.files(fs::path(fs::path_ext_remove(path_nested_zip), "DATA"),
+                            pattern = "tif$",
+                            full.names = TRUE)
+
+
+    # meta data
+
+    path_desc <- list.files(
+        fs::path(
+            fs::path_ext_remove(
+                path_nested_zip),
+            "Legend"),
+        pattern = "txt$",
+        full.names = TRUE)
+
+
+    clc_desc <- read.csv(path_desc, header = FALSE, stringsAsFactors = FALSE) %>%
+        setNames(nm = c("class", "r", "g", "b", "alpha", "name")) %>%
+        dplyr::mutate(class = as.factor(class))
+
+    clc_rast <- raster::raster(path_data)
+
+    # ensure same projection
+    berlin_bbox <- sf::st_transform(berlin_bbox, crs = raster::crs(clc_rast))
+
+
+    clc_rast <- raster::crop(clc_rast, berlin_bbox)
+
+    clc_rast[clc_rast >= 37] <- 100 # water
+    clc_rast[clc_rast < 37 & clc_rast > 21] <- 50 # natural
+    clc_rast[clc_rast <= 21 & clc_rast > 11] <- 25 # agricultural
+    clc_rast[clc_rast <= 11] <- 1 # urban
 
 
 
+    # rural land classes:
+    # CORINE covering grassland, cropland, shrubland, woodland, broadleaf forest and needleleaf forest
+
+    return(list(clc = clc_rast,
+                clc_legend = clc_desc,
+                clc_legend_adjust = c(water = 100, natural = 50, agricultural = 25, urban = 1)))
+}
+
+#' Calculate UHI for Berlin based on CLC land cover and UrbClim data
+#'
+#' @param urbclim raster(layer) of (averaged) urbclim data
+#' @param clc named list, contains clc, clc_legend and clc_legend_adjust
+#'
+#' @returns UHI raster
+#'
+#' @examples
+calc_urbclim_uhi_with_corine <- function(urbclim, clc, natural_cover_val = 50, make_plot = FALSE){
+
+
+
+    clc_crop <- crop(resample(clc, urbclim[[1]]), urbclim[[1]])
+
+    if(make_plot){
+        raster::plot(mask(stack(urbclim), clc_crop == natural_cover_val, maskvalue = 0))
+    }
+
+    urbclim_uhi <- lapply(urbclim,
+           function(x){
+
+               mean_temp_natural <- cellStats(mask(x, clc_crop == natural_cover_val, maskvalue = 0), mean)
+
+               urbclim_uhi <- x - mean_temp_natural
+
+           }) %>%
+        setNames(nm = names(urbclim))
+
+
+
+    return(urbclim_uhi)
+}
 
 #' Add UHI data from RasterLayer stack to sf data frame
 #'
 #' @param uhi_stack_list List, nested on time of year, time of day
 #' @param sf_data sf points, data frame with Berlin tree locations and meta data
+#' @param buff_dist numeric, buffer distance for data extraction
+#' @param method character, should be `simple`
 #'
 #' @return A nested list containing RasterLayers with the following levels:
 #' \enumerate{
@@ -1409,7 +1502,11 @@ get_uhi_rasters <- function(path){
 #'
 #' @export
 #'
-add_uhi_hist_data <- function(uhi_stack_list, sf_data){
+add_uhi_hist_data <- function(
+    uhi_stack_list,
+    sf_data,
+    buff_dist = 100,
+    method = "simple"){
 
 
     # brief checks
@@ -1461,10 +1558,20 @@ add_uhi_hist_data <- function(uhi_stack_list, sf_data){
     extract_vals <- lapply(uhi_stack_list,
                            function(stacks){
                                lapply(stacks,
-                                      raster::extract,
-                                      sf_data,
-                                      # df = TRUE,
-                                      sp = FALSE)
+
+
+                                      function(x){
+                                          raster::extract(x,
+                                                          sf_data,
+                                                          method = method,
+                                                          buffer = buff_dist,
+                                                          fun = mean,
+                                                          na.rm = TRUE,
+                                                          df = FALSE,
+                                                          sp = FALSE,
+                                                          factors = FALSE)
+
+                                      })
                            })
 
 
@@ -1620,7 +1727,78 @@ assess_mean_temps <- function(sf_data, heat_raster, buff_dist = 100, method = "s
 }
 
 
+#' Extract values from raster based on (point) sf
+#'
+#' @param sf_data sf dframe, e.g. berlin trees
+#' @param heat_raster, list with rasters, berlin urbclim data temps (or other)
+#' @param buff_dist, buffer around points / polygons
+#' @param method character, "simple" (for categorical) or "bilinear"
+#'
+#' @return dframe/matrix, 1 row per sf geometry, with proportions of coverage
+assess_mean_temps_urbclim <- function(sf_data,
+                                      heat_raster,
+                                      buff_dist = 100,
+                                      method = "simple"){
 
+    # ensure both objects have same projection
+
+    if(!sf::st_crs(sf_data)$wkt ==
+       raster::wkt(heat_raster[[1]])){
+
+        # sf_data <- sf::st_transform(sf_data,
+                                    # crs = raster::crs(heat_raster[[1]]))
+        heat_raster <- purrr::modify(heat_raster,
+                                     ~raster::projectRaster(
+                                         from = .x,
+                                         crs = sf::st_crs(sf_data)$wkt))
+
+                message("adjusted CRS")
+    }
+
+    # raster_mean_across_hours <- function(heat_raster, hour_av){
+    #
+    #     hour_idxs <- lapply(hour_av,
+    #                         function(x){
+    #                             out <- which(dplyr::between(as.numeric(format(as.POSIXct(heat_raster@z[[1]]), "%H")),
+    #                                                         x[1], x[2]))
+    #
+    #                             return(out)
+    #
+    #                         })
+    #
+    #
+    #     raster_mean_hours <- lapply(seq_along(hour_idxs),
+    #                                 function(x){
+    #                                     out <- raster::calc(subset(heat_raster, hour_idxs[[x]]), mean)
+    #                                     return(out)
+    #                                 }
+    #     )
+    #
+    #     return(raster_mean_hours)
+    # }
+    #
+    # heat_raster_means <- raster_mean_across_hours(heat_raster = heat_raster,
+    #                                               hour_av = hour_av)
+
+
+
+    extracted_vals <- sapply(heat_raster,
+                             function(x){
+
+                                 raster::extract(x,
+                                                 sf_data,
+                                                 method = method,
+                                                 buffer = buff_dist,
+                                                 fun = mean,
+                                                 na.rm = TRUE,
+                                                 df = FALSE,
+                                                 factors = FALSE)})
+
+    colnames(extracted_vals) <- names(heat_raster)
+
+    return(extracted_vals)
+
+}
 
 # Stats -------------------------------------------------------------------
 
@@ -1789,6 +1967,7 @@ apply_models <- function(df = test_df,
         dplyr::top_n(n_top_species)
 
 
+
     test_set <- test_set %>%
         dplyr::filter(ART_BOT %in% top_species$ART_BOT[top_species$n > min_individuals])
 
@@ -1807,6 +1986,116 @@ apply_models <- function(df = test_df,
 }
 
 
+#' Prep model data frame
+#'
+#' Defines df with top species by abundance, max age and the median absolute
+#' deviance score used to remove gross outliers.
+#'
+#' @param dset
+#' @param model_params
+#' @param plot
+#' @param path
+#' @param stat_filter logical, drop observations outside of median absolute dev threshold; uses `model_params$mad_factor`
+#'
+#' @return dset filtered according to the model params and has two additional columns.
+#' One of these is `mad_select`, (logical), which can be used to subset the df.
+#' @export
+#'
+#' @examples
+prep_model_df <- function(dset,
+                          model_params,
+                          plot = TRUE,
+                          stat_filter,
+                          path = "./analysis/figures/diagnostic_01_model_data.png"){
+
+
+    dset <- sf::st_drop_geometry(dset) %>%
+        mutate(species_corrected = as.factor(gsub("Tilia intermedia.*", "Tilia intermedia", x = species_corrected)))
+
+#
+    top_species <- dset %>%
+        dplyr::group_by(species_corrected) %>%
+        dplyr::tally(sort = TRUE) %>%
+        dplyr::top_n(model_params$n_max_species) %>%
+        dplyr::filter(n > model_params$n_min_abundance)
+
+
+
+    df_nest <- dset %>%
+        dplyr::filter(species_corrected %in% top_species$species_corrected,
+        STANDALTER <= model_params$age_cutoff,
+                      dbh_cm <= model_params$dbh_cutoff) %>%
+        tidyr::nest(cols = -species_corrected) %>%
+        dplyr::mutate(
+            mod = purrr::map(
+                cols,
+                function(df){
+                    glm(dbh_cm ~ STANDALTER, family = Gamma(link = "identity"), data = df)
+                }),
+            cols = purrr::modify2(
+                cols,
+                mod,
+                ~dplyr::mutate(.x,
+                               diag_fitted_dat = predict(.y, .x, type = "response"),
+                               diag_resid_val = resid(.y),
+                               diag_mad_cutoff = +1 * model_params$mad_factor * mad(resid(.y)),
+                               diag_mad_select = abs(diag_resid_val) <= diag_mad_cutoff
+                )
+            )
+        ) %>%
+        dplyr::select(-mod) %>%
+        tidyr::unnest(cols = cols)
+
+
+    if(plot == TRUE){
+
+
+
+        p <- df_nest %>%
+            dplyr::arrange(desc(diag_mad_select)) %>%
+            ggplot(aes(x = STANDALTER,
+                       y = dbh_cm,
+                       color = diag_mad_select,
+                       group = species_corrected)) +
+            geom_point() +
+            geom_point(aes(y = diag_fitted_dat), col = "pink", size = 0.5) +
+            labs(color = "Retained point",
+                 subtitle = sprintf("dbh ~ STANDALTER^1; MAD Cutoff factor +/- %i x MAD", model_params$mad_factor)) +
+            # geom_line(color = "pink", aes(group = species_corrected)) +
+            facet_wrap(~species_corrected, scales = "free")
+
+        if(file.exists(path)){
+            cat("Plot already exists. Overwriting. \n\n")
+        }
+
+
+        ggsave(filename = path,
+               plot = p,
+               width = 35,
+               height = 30,
+               units = "cm")
+
+        if(file.exists(path)){
+            cat(sprintf("Created diagnostic plot successfully in %s \n\n", path))
+        }
+
+    }
+
+    df_nest$species_corrected <- as.factor(df_nest$species_corrected)
+
+
+    if(stat_filter){
+        df_nest <- df_nest[df_nest$diag_mad_select, ]
+
+
+
+    }
+
+    return(df_nest)
+
+}
+
+
 
 
 
@@ -1818,15 +2107,16 @@ apply_models <- function(df = test_df,
 #' @param dat df to run with model
 #' @param path character, output path
 #' @param overwrite logical, defaults to FALSE, i.e. don't overwrite existing models
+#' @param n_cl numeric, number of clusters for parallel run, defaults to `NULL`
 #'
 #' @return df with status overview
 #' @export
 #'
 #' @examples
-apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/", overwrite = TRUE){
+apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/", overwrite = TRUE, n_cl = NULL){
 
 
-    safe_bam <- purrr::possibly(mgcv::bam, otherwise = NULL)
+    safe_bam <- purrr::possibly(mgcv::bam, otherwise = NULL, quiet = FALSE)
 
 
 
@@ -1834,8 +2124,9 @@ apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/"
                              seq_len(nrow(model_grid)))
 
 
-    out <- purrr::map_dfr(
-        # out <- furrr::future_map_dfr(
+    future::plan(future::multisession(workers = 4))
+    # out <- purrr::map_dfr(
+        out <- furrr::future_map_dfr(
         model_grid_list,
         function(x){
 
@@ -1858,7 +2149,9 @@ apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/"
                 mod <- safe_bam(
                     formula = x$forms[[1]],
                     family = eval(x$fams[[1]]),
-                    data = dat)
+                    data = dat,
+                    discrete = TRUE,
+                    cl = n_cl)
 
 
                 if(!is.null(mod)){
@@ -1890,13 +2183,11 @@ apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/"
 
 
             return(status_df)
-        })
-    # ,
-    # .options = furrr::furrr_options(seed = 123)
-    # }
-    # )
+        },
+        .options = furrr::furrr_options(seed = 123)
+        )
 
-
+        future::plan(future::sequential())
     return(out)
 }
 
@@ -1908,35 +2199,188 @@ apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/"
 make_model_grid <- function(){
 
 
-    k_uni <- 30
-    k_te <- 40
+    # k_uni <- 30
+    # k_te <- c(5, 15)
+
+    model_params <- new.env()
+
+    model_params$k_uni <- 25
+    # model_params$k_te <- c(7, 20)
+    model_params$k_te <- c(5, 15)
+    model_params$k_spatial <- 75
+    model_params$k_spatial_soilnutmodel <- 100
+    model_params$k_soilnut <- 25
+
+    tempvars <- list('mod2015_T2M04HMEA',
+                     'mod2015_T2M14HMEA',
+                     'mod2015_T2M22HMEA',
+
+                     'urbclim_mod_morning_3_5',
+                     'urbclim_mod_afternoon_13_15',
+                     'urbclim_mod_night_21_23',
+
+                     'day_2007')
+    # tempvars <- list('mod2015_T2M04HMEA', 'mod2015_T2M14HMEA')
+
+#
+    # tensor_mods <- list("mI_age_x_temp_by_species_reBEZIRK" =
+                            # "dbh_cm ~ te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')")
+#     tensor_mods_spatial <- list("mI_spatial_age_x_temp_by_species_reBEZIRK" =
+#                             "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')")
+#     tensor_mods_spatial_full <- list("mI_spatial_age_x_temp_by_species_reBEZIRK_full" =
+#                             "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're') + s(soil_nutrients_swert, k = k_uni) + s(building_heigt_m,  k = k_uni)")
 
 
-    forms <- list("mI_age_by_species" =
-                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
 
-                  # AGE + Heat by Species
-                  "mI_age_by_species_ADD_heat14_by_species" =
-                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(T2M14HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
-                  "mI_age_by_species_ADD_heat04_by_species" =
-                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(T2M04HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
-                  "mI_age_by_species_ADD_heat22_by_species" =
-                      dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(T2M22HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
 
-                  # AGE x HEAT by Species
-                  "mI_age_x_heat14_by_species" =
-                      dbh_cm ~ te(STANDALTER, T2M14HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected,
-                  "mI_age_x_heat04_by_species" =
-                      dbh_cm ~ te(STANDALTER, T2M04HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected,
-                  "mI_age_x_heat22_by_species" =
-                      dbh_cm ~ te(STANDALTER, T2M22HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected,
-                  "mI_age_x_heat14_by_species_reBEZIRK" =
-                      dbh_cm ~ te(STANDALTER, T2M14HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+    mods <- list(
+        list("mI_age_x_temp_by_species_reBEZIRK" =
+            "dbh_cm ~ te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_building_height_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(building_heigt_m, k = k_uni) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_soil_nutrients_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(log10(soil_nutrients_swert), k = k_soilnut) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_baumsch_flaeche_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(log10(baumsch_flaeche_m2), k = k_soilnut) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_reBEZIRK_full" =
+            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're') + s(log10(soil_nutrients_swert), k = k_soilnut) + s(building_heigt_m,  k = k_uni) + +s(log10(baumsch_flaeche_m2), k = k_soilnut)"),
 
-                  # SPATIAL + AGE x HEAT by Species
-                  "mI_spatial_age_x_heat14_by_species" =
-                      dbh_cm ~ s(x,y, k = 200) + te(STANDALTER, T2M14HMEA, by = species_corrected, m = 2, k = k_te) + species_corrected
+
+
+        list("mI_age_ADD_temp_by_species_reBEZIRK" =
+            "dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) +s(%s, by = species_corrected, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_ADD_temp_by_species_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_uni) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_ADD_temp_by_species_building_height_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_uni) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(building_heigt_m, k = k_uni) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_soil_nutrients_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_uni) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(log10(soil_nutrients_swert), k = k_soilnut) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_baumsch_flaeche_reBEZIRK" =
+            "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) +s(STANDALTER, by = species_corrected, k = k_uni) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(log10(baumsch_flaeche_m2), k = k_soilnut) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_reBEZIRK_full" =
+            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_uni) +s(%s, by = species_corrected, k = k_uni) + species_corrected + s(BEZIRK, bs = 're') + s(log10(soil_nutrients_swert), k = k_soilnut) + s(building_heigt_m,  k = k_uni) + +s(log10(baumsch_flaeche_m2), k = k_soilnut)")
     )
+
+
+
+
+
+
+
+    forms <- purrr::map(mods,
+           function(x){
+               make_formula(main_body = x,
+                            placeholders = tempvars,
+                            n_depth = 2)
+
+           }) %>%
+        purrr::flatten()
+
+    # print(forms)
+
+    forms$`mI_age_by_species_NOTEMP_var-nullmodel` <-
+        "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_age_by_species_NOTEMP_var-soil_nutrients` <-
+        "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + s(log10(soil_nutrients_swert),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_age_by_species_NOTEMP_var-building_height` <-
+        "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + s(building_heigt_m,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_age_by_species_NOTEMP_var-baumsch_flaeche` <-
+        "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + s(log10(baumsch_flaeche_m2),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+
+
+    forms$`mI_spatial_age_by_species_NOTEMP_var-nullmodel` <-
+        "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_spatial_age_by_species_NOTEMP_var-soil_nutrients` <-
+        "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + s(log10(soil_nutrients_swert),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_spatial_age_by_species_NOTEMP_var-building_height` <-
+        "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + s(building_heigt_m,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_spatial_age_by_species_NOTEMP_var-baumsch_flaeche` <-
+        "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_uni) + s(log10(baumsch_flaeche_m2),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+
+
+
+
+
+    forms <- lapply(forms, formula, env = model_params)
+
+
+
+
+
+
+    # forms <- list(
+    #     "mI_age_by_species" =
+    #         dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    #     "mI_age_by_species_RE-district" =
+    #         dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re") +s(BEZIRK, bs = "re"),
+    #
+    #               # AGE + Heat by Species
+    #               "mI_age_by_species_ADD_heat14_by_species" =
+    #                   dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(mod2015_T2M14HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    #               "mI_age_by_species_ADD_heat04_by_species" =
+    #                   dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(mod2015_T2M04HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    #               "mI_age_by_species_ADD_heat22_by_species" =
+    #                   dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(mod2015_T2M22HMEA, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    #
+    #               # AGE x HEAT by Species
+    #               "mI_age_x_heat14_by_species" =
+    #                   dbh_cm ~ te(STANDALTER, mod2015_T2M14HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected,
+    #               "mI_age_x_heat04_by_species" =
+    #                   dbh_cm ~ te(STANDALTER, mod2015_T2M04HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected,
+    #               "mI_age_x_heat22_by_species" =
+    #                   dbh_cm ~ te(STANDALTER, mod2015_T2M22HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected,
+    #
+    #               "mI_age_x_heat04_by_species_reBEZIRK" =
+    #                   dbh_cm ~ te(STANDALTER, mod2015_T2M04HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+    #               "mI_age_x_heat14_by_species_reBEZIRK" =
+    #                   dbh_cm ~ te(STANDALTER, mod2015_T2M14HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+    #               "mI_age_x_heat22_by_species_reBEZIRK" =
+    #                   dbh_cm ~ te(STANDALTER, mod2015_T2M22HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+    #
+    #               # SPATIAL + AGE x HEAT by Species
+    #               "mI_spatial_age_x_heat14_by_species" =
+    #                   dbh_cm ~ s(X,Y, k = k_spatial, bs = "ds") + te(STANDALTER, mod2015_T2M14HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected
+    #               # SPATIAL + AGE x HEAT by Species
+    #               "mI_spatial_age_x_heat22_by_species" =
+    #                   dbh_cm ~ s(X,Y, k = k_spatial, bs = "ds") + te(STANDALTER, mod2015_T2M22HMEA, by = species_corrected, m = 1, k = k_te) + species_corrected
+    #
+    #
+    #
+    #
+    #
+    #
+    #               # AGE + Heat by Species
+    #               "mI_age_by_species_ADD_urbclim13-15_by_species" =
+    #                   dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(urbclim_mod_afternoon_13_15, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    #               "mI_age_by_species_ADD_urbclim03-05_by_species" =
+    #                   dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(urbclim_mod_morning_3_5, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    #               "mI_age_by_species_ADD_urbclim21-23_by_species" =
+    #                   dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_uni) + s(urbclim_mod_night_21_23, by = species_corrected, k = k_uni) + s(species_corrected, bs = "re"),
+    #
+    #               # AGE x HEAT by Species
+    #               "mI_age_x_urbclim13-15_by_species" =
+    #                   dbh_cm ~ te(STANDALTER, urbclim_mod_afternoon_13_15, by = species_corrected, m = 1, k = k_te) + species_corrected,
+    #               "mI_age_x_urbclim03-05_by_species" =
+    #                   dbh_cm ~ te(STANDALTER, urbclim_mod_morning_3_5, by = species_corrected, m = 1, k = k_te) + species_corrected,
+    #               "mI_age_x_urbclim21-23_by_species" =
+    #                   dbh_cm ~ te(STANDALTER, urbclim_mod_night_21_23, by = species_corrected, m = 1, k = k_te) + species_corrected,
+    #
+    #               "mI_age_x_urbclim03-05_by_species_reBEZIRK" =
+    #                   dbh_cm ~ te(STANDALTER, urbclim_mod_morning_3_5, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+    #               "mI_age_x_urbclim13-15_by_species_reBEZIRK" =
+    #                   dbh_cm ~ te(STANDALTER, urbclim_mod_afternoon_13_15, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+    #               "mI_age_x_urbclim21-23_by_species_reBEZIRK" =
+    #                   dbh_cm ~ te(STANDALTER, urbclim_mod_night_21_23, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = "re"),
+    #
+    #               # SPATIAL + AGE x HEAT by Species
+    #               "mI_spatial_age_x_urbclim13-15_by_species" =
+    #                   dbh_cm ~ s(X,Y, k = k_spatial, bs = "ds") + te(STANDALTER, urbclim_mod_afternoon_13_15, by = species_corrected, m = 1, k = k_te) + species_corrected
+    #               # SPATIAL + AGE x HEAT by Species
+    #               "mI_spatial_age_x_urbclim21-23_by_species" =
+    #                   dbh_cm ~ s(X,Y, k = k_spatial, bs = "ds") + te(STANDALTER, urbclim_mod_night_21_23, by = species_corrected, m = 1, k = k_te) + species_corrected
+    # )
 
 
 
@@ -1949,6 +2393,141 @@ make_model_grid <- function(){
     return(model_grid)
 
 }
+
+
+make_model_prediction_df <- function(
+    path_model, model_df,
+    fixed_vars = list(X = X, Y = Y, STANDALTER = STANDALTER),
+    crit_val = 1.96){
+
+
+    future::plan(future::multisession(workers = 4))
+
+
+    # extract model meta from file path
+    mod_names <- gsub(
+        pattern = "(.*[_]var[-])(.*)([.]Rds$)",
+        x =  path_model,
+        replacement = "\\2",
+        perl = TRUE)
+
+    # only grab TEMP models!
+    mod_names <- mod_names[!grepl(pattern = "NOTEMP", x = mod_names)]
+
+
+
+    # load model
+    mod_list <- purrr::map(path_model, ~readRDS(.x)) %>%
+        setNames(mod_names)
+
+
+
+    # make prediction df with each model var
+    # pdata <- purrr::map(
+    pdata <- furrr::future_map(
+        mod_names,
+        function(mn){
+
+            # mn <- rlang::sym(mn)
+
+            args_list <- list(
+                # temp var
+                seq(min(model_df[[mn]], na.rm = TRUE),
+                    max(model_df[[mn]], na.rm = TRUE), length.out = 100),
+                # X
+                fixed_vars$X,
+                # Y
+                fixed_vars$Y,
+                # STANDALTER
+                fixed_vars$STANDALTER,
+                # species_corrected
+                as.factor(unique(model_df[["species_corrected"]])),
+                # building_heigt_m
+                median(model_df[['building_heigt_m']], na.rm = TRUE),
+                # soil_nutrients_swert
+                median(model_df[['soil_nutrients_swert']], na.rm = TRUE),
+                # BEZIRK
+                as.factor(unique(model_df[['BEZIRK']]))
+            )
+
+            names(args_list) <- c(
+                mn,
+                "X",
+                "Y",
+                "STANDALTER",
+                "species_corrected",
+                "building_heigt_m",
+                "soil_nutrients_swert",
+                "BEZIRK"
+            )
+
+            tmp <- do.call(expand.grid, args_list)
+
+
+            #
+            # tmp <- with(model_df,
+            #     # tidyr::expand_grid({{mn}} := seq(min({{mn}}, na.rm = TRUE),
+            #                                         # max({{mn}}, na.rm = TRUE), length.out = 200),
+            #     tidyr::expand_grid(!!mn := seq(min(!!mn, na.rm = TRUE),
+            #                                         max(!!mn, na.rm = TRUE), length.out = 200),
+            #                 X = X,
+            #                 Y = Y,
+            #                 # STANDALTER = c(30, 50, 80),
+            #                 STANDALTER = STANDALTER,
+            #                 species_corrected = as.factor(unique(species_corrected)),
+            #                 building_heigt_m = median(building_heigt_m, na.rm = TRUE),
+            #                 soil_nutrients_swert = median(soil_nutrients_swert, na.rm = TRUE),
+            #                 BEZIRK = as.factor(unique(BEZIRK)))
+            #  )
+            #
+            return(tmp)
+
+
+
+
+        }) %>%
+        setNames(mod_names)
+
+    # predict for each model
+    # preds <- purrr::map2(
+    preds <- furrr::future_map2(
+        mod_list,
+        pdata,
+        function(mod, pd){
+
+            ifun <- family(mod)$linkinv
+
+            p <- mgcv::predict.bam(
+                object = mod,
+                newdata = pd,
+                se.fit = TRUE,
+                exclude = "s(BEZIRK)")
+
+
+            pd <- cbind(pd, pred = p) %>%
+                mutate(fit.low = pred.fit - crit_val * pred.se.fit,
+                       fit.high = pred.fit + crit_val * pred.se.fit,
+                       response = ifun(pred.fit),
+                       response.low = ifun(fit.low),
+                       response.high = ifun(fit.high)
+                )
+            return(as.data.frame(pd))
+        },
+        .options = furrr::furrr_options(seed=TRUE))
+
+
+    # define prediction groups, summarize
+
+    # combine results
+
+    # generate plot
+    future::plan(future::sequential())
+
+    return(preds)
+
+
+}
+
 
 
 # PLOTS -------------------------------------------------------------------
@@ -2325,6 +2904,111 @@ make_uhi_plot <- function(uhi_stacks,
 
 
 }
+
+
+#' Plot UHI with Berlin districts
+#'
+#' @param uhi_rast Raster(layer) UHI
+#' @param berlin_poly Berlin District Polygon
+#' @param base_size Numeric, base char size for ggplot
+#' @param file Character, output file path
+#' @param height Numeric, for plot output (cm)
+#' @param width Numeric, for plot output (cm)
+#' @param dpi Numeric
+#' @import raster
+#'
+#' @return
+#' @export
+#'
+make_uhi_urbclim_plot <- function(uhi_rast,
+                                  berlin_poly,
+                                  legend_label = expression(atop(Summer~3-5~AM,
+                                                                 UHI~(degree*C))),
+                                  base_size = 18,
+                                  file,
+                                  height,
+                                  width,
+                                  dpi){
+
+    # extrafont::loadfonts(device = "win",quiet = TRUE)
+    # extrafont::loadfonts(device = "pdf",quiet = TRUE)
+
+
+    # uhi_stacks <- purrr::modify(uhi_stacks, raster::raster)
+
+    # berlin_poly <- sf::st_transform(berlin_poly,
+                                    # crs = raster::crs(uhi_rast))
+
+    uhi_rast <- raster::projectRaster(from = uhi_rast,
+                                      crs = sf::st_crs(berlin_poly)$wkt)
+
+    mid_rescaler <- function(mid = 0) {
+        function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
+            scales::rescale_mid(x, to, from, mid)
+        }
+    }
+
+
+
+
+
+    p <- ggplot2::ggplot() +
+
+
+        ggplot2::geom_sf(data = berlin_poly,
+                         color = "gray60",
+                         fill = "gray80",
+                         size = 0.75,
+                         show.legend = FALSE) +
+
+
+        stars::geom_stars(data = stars::st_as_stars(uhi_rast)[berlin_poly]) +
+
+        # %>%
+        #     dplyr::slice(band, 1),
+        # na.rm = TRUE) +
+        #
+
+        ggplot2::geom_sf(data = berlin_poly,
+                         color = "gray20",
+                         fill = "transparent",
+                         size = 0.25,
+                         show.legend = FALSE) +
+
+        ggplot2::scale_y_continuous(breaks = seq(52.35, 52.65, by = 0.1)) +
+        ggplot2::scale_x_continuous(breaks = seq(13.1, 13.7, by = 0.2)) +
+
+
+        # ggplot2::scale_fill_viridis_c(na.value = "transparent", option = "inferno") +
+        ggplot2::scale_fill_distiller(palette = "RdBu",
+                                      rescaler = mid_rescaler(),
+                                      na.value = "transparent")   +
+
+        ggplot2::labs(fill = legend_label,
+                      x = NULL,
+                      # title = "Estimate of Urban Heat Loading",
+                      y = NULL) +
+
+
+        # ggplot2::theme_minimal(base_family = "Roboto Condensed",
+        ggplot2::theme_minimal(base_size = base_size) +
+        ggplot2::theme(legend.direction = "horizontal",
+                       legend.position = c(0.6, 0.95)) +
+        ggplot2::guides(fill = ggplot2::guide_colorbar(barwidth = ggplot2::unit(3.5, "cm"),
+                                                       title.vjust = 1,
+                                                       ticks.colour = "gray30"))
+
+    ggplot2::ggsave(filename = file,
+                    plot = p,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+    # print(p)
+
+
+}
+
 
 #' Density plot overview
 #'
@@ -2703,7 +3387,7 @@ make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
 
 
 
-    berlin_poly <- sf::st_read(berlin_poly) %>%
+    berlin_poly <- berlin_poly %>%
         sf::st_make_valid() %>%
         sf::st_union()
 
@@ -2744,7 +3428,6 @@ make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
            plot = plt,
            height = height,
            width = width,
-           units = "cm",
            dpi = dpi)
 
 
@@ -2752,6 +3435,137 @@ make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
 }
 
 
+
+#' Climate overview plot
+#'
+#' @param clim tibble, from `download_berlin_climate_data()`
+#' @param col_temp character, color val for temperature
+#' @param col_prec character, color val for precip mean
+#' @param col_prec_secondary character, color val for precip range
+#' @param base_size numeric, 18
+#' @param file character, save height
+#' @param height numeric,
+#' @param width numeric
+#' @param dpi numeric
+#'
+make_berlin_climate_plot <- function(
+    clim,
+
+    col_temp = "#ed6a1f",
+    col_prec = "#3dd2e3",
+    col_prec_secondary = "#93d2d9",
+
+    base_size = 18,
+    file,
+    height,
+    width,
+    dpi
+){
+
+    extrafont::loadfonts(device = "pdf", quiet = TRUE)
+
+
+
+    temp_plot <- clim %>%
+        mutate(across(where(is.numeric), ~ifelse(.x < -100, NA, .x))) %>%
+        mutate(month = forcats::fct_relevel(month, month.abb)) %>%
+
+        ggplot(aes(x = month)) +
+
+        geom_line(aes(y = vals_temp, group = year), col = col_temp, alpha = 0.2) +
+
+        stat_summary(aes(x = month, y = vals_temp, group = 1),
+                     geom = "ribbon",
+                     fill = col_temp,
+                     color = "transparent",
+                     alpha = 0.5,
+                     fun.data = "mean_cl_boot") +
+
+        stat_summary(aes(x = month,
+                         y = vals_temp,
+                         group = 1),
+                     geom = "line",
+                     color = col_temp,
+                     size = 1,
+                     fun = mean) +
+
+        theme_bw(base_size = base_size, base_family = "Roboto Condensed") +
+        theme(axis.line.x.top = element_line(color = "white")) +
+        guides(x.sec = guide_axis(NULL),
+               x = guide_axis(n.dodge = 2)) +
+        # scale_x_discrete(guide = guide_axis(n.dodge = 2))+
+        theme(axis.text.x.top = element_blank(),
+              axis.ticks.length.x.top = unit(0, "npc")) +
+
+        labs(x = NULL, y = expression(Temperature~(degree*C)))
+
+    prec_plot <- clim %>%
+        mutate(across(where(is.numeric), ~ifelse(.x < -100, NA, .x))) %>%
+        mutate(month = forcats::fct_relevel(month, month.abb)) %>%
+
+        ggplot(aes(x = month)) +
+
+        # geom_col(aes(y = vals_prec, group = year), col = col_temp, alpha = 0.2) +
+
+        stat_summary(aes(x = month, y = vals_prec, group = 1),
+                     geom = "linerange",
+                     # color = "gray60",
+                     color = col_prec_secondary,
+                     size = 3,
+                     alpha = 0.25,
+                     fun = mean,
+                     fun.max = max,
+                     fun.min = min) +
+        stat_summary(aes(x = month, y = vals_prec, group = 1),
+                     geom = "linerange",
+                     color = col_prec,
+                     size = 2,
+                     alpha = 1,
+                     fun.data = "mean_cl_boot") +
+        stat_summary(aes(x = month, y = vals_prec, group = 1),
+                     geom = "line",
+                     color = col_prec,
+                     size = 1,
+                     alpha = 1,
+                     fun = "mean") +
+        stat_summary(aes(x = month, y = vals_prec, group = 1),
+                     geom = "point",
+                     color = "white",
+                     size = 0.75,
+                     alpha = 1,
+                     fun = "mean") +
+        scale_y_reverse() +
+
+        theme_bw(base_size = base_size, base_family = "Roboto Condensed") +
+        theme(
+            axis.ticks.x = element_blank(),
+            axis.text.x = element_blank(),
+            axis.title.x = element_blank(),
+            # axis.line = element_line(),
+            # axis.line.y = element_line(),
+            # axis.line.x = element_line(),
+            axis.line.x.top = element_line(color = "black"),
+            axis.line.x.bottom = element_line(color = "white")) +
+        labs(y = expression(Precipitation~(mm)))
+
+
+    # library(patchwork)
+
+
+    patch_plot <- prec_plot + temp_plot  +
+        patchwork::plot_layout(ncol = 1) +
+        patchwork::plot_annotation(tag_levels = "A", tag_suffix = ")") &
+        theme(text = element_text(size = 16),
+              plot.tag.position = "topright",
+              plot.tag = element_text(margin = margin(l = 10)))
+
+    ggplot2::ggsave(filename = file,
+                    plot = patch_plot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+}
 
 
 # Tables ------------------------------------------------------------------
@@ -2905,6 +3719,30 @@ filter_maybe <- function(df, fargs){
 }
 
 
+#' Return boolean index for filtering
+#'
+#' Top species selected based on `model_params$n_max_species`
+#'
+#' @param dset
+#' @param model_params
+#'
+#' @return lgl
+filter_top_species_idx <- function(dset, model_params){
+
+
+    top_species <- dset %>%
+        dplyr::group_by(species_corrected) %>%
+        dplyr::tally(sort = TRUE) %>%
+        dplyr::top_n(model_params$n_max_species) %>%
+        dplyr::filter(n > model_params$n_min_abundance)
+
+    idx <- dset$species_corrected %in% top_species$species_corrected
+
+    return(idx)
+
+}
+
+
 #' Split df in chunks for mapping/looping
 #'
 #' @param dframe df, nrow > 0
@@ -2949,10 +3787,10 @@ split_by_n <- function(dframe, cut_size){
 #'
 prefix_names <- function(x, prefix){
 
-    if(is.null(names(x))){
-
-        return(x)
-    }
+    # if(is.null(names(x))){
+    #
+    #     return(x)
+    # }
 
     # handle sf columns
     if(rlang::inherits_any(x, "sf")){
@@ -2961,7 +3799,8 @@ prefix_names <- function(x, prefix){
         names(x)[-geometry_col] <- paste0(prefix, "_", names(x)[-geometry_col])
 
     } else {
-        names(x) <- paste0(prefix, "_", names(x))
+        x <- as.data.frame(x)
+        colnames(x) <- paste0(prefix, "_", names(x))
 
     }
 
@@ -2987,7 +3826,8 @@ combine_covariates <- function(data_list){
                     "soil_nutrients",
                     "lcz_cover_prop",
                     "building_height_mean_m",
-                    "berlin_heat_model")
+                    "berlin_heat_model",
+                    "berlin_urbclim_heat_model")
 
     if(!all(names(data_list) %in% data_names)){
         stop("expecting different data set inputs. Check or change function to accommodate")
@@ -3000,10 +3840,12 @@ combine_covariates <- function(data_list){
 
     covariate_df <- cbind(sf::st_drop_geometry(data_list$baumsch_data),
                           prefix_names(sf::st_drop_geometry(data_list$soil_type)[, soil_type_cols ], "soil_type"),
-                          prefix_names(sf::st_drop_geometry(data_list$soil_nutrients)[, soil_nutrient_cols], "soil_nutrients"),
+                          prefix_names(apply(sf::st_drop_geometry(data_list$soil_nutrients)[, soil_nutrient_cols], MAR = 2, as.numeric), "soil_nutrients"),
                           building_heigt_m = data_list$building_height_mean_m,
                           prefix_names(data_list$lcz_cover_prop, "lcz_prop"),
-                          prefix_names(data_list$berlin_heat_model, "mod2015"))
+                          prefix_names(data_list$berlin_heat_model, "mod2015"),
+                          prefix_names(data_list$berlin_urbclim_heat_model, "urbclim_mod")
+                          )
 
 
     return(covariate_df)
@@ -3013,6 +3855,193 @@ combine_covariates <- function(data_list){
 }
 
 
+
+
+
+#' Formula factory
+#'
+#' @param main_body named character, string that can be parsed to formula with %s wildcards,
+#' name is base model name, to which placeholder var is appended
+#' @param placeholders list, values = variables spliced into main body via %s
+#' @param n_depth numeric, layers to search up for vars in formula
+#'
+#' @return
+#' @export
+#'
+#' @examples
+make_formula <- function(main_body, placeholders, n_depth){
+
+    if(is.null(names(main_body))){
+        stop("Main body must be named character vector or list")
+    }
+
+
+    # consider adding checks for formula syntax
+
+    placeholder_counts_in_body <- stringr::str_count(main_body, "%s")
+
+
+
+    unique_counts_in_placeholders <- length(unique(lengths(placeholders)))
+
+    if(unique_counts_in_placeholders != 1){
+        stop("Fix your placeholders - all items should have the same length.")
+    }
+
+    if(unique(lengths(placeholders)) != placeholder_counts_in_body){
+        stop("Mismatch of wildcards and number of placeholders")
+    }
+
+
+
+
+    forms_out <- lapply(seq_along(placeholders),
+
+                        function(x){
+
+                            pl <- placeholders[[x]]
+
+
+
+
+                            formula(do.call(sprintf, c(fmt = unname(main_body), as.list(pl))), n = n_depth)
+                            do.call(sprintf, c(fmt = unname(main_body), as.list(pl)))
+                        })
+
+
+
+    model_name_strings <- sapply(seq_along(placeholders),
+                                 function(x){
+
+                                     # grab name
+                                     n_placeholders <- length(placeholders[[x]])
+
+                                     wildcard_string <- paste0(names(main_body), "_var-", paste0(rep("%s", n_placeholders), collapse = "-"))
+
+                                     pl <- placeholders[[x]]
+                                     model_name_string <-do.call(sprintf, c(fmt = wildcard_string, as.list(pl)))
+
+
+                                     # make sprintf string with %s times length of placeholder
+
+
+                                 })
+
+
+    names(forms_out) <- model_name_strings
+
+    return(forms_out)
+
+}
+
+#' Generate indicator for within-group variable ranges of a coarse prediction grid
+#'
+#' @param prediction_df data.frame, prediction grid across full variable range and groups
+#' @param model_df data.frame, original model data frame for all groups and a given focal variable
+#' @param group_var character, column name of the grouping variable of interest (e.g., species)
+#' @param range_var character, column name of the numeric variable for which predictions are made (e.g., temperature)
+#' @param qtl numeric, one-tail percentile at which within-group variables should be truncated to (e.g., 0.95 for 0.0275 and 0.975 percentiles)
+#'
+#' @return prediction_df with additional variable "prediction_range"
+#' @export
+#'
+#' @examples
+augment_prediction_range <- function(prediction_df, model_df, group_var, range_var, qtl = 1){
+
+
+
+    if(any(!c(group_var, range_var) %in% colnames(prediction_df)) |
+       any(!c(group_var, range_var) %in% colnames(model_df))){
+
+        stop("Variables not in dfs")
+    }
+
+
+    # process original data to get ranges
+    # split into groups
+
+    split_df <- split(as.data.frame(model_df), model_df[, group_var])
+
+    print("here")
+
+    # get group variable range
+    group_range <- lapply(split_df,
+                          function(dset){
+
+
+
+                              r <- range(
+                                  quantile(
+                                      dset[ ,range_var],
+                                      probs = c(1 - qtl, qtl),
+                                      na.rm = TRUE),
+                                  na.rm = TRUE)
+
+                              print(r)
+
+                              return(r)
+                          })
+
+
+    # set indicators on prediction df
+
+    split_prediction_df <- split(prediction_df, prediction_df[, group_var])
+
+    prediction_df_adjusted <- purrr::map2_dfr(split_prediction_df,group_range,
+                                          function(x, y){
+
+                                              x$prediction_range <- "full"
+                                              within_idx <- dplyr::between(
+                                                  x[ ,range_var],
+                                                  y[1], y[2])
+
+                                              x$prediction_range[within_idx] <- "within"
+
+                                              return(x)
+
+                                          })
+
+    return(prediction_df_adjusted)
+
+
+}
+
+
+#' Summarize model predictions across age groups
+#'
+#' @param dset data.frame, predictions from
+#' @param tempvar character, temp var used in model
+#' @param age_breaks numeric, breaks for age variable
+#' @param age_break_expr expression
+#'
+#' @return data.frame, containing mean responses and pooled standard errors for each age group
+summarize_age_groups <- function(dset,model_df, tempvar, age_break_expr){
+
+    tempvar_sym <- rlang::sym(tempvar)
+
+    ifun <- Gamma(link = "log")$linkinv
+
+
+    pred_groups <- dset %>%
+        # mutate(age_group = cut(STANDALTER, age_breaks)) %>%
+        mutate(age_group = eval(age_break_expr)) %>%
+        # filter(STANDALTER < 100) %>%
+        group_by(age_group, !! tempvar_sym, species_corrected) %>%
+        summarise(mean_dbh = mean(pred.fit, na.rm = TRUE),
+                  mean_se = sqrt(sum(pred.se.fit))/n()) %>%
+        mutate(response.fit.mean = ifun(mean_dbh),
+               response.low.mean = ifun(mean_dbh - 1.96 * mean_se),
+               response.high.mean = ifun(mean_dbh + 1.96 * mean_se)) %>%
+        ungroup()
+
+    pred_groups <- augment_prediction_range(prediction_df = as.data.frame(pred_groups),
+                                            model_df = model_df,
+                                            group_var = "species_corrected",
+                                            range_var = tempvar,
+                                            qtl = 1)
+
+    return(pred_groups)
+}
 
 # BIWI analyses -----------------------------------------------------------
 

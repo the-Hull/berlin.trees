@@ -33,7 +33,8 @@ header-includes:
 - \usepackage[normalem]{ulem}
 bibliography: 
   - uhi_references.bib
-  - 04_gfz_uhi.bib
+  - 04_gfz_UHI.bib
+  - 07_phenoTram.bib
 csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
 abstract: |
   **This document outlines the rationale for an analysis of tree growth (potential) and its relationship with the Urban Heat Island (UHI) effect in Berlin using an extensive, publicly available data set. It introduces preliminary results and provides an outlook for up-coming and potential work.**
@@ -237,7 +238,7 @@ dsources$Accessed <- format(dsources$Accessed, "%b '%y")
 
 ```
 
-```{r dsources-tab}
+```{r dsources-tab, eval = TRUE}
 
 caption <- "Data description used for generating maps and route optimization. Resolution and radius are provided in $m$, the latter referring to the buffer size across which data was averaged to estimate trees' environmental conditions. A zero-radius refers to a point extraction from categorical and location specific data. **Planting Bed Area, and Soil type are not currently used.**"
 
@@ -263,7 +264,8 @@ if (grepl("docx", out_format) ||
              #              "Obsv. (n)",
              #              "Resolution (m)",
              #              "Source")
-             escape = FALSE) 
+             escape = FALSE) %>% 
+      kableExtra::landscape()
   
 } else {
 table_ds <- dsources %>% 
@@ -600,12 +602,15 @@ knitr::include_graphics(here::here("analysis/figures/plot_03_ranef_species_dbh_u
 
 # Discussion
 
-- Temperature, environmental and urban controls on tree growth  
+1. Temperature, environmental and urban controls on tree growth  
 	+ Intra specific differences
 	+ Sensitive trees in hot spots
 	+ Temporal dynamics  
 	+ Validity and limitations  
-- Implications:  
+	
+	
+	
+2. Implications:  
   + Policy / planning:  
     - tree species
 	  - Increase temporal coverage and accuracy  
