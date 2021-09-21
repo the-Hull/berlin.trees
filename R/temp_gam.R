@@ -1569,3 +1569,19 @@ moran_comparison = assess_morans_spatialmod(
     var_response = "dbh_cm",
     var_resid = ".resid"
 )
+
+
+
+
+
+
+# plot morans -------------------------------------------------------------
+
+
+
+library(ggplot2)
+res %>%
+    dplyr::filter(vars %in% c('observed', 'expected')) %>%
+    ggplot(aes(x = grid_area , y = value, fill = spatial_model)) +
+    geom_bar(position = "dodge", stat = "identity") +
+    facet_wrap(~model)
