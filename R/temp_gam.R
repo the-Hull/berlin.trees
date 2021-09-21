@@ -1488,56 +1488,84 @@ short_mod[[1]] <- short_mod[[1]][1:2]
 # cycle through model groups
 # future::plan(future::multiprocess(workers = 3))
 
-moran_mods <- purrr::map2(mod_group_list[has_spatial],
-            names(mod_group_list[has_spatial]),
-# purrr::map2(short_mod[has_spatial],
-#             names(short_mod[has_spatial]),
-            function(x,y){
+#' Compare Variable and residuals
+#'
+#' @param mod_list list, mod_group_list
+#' @param var_response character, column name of response variable, e.g. dbh_cm, must be used in model from `mod_list`
+#' @param var_resid character, column name of residuals, typically `.resid` from `broom::augment`
+#' @param gridp sf df, 2x2 grid squares to subset data - currently split by column `grid_region`
+#'
+#' @return list with nesting from mod_list, with ouput from `ape::Moran.I()`
+assess_morans_spatialmod <- function(mod_list,
+                                     gridp,
+                                     var_response,
+                                     var_resid){
+
+
+    # cycle through
+    moran_mods <- purrr::map2(mod_list,
+                              names(mod_list),
+                              function(x,y){
 
 
 
-                # get to individual models
-                morans <- purrr::map2(x,names(x),
-                            function(mod, varname){
+                                  # get to individual models, carry over temp var
+                                  morans <- purrr::map2(x,names(x),
+                                                        function(mod, varname){
 
-                                message(sprintf("current mod is: %s\n",y))
-                                message(sprintf("current var is: %s\n",varname))
-                                message(sprintf("current path is: %s\n",mod))
+                                                            message(sprintf("current mod is: %s\n",y))
+                                                            message(sprintf("current var is: %s\n",varname))
+                                                            message(sprintf("current path is: %s\n",mod))
 
-                                temp_mod <- readRDS(mod)
-                                temp_mod <- broom::augment(temp_mod)
-                                temp_mod <- sf::st_as_sf(temp_mod, coords = c("X", "Y"), crs = sf::st_crs(gridp))
-                                temp_mod <- cbind(temp_mod, sf::st_coordinates(temp_mod))
+                                                            temp_mod <- readRDS(mod)
+                                                            temp_mod <- broom::augment(temp_mod)
+                                                            temp_mod <- sf::st_as_sf(temp_mod, coords = c("X", "Y"), crs = sf::st_crs(gridp))
+                                                            temp_mod <- cbind(temp_mod, sf::st_coordinates(temp_mod))
 
-                                moran_temp <- purrr::map(.x = unique(gridp$grid_region),
-                                           .f = function(gr){
+                                                            moran_temp <- purrr::map(.x = unique(gridp$grid_region),
+                                                                                     .f = function(gr){
 
-                                               moran_non_spat <- check_moran(df = temp_mod,
-                                                           grid = sf::st_union(gridp[gridp$grid_region==unlist(gr), ]),
-                                                           min_obs = 1000,
-                                                           var = "dbh_cm")
-                                               moran_spat <- check_moran(df = temp_mod,
-                                                           grid = sf::st_union(gridp[gridp$grid_region==unlist(gr), ]),
-                                                           min_obs = 1000,
-                                                           var = ".resid")
+                                                                                         moran_non_spat <- check_moran(df = temp_mod,
+                                                                                                                       grid = sf::st_union(gridp[gridp$grid_region==unlist(gr), ]),
+                                                                                                                       min_obs = 1000,
+                                                                                                                       var = var_response)
+                                                                                         moran_spat <- check_moran(df = temp_mod,
+                                                                                                                   grid = sf::st_union(gridp[gridp$grid_region==unlist(gr), ]),
+                                                                                                                   min_obs = 1000,
+                                                                                                                   var = var_resid)
 
-                                               return(list(non_spat = moran_non_spat,
-                                                      spat = moran_spat,
-                                                      var = varname,
-                                                      grid_area = gr))
-                                           })
-                                rm(temp_mod)
+                                                                                         return(list(non_spat = moran_non_spat,
+                                                                                                     spat = moran_spat,
+                                                                                                     var = varname,
+                                                                                                     grid_area = gr))
+                                                                                     })
+                                                            rm(temp_mod)
 
-                                # add grid names
-                                names(moran_temp) <- purrr::map_chr(moran_temp, "grid_area")
+                                                            # add grid names
+                                                            names(moran_temp) <- purrr::map_chr(moran_temp, "grid_area")
 
-                                return(moran_temp)
-                            })
-                gc()
-                # print()
-                # names(morans) <- purrr::map_chr(morans, "grid_area")
-                return(morans)
-            })
+                                                            return(moran_temp)
+                                                        })
+                                  gc()
+                                  # print()
+                                  # names(morans) <- purrr::map_chr(morans, "grid_area")
+                                  return(morans)
+                              })
+
+    return(moran_mods)
+
+}
 
 
-    purrr::keep(.p = function(x) grepl("spatial", x = names(.)))
+# purrr::keep(.p = function(x) grepl("spatial", x = names(.)))
+
+
+
+moran_comparison = assess_morans_spatialmod(
+    mod_list = mod_group_list_filtered[grepl(
+        pattern = ("mI_spatial_age_ADD_temp_by_species_reBEZIRK$"),
+        x = names(mod_group_list_filtered))],
+    gridp = gridp,
+    var_response = "dbh_cm",
+    var_resid = ".resid"
+)

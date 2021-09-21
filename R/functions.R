@@ -586,12 +586,12 @@ download_urbclim_uhi <- function(month = "06", year = "2010", var = 'air_tempera
     if(!file.exists( normalizePath(file.path(path_dir, fname)))){
 
 
-    # call:
-    file <- ecmwfr::wf_request(
-        user     = "92658",   # user ID (for authentification)
-        request  = request,  # the request
-        transfer = TRUE,     # download the file
-        path     = path_dir)      # store data in current working directory
+        # call:
+        file <- ecmwfr::wf_request(
+            user     = "92658",   # user ID (for authentification)
+            request  = request,  # the request
+            transfer = TRUE,     # download the file
+            path     = path_dir)      # store data in current working directory
     } else {
         cat(sprintf("File %s already exists", fname))
     }
@@ -633,7 +633,7 @@ download_urbclim_uhi <- function(month = "06", year = "2010", var = 'air_tempera
     }
 
     out <- raster_mean_across_hours(heat_raster = out,
-                                                  hour_av = hour_av)
+                                    hour_av = hour_av)
 
     out <- raster::stack(out)
 
@@ -1471,13 +1471,13 @@ calc_urbclim_uhi_with_corine <- function(urbclim, clc, natural_cover_val = 50, m
     }
 
     urbclim_uhi <- lapply(urbclim,
-           function(x){
+                          function(x){
 
-               mean_temp_natural <- cellStats(mask(x, clc_crop == natural_cover_val, maskvalue = 0), mean)
+                              mean_temp_natural <- cellStats(mask(x, clc_crop == natural_cover_val, maskvalue = 0), mean)
 
-               urbclim_uhi <- x - mean_temp_natural
+                              urbclim_uhi <- x - mean_temp_natural
 
-           }) %>%
+                          }) %>%
         setNames(nm = names(urbclim))
 
 
@@ -1746,13 +1746,13 @@ assess_mean_temps_urbclim <- function(sf_data,
        raster::wkt(heat_raster[[1]])){
 
         # sf_data <- sf::st_transform(sf_data,
-                                    # crs = raster::crs(heat_raster[[1]]))
+        # crs = raster::crs(heat_raster[[1]]))
         heat_raster <- purrr::modify(heat_raster,
                                      ~raster::projectRaster(
                                          from = .x,
                                          crs = sf::st_crs(sf_data)$wkt))
 
-                message("adjusted CRS")
+        message("adjusted CRS")
     }
 
     # raster_mean_across_hours <- function(heat_raster, hour_av){
@@ -2012,7 +2012,7 @@ prep_model_df <- function(dset,
     dset <- sf::st_drop_geometry(dset) %>%
         mutate(species_corrected = as.factor(gsub("Tilia intermedia.*", "Tilia intermedia", x = species_corrected)))
 
-#
+    #
     top_species <- dset %>%
         dplyr::group_by(species_corrected) %>%
         dplyr::tally(sort = TRUE) %>%
@@ -2023,7 +2023,7 @@ prep_model_df <- function(dset,
 
     df_nest <- dset %>%
         dplyr::filter(species_corrected %in% top_species$species_corrected,
-        STANDALTER <= model_params$age_cutoff,
+                      STANDALTER <= model_params$age_cutoff,
                       dbh_cm <= model_params$dbh_cutoff) %>%
         tidyr::nest(cols = -species_corrected) %>%
         dplyr::mutate(
@@ -2126,7 +2126,7 @@ apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/"
 
     future::plan(future::multisession(workers = 4))
     # out <- purrr::map_dfr(
-        out <- furrr::future_map_dfr(
+    out <- furrr::future_map_dfr(
         model_grid_list,
         function(x){
 
@@ -2185,9 +2185,9 @@ apply_gam_mod <- function(model_grid, dat, path = "./analysis/data/models/stat/"
             return(status_df)
         },
         .options = furrr::furrr_options(seed = 123)
-        )
+    )
 
-        future::plan(future::sequential())
+    future::plan(future::sequential())
     return(out)
 }
 
@@ -2223,45 +2223,45 @@ make_model_grid <- function(){
                      'day_2007')
     # tempvars <- list('mod2015_T2M04HMEA', 'mod2015_T2M14HMEA')
 
-#
+    #
     # tensor_mods <- list("mI_age_x_temp_by_species_reBEZIRK" =
-                            # "dbh_cm ~ te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')")
-#     tensor_mods_spatial <- list("mI_spatial_age_x_temp_by_species_reBEZIRK" =
-#                             "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')")
-#     tensor_mods_spatial_full <- list("mI_spatial_age_x_temp_by_species_reBEZIRK_full" =
-#                             "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're') + s(soil_nutrients_swert, k = k_uni) + s(building_height_m,  k = k_uni)")
+    # "dbh_cm ~ te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')")
+    #     tensor_mods_spatial <- list("mI_spatial_age_x_temp_by_species_reBEZIRK" =
+    #                             "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')")
+    #     tensor_mods_spatial_full <- list("mI_spatial_age_x_temp_by_species_reBEZIRK_full" =
+    #                             "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're') + s(soil_nutrients_swert, k = k_uni) + s(building_height_m,  k = k_uni)")
 
 
 
 
     mods <- list(
         list("mI_age_x_temp_by_species_reBEZIRK" =
-            "dbh_cm ~ te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
+                 "dbh_cm ~ te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_reBEZIRK" =
-            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_building_height_reBEZIRK" =
-            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(building_height_m, k = k_uni) + s(BEZIRK, bs = 're')"),
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(building_height_m, k = k_uni) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_soil_nutrients_reBEZIRK" =
-            "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(log10(soil_nutrients_swert), k = k_soilnut) + s(BEZIRK, bs = 're')"),
+                 "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(log10(soil_nutrients_swert), k = k_soilnut) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_baumsch_flaeche_reBEZIRK" =
-            "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(log10(baumsch_flaeche_m2), k = k_soilnut) + s(BEZIRK, bs = 're')"),
+                 "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(log10(baumsch_flaeche_m2), k = k_soilnut) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_reBEZIRK_full" =
-            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're') + s(log10(soil_nutrients_swert), k = k_soilnut) + s(building_height_m,  k = k_uni) + +s(log10(baumsch_flaeche_m2), k = k_soilnut)"),
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're') + s(log10(soil_nutrients_swert), k = k_soilnut) + s(building_height_m,  k = k_uni) + +s(log10(baumsch_flaeche_m2), k = k_soilnut)"),
 
 
 
         list("mI_age_ADD_temp_by_species_reBEZIRK" =
-            "dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"),
+                 "dbh_cm ~ s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_reBEZIRK" =
-            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + s(BEZIRK, bs = 're')"),
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_building_height_reBEZIRK" =
-            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(building_height_m, k = k_uni) + s(BEZIRK, bs = 're')"),
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(building_height_m, k = k_uni) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_soil_nutrients_reBEZIRK" =
-            "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(log10(soil_nutrients_swert), k = k_soilnut) + s(BEZIRK, bs = 're')"),
+                 "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(log10(soil_nutrients_swert), k = k_soilnut) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_baumsch_flaeche_reBEZIRK" =
-            "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) +s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(log10(baumsch_flaeche_m2), k = k_soilnut) + s(BEZIRK, bs = 're')"),
+                 "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) +s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(log10(baumsch_flaeche_m2), k = k_soilnut) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_reBEZIRK_full" =
-            "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni) + species_corrected + s(BEZIRK, bs = 're') + s(log10(soil_nutrients_swert), k = k_soilnut) + s(building_height_m,  k = k_uni) + +s(log10(baumsch_flaeche_m2), k = k_soilnut)")
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni) + species_corrected + s(BEZIRK, bs = 're') + s(log10(soil_nutrients_swert), k = k_soilnut) + s(building_height_m,  k = k_uni) + +s(log10(baumsch_flaeche_m2), k = k_soilnut)")
     )
 
 
@@ -2271,12 +2271,12 @@ make_model_grid <- function(){
 
 
     forms <- purrr::map(mods,
-           function(x){
-               make_formula(main_body = x,
-                            placeholders = tempvars,
-                            n_depth = 2)
+                        function(x){
+                            make_formula(main_body = x,
+                                         placeholders = tempvars,
+                                         n_depth = 2)
 
-           }) %>%
+                        }) %>%
         purrr::flatten()
 
     # print(forms)
@@ -2938,7 +2938,7 @@ make_uhi_urbclim_plot <- function(uhi_rast,
     # uhi_stacks <- purrr::modify(uhi_stacks, raster::raster)
 
     # berlin_poly <- sf::st_transform(berlin_poly,
-                                    # crs = raster::crs(uhi_rast))
+    # crs = raster::crs(uhi_rast))
 
     uhi_rast <- raster::projectRaster(from = uhi_rast,
                                       crs = sf::st_crs(berlin_poly)$wkt)
@@ -3426,10 +3426,10 @@ make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
                                    ymax = 5837259.4)
 
     ggplot2::ggsave(path_out,
-           plot = plt,
-           height = height,
-           width = width,
-           dpi = dpi)
+                    plot = plt,
+                    height = height,
+                    width = width,
+                    dpi = dpi)
 
 
 
@@ -3846,7 +3846,7 @@ combine_covariates <- function(data_list){
                           prefix_names(data_list$lcz_cover_prop, "lcz_prop"),
                           prefix_names(data_list$berlin_heat_model, "mod2015"),
                           prefix_names(data_list$berlin_urbclim_heat_model, "urbclim_mod")
-                          )
+    )
 
 
     return(covariate_df)
@@ -3989,18 +3989,18 @@ augment_prediction_range <- function(prediction_df, model_df, group_var, range_v
     split_prediction_df <- split(prediction_df, prediction_df[, group_var])
 
     prediction_df_adjusted <- purrr::map2_dfr(split_prediction_df,group_range,
-                                          function(x, y){
+                                              function(x, y){
 
-                                              x$prediction_range <- "full"
-                                              within_idx <- dplyr::between(
-                                                  x[ ,range_var],
-                                                  y[1], y[2])
+                                                  x$prediction_range <- "full"
+                                                  within_idx <- dplyr::between(
+                                                      x[ ,range_var],
+                                                      y[1], y[2])
 
-                                              x$prediction_range[within_idx] <- "within"
+                                                  x$prediction_range[within_idx] <- "within"
 
-                                              return(x)
+                                                  return(x)
 
-                                          })
+                                              })
 
     return(prediction_df_adjusted)
 
@@ -4086,6 +4086,130 @@ check_moran <- function(dframe, grid, min_obs = 1000, var){
     return(calc_weights)
 }
 
+
+#' Compare Variable and residuals
+#'
+#' @param mod_list list, mod_group_list
+#' @param var_response character, column name of response variable, e.g. dbh_cm, must be used in model from `mod_list`
+#' @param var_resid character, column name of residuals, typically `.resid` from `broom::augment`
+#' @param gridp sf df, 2x2 grid squares to subset data - currently split by column `grid_region`
+#'
+#' @return list with nesting from mod_list, with ouput from `ape::Moran.I()`
+assess_morans_spatialmod <- function(mod_list,
+                                     gridp,
+                                     var_response,
+                                     var_resid){
+
+
+    # cycle through
+    moran_mods <- purrr::map2(mod_list,
+                              names(mod_list),
+                              function(x,y){
+
+
+
+                                  # get to individual models, carry over temp var
+                                  morans <- purrr::map2(x,names(x),
+                                                        function(mod, varname){
+
+                                                            message(sprintf("current mod is: %s\n",y))
+                                                            message(sprintf("current var is: %s\n",varname))
+                                                            message(sprintf("current path is: %s\n",mod))
+
+                                                            temp_mod <- readRDS(mod)
+                                                            temp_mod <- broom::augment(temp_mod)
+                                                            temp_mod <- sf::st_as_sf(temp_mod, coords = c("X", "Y"), crs = sf::st_crs(gridp))
+                                                            temp_mod <- cbind(temp_mod, sf::st_coordinates(temp_mod))
+
+                                                            moran_temp <- purrr::map(.x = unique(gridp$grid_region),
+                                                                                     .f = function(gr){
+
+                                                                                         if(gr %in% c("Mitte", "Sued")){
+                                                                                         # if(gr %in% c("Mitte", "Nord", "Sued")){
+
+                                                                                             message(sprintf("Skipping %s", gr))
+                                                                                             return(list(non_spat = NULL,
+                                                                                                         spat = NULL,
+                                                                                                         var = varname,
+                                                                                                         grid_area = gr))
+                                                                                         } else {
+
+
+                                                                                             mino <- 500
+                                                                                             moran_non_spat <- check_moran(df = temp_mod,
+                                                                                                                           grid = sf::st_union(gridp[gridp$grid_region==unlist(gr), ]),
+                                                                                                                           min_obs = mino,
+                                                                                                                           var = var_response)
+                                                                                             moran_spat <- check_moran(df = temp_mod,
+                                                                                                                       grid = sf::st_union(gridp[gridp$grid_region==unlist(gr), ]),
+                                                                                                                       min_obs = mino,
+                                                                                                                       var = var_resid)
+
+                                                                                             return(list(non_spat = moran_non_spat,
+                                                                                                         spat = moran_spat,
+                                                                                                         var = varname,
+                                                                                                         grid_area = gr))
+                                                                                         }
+                                                                                     })
+                                                            rm(temp_mod)
+                                                            gc()
+
+                                                            # add grid names
+                                                            names(moran_temp) <- purrr::map_chr(moran_temp, "grid_area")
+
+                                                            return(moran_temp)
+                                                        })
+                                  gc()
+                                  # print()
+                                  # names(morans) <- purrr::map_chr(morans, "grid_area")
+                                  return(morans)
+                              })
+
+    return(moran_mods)
+
+}
+
+#' Wrangle nested Moran's output list
+#'
+#' @param moran_list output from `assess_morans_spatialmod`
+#'
+#' @return tibble with all values from assessment
+summarize_moran <- function(moran_list){
+
+    res_list <- list()
+
+    for(mod in names(moran_list)){
+
+
+        current_mod <- moran_comparison[[mod]]
+
+
+
+        for(var in names(current_mod)){
+            current_var <- current_mod[[var]]
+
+
+            tibble_out <- purrr::map(current_var, bind_rows) %>%
+                purrr::discard(.p = ~nrow(.x) == 1) %>%
+                purrr::map(~bind_cols(.x, tibble::tibble(vars = c("observed", "expected", "sd", "p.value")))) %>%
+                purrr::map(~tidyr::pivot_longer(.x, cols = c("non_spat", "spat"), names_to = "spatial_model")) %>%
+                purrr::map(tidyr::unnest, cols = "value") %>%
+                dplyr::bind_rows()
+
+
+
+
+            res_list[[mod]][[var]] <- tibble_out
+        }
+
+
+    }
+
+    res <- purrr::map(res_list, dplyr::bind_rows) %>%
+        dplyr::bind_rows(.id = "model")
+
+    return(res)
+}
 
 
 # BIWI analyses -----------------------------------------------------------

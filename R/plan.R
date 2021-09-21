@@ -23,6 +23,9 @@ plan <- drake_plan(
     ## Spatial Ancillary -----------------------------------
 
 
+    ### Berlin grid
+    gridp = sf::st_read("analysis/data/raw_data/spatial_ancillary/grid_2x2.geojson"),
+
 
     ### Berlin districts and BBoxx
     berlin_polygons = target(download_berlin_polygons_as_sf(),
@@ -313,6 +316,57 @@ plan <- drake_plan(
                                            n_top_species = 3,
                                            min_individuals = 1000),
 
+
+   path_model_dir_filtered = "analysis/data/models/stat/filtered/",
+   path_model_files_filtered = list.files(path_model_dir_filtered, full.names = TRUE),
+
+
+
+   mod_groups_filtered = {list.files(path_model_dir_filtered) %>%
+       gsub("_var-.*Rds$", "", .) %>%
+       as.factor()},
+
+
+   # grab model paths and format into list
+   mod_group_list_filtered =
+       purrr::map(
+           levels(mod_groups_filtered),
+           function(mg){
+
+               idx <- which(mod_groups_filtered == mg)
+
+               mods <- lapply(path_model_files_filtered[idx],
+                              function(x){
+                                  return(x)
+                              }) %>%
+                   setNames(
+                       fs::path_ext_remove(
+                           list.files(path_model_dir_filtered)[idx]
+                       )  %>%
+                           gsub(pattern = ".*var-",
+                                replacement = "",
+                                x = .)
+                   )
+           }) %>%
+       setNames(levels(mod_groups_filtered)),
+
+
+   # Stat Spatial ---------------------------
+
+   ## autocorrelation ------------------
+
+
+   moran_comparison = assess_morans_spatialmod(
+       mod_list = mod_group_list_filtered[grepl(
+           pattern = "(mI_spatial_age_ADD_temp_by_species_reBEZIRK$|mI_spatial_age_x_temp_by_species_reBEZIRK$)",
+           x = names(mod_group_list_filtered))],
+       gridp = gridp,
+       var_response = "dbh_cm",
+       var_resid = ".resid"
+   ),
+
+
+   moran_summary = summarize_moran(moran_comparison),
 
 
 
