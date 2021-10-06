@@ -1867,7 +1867,8 @@ make_test_data_set <- function(full_df = full_data_set_clean,
 
 
     test_set <- dplyr::mutate(cbind(as.data.frame(full_df),
-                                    extract_uhi$Summertime_gridded_UHI_data$day),
+                                    extract_uhi$Summertime_gridded_UHI_data$day,
+                                    extract_uhi$Summertime_gridded_UHI_data$night),
 
                               STANDALTER = as.numeric(STANDALTER),
                               age_group = cut(STANDALTER, breaks = seq(0, 280, 40)),
@@ -2220,7 +2221,8 @@ make_model_grid <- function(){
                      'urbclim_mod_afternoon_13_15',
                      'urbclim_mod_night_21_23',
 
-                     'day_2007')
+                     'day_2007',
+                     'night_2007')
     # tempvars <- list('mod2015_T2M04HMEA', 'mod2015_T2M14HMEA')
 
     #
@@ -2241,6 +2243,8 @@ make_model_grid <- function(){
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_building_height_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(building_height_m, k = k_uni) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_lcz6_reBEZIRK" =
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(lcz_prop_6, k = k_uni) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_soil_nutrients_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(log10(soil_nutrients_swert), k = k_soilnut) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_baumsch_flaeche_reBEZIRK" =
@@ -2256,6 +2260,8 @@ make_model_grid <- function(){
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_building_height_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(building_height_m, k = k_uni) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_ADD_temp_by_species_lcz6_reBEZIRK" =
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(lcz_prop_6, k = k_uni) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_soil_nutrients_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(log10(soil_nutrients_swert), k = k_soilnut) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_baumsch_flaeche_reBEZIRK" =
@@ -2422,6 +2428,33 @@ make_model_prediction_df <- function(
         setNames(mod_names)
 
 
+    # set up grid variables
+
+
+
+
+    bheight <- {if(!is.null(fixed_vars$building_height_m)){
+        fixed_vars$building_height_m
+    } else {
+        median(model_df[['building_height_m']], na.rm = TRUE)
+    }}
+
+    snut <- {if(!is.null(fixed_vars$soil_nutrients_swert)){
+        fixed_vars$soil_nutrients_swert
+    } else {
+        median(model_df[['soil_nutrients_swert']], na.rm = TRUE)
+    }}
+
+
+    baumsch <- {if(!is.null(fixed_vars$baumsch_flaeche_m2)){
+                      fixed_vars$baumsch_flaeche_m2
+    } else {
+                      median(model_df[['baumsch_flaeche_m2']], na.rm = TRUE)
+    }}
+
+
+
+
 
     # make prediction df with each model var
     # pdata <- purrr::map(
@@ -2431,10 +2464,19 @@ make_model_prediction_df <- function(
 
             # mn <- rlang::sym(mn)
 
+            temps <- {if(!is.null(fixed_vars$tempvar)){
+                fixed_vars$tempvar
+            } else {
+                seq(min(model_df[[mn]], na.rm = TRUE),
+                    max(model_df[[mn]], na.rm = TRUE), length.out = 100)
+            }}
+
+
             args_list <- list(
                 # temp var
-                seq(min(model_df[[mn]], na.rm = TRUE),
-                    max(model_df[[mn]], na.rm = TRUE), length.out = 100),
+                # seq(min(model_df[[mn]], na.rm = TRUE),
+                #     max(model_df[[mn]], na.rm = TRUE), length.out = 100),
+                temps,
                 # X
                 fixed_vars$X,
                 # Y
@@ -2444,9 +2486,13 @@ make_model_prediction_df <- function(
                 # species_corrected
                 as.factor(unique(model_df[["species_corrected"]])),
                 # building_height_m
-                median(model_df[['building_height_m']], na.rm = TRUE),
+                # median(model_df[['building_height_m']], na.rm = TRUE),
+                bheight,
                 # soil_nutrients_swert
-                median(model_df[['soil_nutrients_swert']], na.rm = TRUE),
+                # median(model_df[['soil_nutrients_swert']], na.rm = TRUE),
+                snut,
+                # baumsch
+                baumsch,
                 # BEZIRK
                 as.factor(unique(model_df[['BEZIRK']]))
             )
@@ -2459,6 +2505,7 @@ make_model_prediction_df <- function(
                 "species_corrected",
                 "building_height_m",
                 "soil_nutrients_swert",
+                "baumsch_flaeche_m2",
                 "BEZIRK"
             )
 
@@ -2481,6 +2528,8 @@ make_model_prediction_df <- function(
             #                 BEZIRK = as.factor(unique(BEZIRK)))
             #  )
             #
+
+
             return(tmp)
 
 
@@ -2488,6 +2537,8 @@ make_model_prediction_df <- function(
 
         }) %>%
         setNames(mod_names)
+
+
 
     # predict for each model
     # preds <- purrr::map2(
@@ -2498,12 +2549,17 @@ make_model_prediction_df <- function(
 
             ifun <- family(mod)$linkinv
 
+
+
+            print("a")
+            print(colnames(pd))
             p <- mgcv::predict.bam(
                 object = mod,
                 newdata = pd,
                 se.fit = TRUE,
                 exclude = "s(BEZIRK)")
 
+            print("b")
 
             pd <- cbind(pd, pred = p) %>%
                 mutate(fit.low = pred.fit - crit_val * pred.se.fit,
@@ -2528,6 +2584,129 @@ make_model_prediction_df <- function(
 
 
 }
+
+
+
+#' Get GAMM and Spatial (variogram) summaries
+#'
+#' Hard-coded 8 parallel sessions to summarise models
+#'
+#' @param mgroups factor, model subgroups
+#' @param path_model_dir character, path to model dir (filtered/nonfiltered)
+#' @param path_model_files character, path to model files
+#' @param path_out character, path to save RDS of model summary on disk
+#'
+#'
+#' @return list of model summaries
+model_summarize <- function(mgroups, path_model_dir, path_model_files,path_out){
+
+
+
+
+    future::plan(future::multisession(workers = 12))
+    mod_summary_list <-
+        furrr::future_map(
+            levels(mgroups),
+            function(mg){
+
+                idx <- which(mgroups == mg)
+
+                mods <- lapply(path_model_files[idx],
+                               function(x){
+                                   m <- readRDS(x)
+
+                                   s <- m %>%
+                                       summary()
+
+                                   m <- broom::augment(m,
+                                                       type.residuals = "response",
+                                                       type.response = "response")
+
+                                   v <- {
+                                       if(grepl("mI_spatial", x = x)){
+                                           gstat::variogram(.resid ~ 1, locations = ~ X + Y, width = 50, cutoff = 5000, data = m)
+                                       } else {
+                                           NULL
+                                       }}
+
+                                   return(
+                                       list(summary = s,
+                                            variogramm = v,
+                                            fitted_response = m[ , c("dbh_cm", ".fitted", ".resid")]))
+
+                               }) %>%
+                    setNames(
+                        fs::path_ext_remove(
+                            list.files(path_model_dir)[idx]
+                        )  %>%
+                            gsub(pattern = ".*var-",
+                                 replacement = "",
+                                 x = .)
+                    )
+            }, .options = furrr::furrr_options(seed = TRUE)) %>%
+        setNames(levels(mgroups))
+    future::plan(future::sequential())
+
+
+    saveRDS(mod_summary_list, file = path_out)
+
+    return(path_out)
+
+}
+
+
+#' Predict temp models
+#'
+#' @param path_model character, path to single model
+#' @param model_df dframe, used for fitting path model
+#' @param fixed_vars list, provide variables used in model
+#' @param age_expression expression, used to define age groups
+#' @param group_vars character, name of variables (next to temp) for grouping
+#'
+#' @return list with raw predictions and summarized by age group
+pred_dbh_temp_single_var <- function(path_model,
+                                     model_df,
+                                     fixed_vars,
+                                     age_expression,
+                                     group_vars
+){
+
+
+
+    `%nin%` <- Negate(`%in%`)
+
+
+
+    pred_var <- make_model_prediction_df(
+        path_model = path_model,
+        model_df = model_df %>%
+            mutate(species_corrected = droplevels(species_corrected)),
+        fixed_vars = fixed_vars
+    )
+
+
+
+
+    pred_groups <- purrr::map2_dfr(
+        pred_var,
+        names(pred_var),
+        function(x,y){
+            summarize_age_groups(
+                x,
+                model_df %>%
+                    mutate(species_corrected = droplevels(species_corrected)),
+                c(y, group_vars),
+                age_break_expr = age_expression)
+        },
+        .id = "tempvar"
+    )
+
+
+    return(list(pred_var = pred_var, pred_groups = pred_groups))
+
+
+}
+
 
 
 
@@ -3568,6 +3747,578 @@ make_berlin_climate_plot <- function(
 
 }
 
+#' Create model overview for SI
+#'
+#' @param sf_data sf-tibble of Berlin trees
+#' @param poly sf-tibble, polygons of Berlin districts
+#' @param file character, file path (use with \code{\link{file_out}}), must include file ending
+#' @param height numeric, height in inches
+#' @param width numeric, width in inches
+#' @param dpi numeric, dpi of output
+#'
+#' @return ggplot object
+#' @import ggplot2
+make_deviance_plot <- function(mod_summary_list,
+                               base_size = 18,
+                               file,
+                               height,
+                               width,
+                               dpi){
+
+
+    # grab sample size per model
+    mod_n <- mod_summary_list %>%
+        purrr::map_depth(2, "summary") %>%
+        purrr::map_depth(2, "n") %>%
+        purrr::map_depth(2, .f = as.data.frame) %>%
+        purrr::map(dplyr::bind_rows, .id = "expvar")  %>%
+        purrr::map2(names(.),
+                    ~mutate(.x, mod_group = .y)) %>%
+        do.call(rbind, .) %>%
+        `rownames<-`(NULL) %>%
+        rename(n_sample = 2)
+
+
+
+    # extract deviance and add sample sizes
+    mod_dev <- mod_summary_list %>%
+        purrr::map_depth(2, "summary") %>%
+        purrr::map_depth(2, "dev.expl") %>%
+        purrr::map_depth(2, .f = as.data.frame) %>%
+        purrr::map(dplyr::bind_rows, .id = "expvar")  %>%
+        purrr::map2(names(.),
+                    ~mutate(.x, mod_group = .y)) %>%
+        do.call(rbind, .) %>%
+        `rownames<-`(NULL) %>%
+        dplyr::rename(deviance_explained = 2) %>%
+        dplyr::left_join(mod_n, by = c("mod_group", 'expvar'))
+
+    # calc data for points over box plot
+    mod_means <- mod_dev %>%
+        dplyr::group_by(mod_group) %>%
+        dplyr::summarise(ggplot2:::mean_se(deviance_explained)) %>%
+        dplyr::arrange(desc(y))
+
+    mod_dev$mod_group <- forcats::fct_relevel(mod_dev$mod_group, mod_means$mod_group)
+    mod_means$mod_group <- forcats::fct_relevel(mod_means$mod_group, mod_means$mod_group)
+
+    # ggplot(mod_dev,
+    #        aes(y = mod_group,
+    #            x = deviance_explained)) +
+    #     geom_line(data = mod_means, aes(x = y),  color = "black", group = 1, alpha = 0.3) +
+    #     geom_jitter( shape = 21,height = .1, aes(size = n_sample,
+    #                                              fill = expvar), alpha = 0.8) +
+    #     # geom_jitter( shape = 21, color = "white", fill = "gray60",height = .1, aes(size = n_sample), alpha = 0.5) +
+    #     geom_linerange(data = mod_means, aes(x = y, xmin = ymin, xmax = ymax), color = "black") +
+    #     geom_point(data = mod_means, aes(x = y), size = 3, shape = 21, color = "white", fill = "black") +
+    #     guides(fill = guide_legend(override.aes = list(size = 5))) +
+    #     theme_minimal() +
+    #     scale_fill_brewer(type = "qual", palette = "Set3")
+    #
+
+    gplot <- ggplot(
+        mod_dev %>%
+            dplyr::mutate(is_spatial = grepl("spatial", mod_group),
+                          mod_group = forcats::fct_relevel(mod_group, stringr::str_sort(levels(mod_group))),
+                          expvar = forcats::fct_relevel(
+                              expvar,
+                              "nullmodel",
+                              "baumsch_flaeche",
+                              "building_height",
+                              "soil_nutrients",
+                              "urbclim_mod_morning_3_5",
+                              "urbclim_mod_afternoon_13_15",
+                              "urbclim_mod_night_21_23")),
+        aes(x = expvar,
+            y = deviance_explained * 100)) +
+        # geom_line(data = mod_means, aes(x = y),  color = "black", group = 1, alpha = 0.3) +
+        # annotate("text", x = c(2.5, 5.5, 8, 10), y = rep(0.82, 4), label = c("no temp", "Urbclim", "Landsat", "Berlin UA")) +
+        # annotate("text", x = c(1:4), y = rep(0.82, 4), label = c("bla", "blu", "bli", "kli")) +
+        annotate("text", x = c(2.5), y = rep(80, 1), label = "bold(no~temp)", parse = TRUE) +
+        annotate("text", x = c(6),   y = rep(80, 1), label = "bold(Urbclim)", parse = TRUE) +
+        annotate("text", x = c(8),   y = rep(80, 1), label = "bold(Landsat)", parse = TRUE) +
+        annotate("text", x = c(10),  y = rep(80, 1), label = "bold(Berlin~EnvAt)", parse = TRUE) +
+        annotate(geom = "rect", xmin = 0.5, xmax = 4.5, ymin = -Inf, ymax = Inf, alpha = 0.3) +
+        annotate(geom = "rect", xmin = 4.5, xmax = 7.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "steelblue1") +
+        annotate(geom = "rect", xmin = 7.5, xmax = 8.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "darkorange") +
+        annotate(geom = "rect", xmin = 8.5, xmax = 11.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "seagreen4") +
+        geom_boxplot() +
+        geom_jitter( shape = 21,width = .25, aes(size = n_sample,
+                                                 fill = mod_group), alpha = 0.8) +
+        # geom_linerange(data = mod_means, aes(x = y, xmin = ymin, xmax = ymax), color = "black") +
+        # geom_point(data = mod_means, aes(y = y), size = 3, shape = 21, color = "white", fill = "black") +
+        guides(fill = guide_legend(override.aes = list(size = 5),
+                                   ncol = 2)) +
+        theme_minimal() +
+        theme(legend.position = "top",
+              legend.direction = "vertical",
+              strip.text = element_text(size = 12)) +
+        # scale_fill_brewer(type = "qual", palette = "Set3") +
+        scale_fill_manual(values = pals::kelly(n = n_distinct(mod_dev$mod_group))) +
+        scale_x_discrete(guide = guide_axis(n.dodge = 3) ) +
+        facet_wrap(~is_spatial, ncol = 1, labeller = labeller(is_spatial = c('TRUE' = "spatial - f(x,y)", 'FALSE' = 'non-spatial')))  +
+        labs(x = NULL, y = "Explained Deviance (%)")
+
+    ggplot2::ggsave(filename = file,
+                    plot = gplot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+    return(gplot)
+}
+
+
+#' Make single-temp var plot
+#'
+#' @param pred_list list, output from `pred_dbh_temp_single_var`
+#' @param model_df dframe used for predictions in pred_list
+#' @param age_filter character, age groups to exclude
+#' @param age_expression expression, used to define age groups
+#' @param prediction_range character, within or full?
+#' @param base_size numeric
+#' @param file path, save plot
+#' @param height, width numeric, inches
+#' @param dpi numeric
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plot_dbh_temp_single_var <- function(pred_list,
+                                     model_df,
+                                     age_filter,
+                                     age_expression,
+                                     base_size = 18,
+                                     prediction_range = "full",
+                                     file,
+                                     height,
+                                     width,
+                                     dpi){
+
+    `%nin%` <- Negate(`%in%`)
+
+    model_df <- model_df %>%
+        mutate(age_group = eval(age_expression),
+               species_corrected = shorten_species(species_corrected)) %>%
+        tidyr::drop_na(age_group)
+
+
+
+    plot_data <- pred_list$pred_groups %>%
+        # dplyr::select(-tempvar) %>%
+        tidyr::pivot_longer(cols = dplyr::all_of(names(pred_list$pred_var)),
+                            names_to = "uhi_tempvar",
+                            values_to = "temp_degc") %>%
+        dplyr::filter(prediction_range == prediction_range) %>%
+        dplyr::filter(age_group %nin% age_filter) %>%
+        dplyr::arrange(uhi_tempvar) %>%
+        tidyr::drop_na(temp_degc) %>%
+        dplyr::group_by(species_corrected, uhi_tempvar) %>%
+        dplyr::mutate(temp_degc_scaled = scales::rescale(temp_degc, to = c(0,1)),
+                      species_corrected = shorten_species(species_corrected))
+
+
+
+
+    gplot <- ggplot(data = plot_data %>%
+                      ungroup(),
+                  aes(y = response.fit.mean,
+                      x = temp_degc,
+                      colour = as.factor(age_group),
+                      fill =  as.factor(age_group),
+                      ymin = response.low.mean,
+                      ymax = response.high.mean)) +
+
+
+        stat_density(inherit.aes = FALSE,
+                     data = model_df %>%
+                         dplyr::filter(age_group %nin% age_filter),
+                     aes(x = day_2007,
+                         y = ..scaled..*100,
+                         fill = as.factor(age_group),),
+                     position = "dodge",
+                     geom = "area",
+                     alpha = 0.4) +
+
+
+        geom_ribbon( alpha = 0.5, color = "transparent") +
+        # geom_line(color = "black")  +
+
+        geom_smooth(aes(group = 1),
+                    formula = y ~ x,
+                    method = "lm", fill = "transparent",
+                    color = "gray50") +
+        # geom_ribbon(linetype = 1) +
+
+
+        # geom_line(linetype = 1)  +
+        geom_line()  +
+
+
+        facet_grid(age_group~species_corrected,
+                   scales = "free_y",
+                   labeller = label_wrap_gen(width = 3,
+                                             multi_line = FALSE)) +
+
+        theme_minimal(base_size = base_size) +
+        theme(legend.position = 'top',
+              legend.direction = "horizontal",
+              panel.spacing = unit(2, "lines"),
+              strip.text = element_text(size = 12)) +
+
+        scale_color_brewer(palette = 2, type = "qual") +
+        scale_fill_brewer(palette = 2, type = "qual") +
+
+        labs(color = "Age Group",
+             fill = "Age Group",
+             x = expression(UHI~Magnitude~(degree~C)),
+             y = expression(bar(DBH)~(cm)))
+
+
+    ggplot2::ggsave(filename = file,
+                    plot = gplot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+
+}
+
+
+
+
+
+#' Make single-temp var plot for individual species
+#'
+#' @param pred_list list, output from `pred_dbh_temp_single_var`
+#' @param model_df dframe used for predictions in pred_list
+#' @param age_filter character, age groups to exclude, using `%nin%`
+#' @param species_filter character, age groups to exclude, using `%in%`
+#' @param age_expression expression, used to define age groups
+#' @param prediction_range character, within or full?
+#' @param base_size numeric
+#' @param file
+#' @param height
+#' @param width
+#' @param dpi
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plot_dbh_temp_single_var_single_species <- function(pred_list,
+                                                    model_df,
+                                                    age_filter,
+                                                    species_filter,
+                                                    age_expression,
+                                                    base_size = 18,
+                                                    prediction_range = "full",
+                                                    file,
+                                                    height,
+                                                    width,
+                                                    dpi
+){
+
+    `%nin%` <- Negate(`%in%`)
+
+    model_df <- model_df %>%
+        dplyr::filter(age_group %nin% age_filter,
+                      species_corrected %in% species_filter) %>%
+        mutate(age_group = eval(age_expression),
+               species_corrected = shorten_species(species_corrected)) %>%
+        tidyr::drop_na(age_group)
+
+
+    plot_data <- pred_list$pred_groups %>%
+        # dplyr::select(-tempvar) %>%
+        tidyr::pivot_longer(cols = dplyr::all_of(names(pred_list$pred_var)),
+                            names_to = "uhi_tempvar",
+                            values_to = "temp_degc") %>%
+        dplyr::filter(prediction_range == prediction_range) %>%
+        dplyr::filter(age_group %nin% age_filter) %>%
+        dplyr::filter(species_corrected %in% species_filter) %>%
+        dplyr::arrange(uhi_tempvar) %>%
+        tidyr::drop_na(temp_degc) %>%
+        dplyr::group_by(species_corrected, uhi_tempvar) %>%
+        dplyr::mutate(temp_degc_scaled = scales::rescale(temp_degc, to = c(0,1)),
+                      species_corrected = shorten_species(species_corrected))
+
+
+
+
+    gplot <- ggplot(data = plot_data %>%
+                        ungroup(),
+                    aes(y = response.fit.mean,
+                        x = temp_degc,
+                        colour = as.factor(species_corrected),
+                        fill =  as.factor(species_corrected),
+                        ymin = response.low.mean,
+                        ymax = response.high.mean)) +
+
+
+        stat_density(inherit.aes = FALSE,
+                     data = model_df,
+                     aes(x = day_2007,
+                         y = ..scaled..*100,
+                         fill = as.factor(species_corrected)),
+                     position = "dodge",
+                     geom = "area",
+                     alpha = 0.2) +
+
+
+        geom_ribbon( alpha = 0.5, color = "transparent") +
+        # geom_line(color = "black")  +
+
+        geom_smooth(aes(group = species_corrected),
+                    formula = y ~ x,
+                    method = "lm", fill = "transparent",
+                    color = "gray50") +
+        # geom_ribbon(linetype = 1) +
+
+
+        # geom_line(linetype = 1)  +
+        geom_line()  +
+
+        #
+        facet_grid(~age_group) +
+
+        theme_minimal(base_size = base_size) +
+        theme(legend.position = 'top',
+              legend.direction = "horizontal",
+              panel.spacing = unit(2, "lines"),
+              strip.text = element_text(size = 12)) +
+
+        scale_color_brewer(palette = 2, type = "qual") +
+        scale_fill_brewer(palette = 2, type = "qual") +
+
+        labs(color = "Species",
+             fill = "Species",
+             x = expression(UHI~Magnitude~(degree~C)),
+             y = expression(bar(DBH)~(cm)))
+
+
+
+    ggplot2::ggsave(filename = file,
+                    plot = gplot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+
+}
+
+
+#' Make single-temp var plot for individual species
+#'
+#' @param pred_list list, output from `pred_dbh_temp_single_var`
+#' @param model_df dframe used for predictions in pred_list
+#' @param age_filter character, age groups to exclude, using `%nin%`
+#' @param species_filter character, age groups to exclude, using `%in%`
+#' @param age_expression expression, used to define age groups
+#' @param prediction_range character, within or full?
+#' @param base_size numeric
+#' @param file
+#' @param height
+#' @param width
+#' @param dpi
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plot_dbh_temp_single_var_flex <- function(pred_list,
+                                          model_df,
+                                          var,
+                                          age_filter,
+                                          species_filter,
+                                          age_expression,
+                                          base_size = 18,
+                                          prediction_range = "full",
+                                          file,
+                                          height,
+                                          width,
+                                          dpi
+){
+
+    `%nin%` <- Negate(`%in%`)
+    var <- rlang::sym(var)
+
+
+    model_df <- model_df %>%
+        dplyr::filter(age_group %nin% age_filter,
+                      species_corrected %in% species_filter) %>%
+        mutate(age_group = eval(age_expression),
+               species_corrected = shorten_species(species_corrected)) %>%
+        tidyr::drop_na(age_group)
+
+
+    plot_data <- pred_list$pred_groups %>%
+        # dplyr::select(-tempvar) %>%
+        tidyr::pivot_longer(cols = dplyr::all_of(names(pred_list$pred_var)),
+                            names_to = "uhi_tempvar",
+                            values_to = "temp_degc") %>%
+        dplyr::filter(prediction_range == prediction_range) %>%
+        dplyr::filter(age_group %nin% age_filter) %>%
+        dplyr::filter(species_corrected %in% species_filter) %>%
+        dplyr::arrange(uhi_tempvar) %>%
+        tidyr::drop_na(temp_degc) %>%
+        dplyr::group_by(species_corrected, uhi_tempvar) %>%
+        dplyr::mutate(temp_degc_scaled = scales::rescale(temp_degc, to = c(0,1)),
+                      species_corrected = shorten_species(species_corrected))
+
+
+
+    #
+    gplot <- ggplot(data = plot_data %>%
+                        ungroup(),
+                    aes(y = response.fit.mean,
+                        x = !!var,
+                        colour = as.factor(species_corrected),
+                        fill =  as.factor(species_corrected),
+                        ymin = response.low.mean,
+                        ymax = response.high.mean)) +
+
+
+        # stat_density(inherit.aes = FALSE,
+        #              data = model_df,
+        #              aes(x = day_2007,
+        #                  y = ..scaled..*100,
+        #                  fill = as.factor(species_corrected)),
+        #              position = "dodge",
+        #              geom = "area",
+        #              alpha = 0.2) +
+
+
+    geom_ribbon( alpha = 0.5, color = "transparent") +
+        # geom_line(color = "black")  +
+
+        geom_smooth(aes(group = species_corrected),
+                    formula = y ~ x,
+                    method = "lm", fill = "transparent",
+                    color = "gray50") +
+        # geom_ribbon(linetype = 1) +
+
+
+        # geom_line(linetype = 1)  +
+        geom_line()  +
+
+        #
+        facet_grid(~age_group) +
+
+        lims(y = c(20, 35)) +
+
+        theme_minimal(base_size = base_size) +
+        theme(legend.position = 'top',
+              legend.direction = "horizontal",
+              panel.spacing = unit(2, "lines"),
+              strip.text = element_text(size = 12)) +
+
+        scale_color_brewer(palette = 2, type = "qual") +
+        scale_fill_brewer(palette = 2, type = "qual") +
+
+        labs(color = "Species",
+             fill = "Species",
+             x = expression('Building height '[bar(150~m)]~(m)),
+             y = expression(bar(DBH)~(cm)))
+
+
+
+    ggplot2::ggsave(filename = file,
+                    plot = gplot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+
+}
+
+
+
+#' Title
+#'
+#' @param moran_summary
+#' @param file
+#' @param height
+#' @param width
+#' @param dpi
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plot_moran_comparison <- function(moran_summary,
+                                  base_size = 18,
+                                  file,
+                                  height,
+                                  width,
+                                  dpi){
+
+
+    gplot <- moran_summary %>%
+        mutate(spatial_model = dplyr::case_when(spatial_model == "spat" ~ "spatial - f(x,y)",
+                                                spatial_model == "non_spat" ~ "non-spatial",
+                                                TRUE ~ NA_character_)) %>%
+        dplyr::filter(vars %in% c('observed', 'expected')) %>%
+        ggplot(aes(x = grid_area , y = value, fill = spatial_model)) +
+        geom_bar(position = "dodge", stat = "identity") +
+        facet_wrap(~model) +
+        labs(y = "Moran's I", x = "Grid Area", fill = "Model type") +
+        scale_fill_brewer(type = "qual", palette = 2) +
+        scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+        theme_minimal(base_size = base_size)
+
+
+
+    ggplot2::ggsave(filename = file,
+                    plot = gplot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+}
+
+
+
+#' Observed vs. Predicted for given model
+#'
+#' @param path_model
+#' @param base_size
+#' @param file
+#' @param height
+#' @param width
+#' @param dpi
+#'
+plot_obs_predicted_model <- function(path_model,
+                                     base_size = 18,
+                                     file,
+                                     height,
+                                     width,
+                                     dpi){
+
+    mod <- readRDS(path_model)
+
+    mod_broomed <- broom::augment(mod)
+
+    ifun <- Gamma(link = "log")$linkinv
+
+    gplot <- mod_broomed %>%
+        ggplot(aes(x = mod$family$linkinv(.fitted), y = dbh_cm)) +
+        geom_hex(bins = 75, color = "transparent") +
+        geom_smooth(method = "lm", color = "red") +
+        scale_fill_viridis_c() +
+        theme_minimal(base_size = 18) +
+        labs(x = "Predicted", y = "Observed", fill = "N")
+
+
+    ggplot2::ggsave(filename = file,
+                    plot = gplot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+
+}
 
 # Tables ------------------------------------------------------------------
 
@@ -3694,6 +4445,34 @@ make_wudapt_landcover_table <- function(wudapt_path, wudapt_desc_path, berlin_po
 
 # helpers -----------------------------------------------------------------
 
+
+
+#' Shorten species label to X. yyyy
+#'
+#' @param species vector, character/factor
+#'
+#' @return factor vector, same length as species
+shorten_species <- function(species){
+    spec_list <- species %>%
+        droplevels() %>%
+        as.character() %>%
+        strsplit(" ")
+
+
+    genus_short <- spec_list %>%
+        purrr::map_chr(1)
+    genus_short <- paste0(stringr::str_sub(genus_short, 1,1), ".")
+    #
+
+    species <- spec_list %>%
+        purrr::map_chr(2)
+
+    species_short <- paste(genus_short,
+                           species)
+
+
+    return(as.factor(species_short))
+}
 
 
 #' Adjusted filtering with ...
@@ -4011,14 +4790,14 @@ augment_prediction_range <- function(prediction_df, model_df, group_var, range_v
 #' Summarize model predictions across age groups
 #'
 #' @param dset data.frame, predictions from
-#' @param tempvar character, temp var used in model
+#' @param groupvars character, temp var and other variable(s) used in model; first needs to be temp var
 #' @param age_breaks numeric, breaks for age variable
 #' @param age_break_expr expression
 #'
 #' @return data.frame, containing mean responses and pooled standard errors for each age group
-summarize_age_groups <- function(dset,model_df, tempvar, age_break_expr){
+summarize_age_groups <- function(dset,model_df, groupvars, age_break_expr){
 
-    tempvar_sym <- rlang::sym(tempvar)
+    groupvars_sym <- rlang::syms(groupvars)
 
     ifun <- Gamma(link = "log")$linkinv
 
@@ -4027,7 +4806,7 @@ summarize_age_groups <- function(dset,model_df, tempvar, age_break_expr){
         # mutate(age_group = cut(STANDALTER, age_breaks)) %>%
         mutate(age_group = eval(age_break_expr)) %>%
         # filter(STANDALTER < 100) %>%
-        group_by(age_group, !! tempvar_sym, species_corrected) %>%
+        group_by(age_group, !!! groupvars_sym, species_corrected) %>%
         summarise(mean_dbh = mean(pred.fit, na.rm = TRUE),
                   mean_se = sqrt(sum(pred.se.fit))/n()) %>%
         mutate(response.fit.mean = ifun(mean_dbh),
@@ -4038,7 +4817,7 @@ summarize_age_groups <- function(dset,model_df, tempvar, age_break_expr){
     pred_groups <- augment_prediction_range(prediction_df = as.data.frame(pred_groups),
                                             model_df = model_df,
                                             group_var = "species_corrected",
-                                            range_var = tempvar,
+                                            range_var = groupvars[1],
                                             qtl = 1)
 
     return(pred_groups)
@@ -4181,7 +4960,7 @@ summarize_moran <- function(moran_list){
     for(mod in names(moran_list)){
 
 
-        current_mod <- moran_comparison[[mod]]
+        current_mod <- moran_list[[mod]]
 
 
 

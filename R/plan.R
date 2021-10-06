@@ -351,6 +351,78 @@ plan <- drake_plan(
        setNames(levels(mod_groups_filtered)),
 
 
+
+   mod_summaries_filtered = model_summarize(mgroups = mod_groups_filtered,
+                                    path_model_dir = path_model_dir_filtered,
+                                    path_model_files = path_model_files_filtered,
+                                    path_out = drake::file_out("./analysis/data/models/stat/summary/mod_filtered_summary.Rds")),
+
+
+   ## predictions
+
+
+   age_expr = expression(dplyr::case_when(
+       dplyr::between(STANDALTER, 30, 35) ~ "[30 - 35]",
+       dplyr::between(STANDALTER, 45, 50) ~ "[45 - 50]",
+       dplyr::between(STANDALTER, 60, 65) ~ "[60 - 65]",
+       dplyr::between(STANDALTER, 75, 80) ~ "[75 - 80]",
+       dplyr::between(STANDALTER, 90, 95) ~ "[90 - 95]",
+       TRUE ~ NA_character_
+   )),
+
+
+   # temp varying
+   pred_data_single_tempvar =  pred_dbh_temp_single_var(
+       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_reBEZIRK_var-day_2007', 'model_file_path'],
+       model_df = model_df_stat_filtered,
+       fixed_vars = list(X = 388141,
+                         Y = 5818534,
+                         STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95)),
+       age_expression = age_expr,
+       group_vars = NULL),
+
+
+   pred_data_single_tempvar_fullmodel =  pred_dbh_temp_single_var(
+       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_reBEZIRK_full_var-day_2007', 'model_file_path'],
+       model_df = model_df_stat_filtered,
+       fixed_vars = list(X = 388141,
+                         Y = 5818534,
+                         STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95)),
+       age_expression = age_expr,
+       group_vars = NULL),
+
+
+   # temp fixed
+   pred_data_single_tempvar_fixed_baumsch =  pred_dbh_temp_single_var(
+       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_baumsch_flaeche_reBEZIRK_var-day_2007', 'model_file_path'],
+       model_df = model_df_stat_filtered,
+       fixed_vars = list(
+           tempvar = 3,
+           X = 388141,
+           Y = 5818534,
+           STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
+           baumsch_flaeche_m2 = seq(1, 12, by = 0.1)),
+       age_expression = age_expr,
+       group_vars = "baumsch_flaeche_m2"),
+
+
+   pred_data_single_tempvar_fixed_build =  pred_dbh_temp_single_var(
+       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_building_height_reBEZIRK_var-day_2007', 'model_file_path'],
+       model_df = model_df_stat_filtered,
+       fixed_vars = list(
+           tempvar = 3,
+           X = 388141,
+           Y = 5818534,
+           STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
+           building_height_m = seq(1, 25, by = 0.25)),
+       age_expression = age_expr,
+       group_vars = "building_height_m"),
+
+
+
+
+
+
    # Stat Spatial ---------------------------
 
    ## autocorrelation ------------------
@@ -484,6 +556,103 @@ plan <- drake_plan(
                                                  width = 12,
                                                  dpi = 300),
 
+
+   ### stat: GAMM deviance ------------------
+
+   plot_gam_deviance = make_deviance_plot(
+       mod_summary_list = readRDS(mod_summaries_filtered),
+       base_size = 18,
+       file = drake::file_out("./analysis/figures/fig_model_deviance.png"),
+       height = 10,
+       width = 12,
+       dpi = 300),
+
+   ### stat: GAMM day_2007 prediction ----------------
+
+   plot_gam_temp_prediction = plot_dbh_temp_single_var(
+       pred_list = pred_data_single_tempvar,
+       model_df = model_df_stat_filtered,
+       age_filter = NULL,
+       age_expression = age_expr,
+       prediction_range = "within",
+       base_size = 18,
+       file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007.png"),
+       height = 11,
+       width = 18,
+       dpi = 300),
+
+
+   plot_gam_temp_prediction_fullmodel = plot_dbh_temp_single_var(
+       pred_list = pred_data_single_tempvar_fullmodel,
+       model_df = model_df_stat_filtered,
+       age_filter = NULL,
+       age_expression = age_expr,
+       prediction_range = "within",
+       base_size = 18,
+       file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_fullmodel.png"),
+       height = 11,
+       width = 18,
+       dpi = 300),
+
+
+
+
+
+   plot_gam_temp_prediction_single_genus = plot_dbh_temp_single_var_single_species(pred_list = pred_data_single_tempvar,
+                                           model_df = model_df_stat_filtered,
+                                           age_filter = NULL,
+                                           species_filter = c("Tilia cordata", "Tilia platyphyllos"),
+                                           # species_filter = c("Tilia cordata","Platanus acerifolia"),
+                                           age_expression = age_expr,
+                                           prediction_range = "within",
+                                           base_size = 18,
+                                           file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_tilia.png"),
+                                           height = 6,
+                                           width = 12,
+                                           dpi = 300),
+
+
+
+   plot_gam_temp_prediction_single_genus_building_height = plot_dbh_temp_single_var_flex(pred_list = pred_data_single_tempvar_fixed_build,
+                                 model_df = model_df_stat_filtered,
+                                 var = "building_height_m",
+                                 age_filter = c("[45 - 50]", "[60 - 65]", '[75 - 80]', '[90 - 95]'),
+                                 species_filter = c("Tilia cordata", "Tilia platyphyllos"),
+                                 # species_filter = c("Tilia cordata","Platanus acerifolia"),
+                                 age_expression = age_expr,
+                                 prediction_range = "within",
+                                 base_size = 18,
+                                 file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_building_height_tilia.png"),
+                                 height = 7,
+                                 width = 8,
+                                 dpi = 300),
+
+
+
+
+    ### stat: Obs vs. Pred --------------------------------------------------
+
+
+   plot_obs_pred = plot_obs_predicted_model(path_model = bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_reBEZIRK_var-day_2007', 'model_file_path'],
+                                            file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_obs_pred.png"),
+                                            height = 7,
+                                            width = 8,
+                                            dpi = 300),
+
+
+
+
+
+   ### stat: moran comparison ------------------
+
+
+
+   plot_moran_blocks = plot_moran_comparison(moran_summary,
+                         base_size = 18,
+                         file = drake::file_out("./analysis/figures/fig-gam-spatial_moran_comparison_blocks.png"),
+                         height = 8,
+                         width = 14,
+                         dpi = 300),
 
     # tables ------------------------------------------
 

@@ -935,20 +935,28 @@ plotResiduals(simout, simple_spatial@frame$day_2007, quantreg = TRUE)
 drake::loadd(bam_dbh_fulldf)
 drake::loadd(model_df_full)
 drake::loadd(model_df_stat_filtered)
+drake::loadd(bam_dbh_filtered)
 
 
 
 # bam_dbh_fulldf[18:21, "model_file_path"]
 
 
+bam_dbh_filtered[
+    bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_reBEZIRK_var-day_2007', 'model_file_path']
 
 
 testvar <- make_model_prediction_df(
-    path_model = bam_dbh_fulldf[8:14, "model_file_path"],
-    model_df = model_df_full,
+    # path_model = bam_dbh_fulldf[8:14, "model_file_path"],
+    path_model = bam_dbh_filtered[
+        # bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_reBEZIRK_var-day_2007', 'model_file_path'],
+        bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_building_height_reBEZIRK_var-day_2007', 'model_file_path'],
+    model_df = model_df_stat_filtered %>%
+        mutate(species_corrected = droplevels(species_corrected)),
     fixed_vars = list(X = 385785,
                       Y = 5816681,
-                      STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95))
+                      STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
+                      building_height_m = c(7.5, 25))
 )
 
 
@@ -961,8 +969,8 @@ age_expr <- expression(dplyr::case_when(
     TRUE ~ NA_character_
 ))
 
-saveRDS(testvar, "testvar.Rds")
-testvar <- readRDS("testvar.Rds")
+# saveRDS(testvar, "testvar.Rds")
+# testvar <- readRDS("testvar.Rds")
 
 
 # age_breaks <- c(29, 35, 44,50,59,65,74,80,89,95)
@@ -977,8 +985,9 @@ pred_groups <- purrr::map2_dfr(
     function(x,y){
         summarize_age_groups(
             x,
-            model_df_full,
-            y,
+            model_df_stat_filtered %>%
+                mutate(species_corrected = droplevels(species_corrected)),
+            c(y, "building_height_m"),
             age_break_expr = age_expr)
     },
     .id = "tempvar"
@@ -1034,51 +1043,83 @@ plot_data <- pred_groups %>%
     tidyr::pivot_longer(cols = dplyr::all_of(names(testvar)),
                         names_to = "uhi_tempvar",
                         values_to = "temp_degc") %>%
-    dplyr::filter(age_group == "[60 - 65]", prediction_range == "within") %>%
+    dplyr::filter(age_group != "[60 - 65]", prediction_range == "within") %>%
+    dplyr::filter(age_group != "[75 - 80]", prediction_range == "within") %>%
+    # dplyr::filter(age_group != "[90 - 95]", prediction_range == "within") %>%
+    dplyr::filter() %>%
     dplyr::arrange(uhi_tempvar) %>%
     tidyr::drop_na(temp_degc) %>%
     group_by(species_corrected, uhi_tempvar) %>%
     mutate(temp_degc_scaled = scales::rescale(temp_degc, to = c(0,1)))
 
 grand_means <- plot_data %>%
-    filter(grepl("mod2015", uhi_tempvar)) %>%
-    group_by(species_corrected, temp_degc_scaled) %>%
-    summarise(grand_mean = mean(response.fit.mean, na.rm = TRUE),
-              n = n())
+    dplyr::filter(grepl("day_2007", uhi_tempvar)) %>%
+    dplyr::group_by(species_corrected, temp_degc_scaled) %>%
+    dplyr::summarise(grand_mean = mean(response.fit.mean, na.rm = TRUE),
+              n = dplyr::n())
 
+model_df_stat_filtered <- model_df_stat_filtered %>%
+    mutate(age_group = eval(age_expr))
 
 plt <- ggplot(data = plot_data %>%
                   filter(prediction_range == "within",
-                         grepl("mod2015", uhi_tempvar)) %>%
+                         grepl("day_2007", uhi_tempvar)) %>%
+                  # filter(prediction_range == "within",
+                  #        grepl("mod2015", uhi_tempvar)) %>%
                   ungroup(),
               aes(y = response.fit.mean,
-                  # x = temp_degc,
-                  x = temp_degc_scaled,
-                  colour = as.factor(uhi_tempvar),
-                  fill =  as.factor(uhi_tempvar),
-                  group = as.factor(uhi_tempvar),
+                  x = temp_degc,
+                  # x = temp_degc_scaled,
+                  colour = as.factor(age_group),
+                  fill =  as.factor(age_group),
+                  linetype = as.factor(building_height_m),
+                  # group = as.factor(age_group),
+                  # colour = as.factor(uhi_tempvar),
+                  # fill =  as.factor(uhi_tempvar),
+                  # group = as.factor(uhi_tempvar),
                   ymin = response.low.mean,
                   ymax = response.high.mean)) +
 
-    geom_ribbon(color = "transparent", alpha = 0.2) +
-    geom_line(linetype = 1)  +
+
+    stat_density(inherit.aes = FALSE,
+               data = model_df_stat_filtered %>%
+                   dplyr::filter(age_group != "[60 - 65]") %>%
+                   dplyr::filter(age_group != "[75 - 80]") ,
+               aes(x = day_2007,
+                   y = ..scaled..*100,
+                   fill = as.factor(age_group),),
+               position = "dodge",
+               geom = "area",
+               alpha = 0.4) +
+
+
+    # geom_ribbon(color = "transparent", alpha = 0.2) +
+    # geom_line(color = "black")  +
+
+    # geom_ribbon(linetype = 1) +
+
+
+    # geom_line(linetype = 1)  +
+    geom_line()  +
+
     # geom_line(inherit.aes = FALSE,
     #              data = grand_means,
     #              aes(y = grand_mean,
     #                  # x = temp_degc,
-    #                  x = temp_degc_scaled)) +
+    #                  # x = temp_degc_scaled
+    #                  )) +
 
-    geom_smooth(aes(group = 1), fill = "transparent", color = "black") +
+    # geom_smooth(aes(group = 1), fill = "transparent", color = "black") +
+    geom_smooth(aes(group = 1), formula = y ~ x, method = "lm", fill = "transparent", color = "black") +
 
-    #
-    # geom_ribbon(data = pred_groups %>%
-    #                 filter(prediction_range =="within"),
-    #             alpha = 0.2,
-    #             aes(),
-    #             color = "transparent") +
-    #
-    # geom_line(data = pred_groups %>%
-    #               filter(prediction_range =="within"))+
+#
+#     geom_ribbon(data = pred_groups %>%
+#                     filter(prediction_range =="within"),
+#                 alpha = 0.2,
+#                 color = "transparent") +
+#
+#     geom_line(data = pred_groups %>%
+#                   filter(prediction_range =="within"))+
     #
 # geom_ribbon(data = pred_groups,
 #             alpha = 0.2,  aes(ymin = response.low.mean, ymax = response.high.mean), color = "transparent",
@@ -1091,7 +1132,7 @@ plt <- ggplot(data = plot_data %>%
 theme(legend.position = 'right') +
     theme_minimal(base_size = 16) +
     # facet_grid(uhi_tempvar ~species_corrected, scales = "free_y") +
-    facet_wrap(~species_corrected, scales = "free_y") +
+    facet_grid(age_group~species_corrected, scales = "free_y") +
     scale_color_brewer(palette = 2, type = "qual") +
     scale_fill_brewer(palette = 2, type = "qual") +
     labs(color = "Model", fill = "Model", x = "Standardized UHI Magnitude", y = "Mean DBH (cm)")
@@ -1113,6 +1154,8 @@ mod_groups <- list.files(path_model_dir) %>%
     as.factor()
 
 # get model summaries -------------------------------------------------------
+
+
 future::plan(future::multisession(workers = 8))
 mod_summary_list <-
     furrr::future_map(
@@ -1401,6 +1444,8 @@ ggsave(plot = mod_plot, filename = "./analysis/figures/eda/model_sign_smooth.png
 
 # extract mod R2 ----------------------------------------------------------
 
+mod_summary_list <- mod_summaries_filtered
+## NEXT
 mod_n <- mod_summary_list %>%
     purrr::map_depth(2, "summary") %>%
     purrr::map_depth(2, "n") %>%
@@ -1454,24 +1499,46 @@ ggplot(mod_dev,
 
 
 ggplot(mod_dev %>%
-           mutate(is_spatial = grepl("spatial", mod_group)),
+           mutate(is_spatial = grepl("spatial", mod_group),
+                  mod_group = forcats::fct_relevel(mod_group, stringr::str_sort(levels(mod_group))),
+                  expvar = forcats::fct_relevel(
+                      expvar,
+                      "nullmodel",
+                      "baumsch_flaeche",
+                      "building_height",
+                      "soil_nutrients",
+                      "urbclim_mod_morning_3_5",
+                      "urbclim_mod_afternoon_13_15",
+                      "urbclim_mod_night_21_23")),
        aes(x = expvar,
-           y = deviance_explained)) +
+           y = deviance_explained * 100)) +
     # geom_line(data = mod_means, aes(x = y),  color = "black", group = 1, alpha = 0.3) +
+    # annotate("text", x = c(2.5, 5.5, 8, 10), y = rep(0.82, 4), label = c("no temp", "Urbclim", "Landsat", "Berlin UA")) +
+    # annotate("text", x = c(1:4), y = rep(0.82, 4), label = c("bla", "blu", "bli", "kli")) +
+    annotate("text", x = c(2.5), y = rep(80, 1), label = "bold(no~temp)", parse = TRUE) +
+    annotate("text", x = c(6),   y = rep(80, 1), label = "bold(Urbclim)", parse = TRUE) +
+    annotate("text", x = c(8),   y = rep(80, 1), label = "bold(Landsat)", parse = TRUE) +
+    annotate("text", x = c(10),  y = rep(80, 1), label = "bold(Berlin~EnvAt)", parse = TRUE) +
+    annotate(geom = "rect", xmin = 0.5, xmax = 4.5, ymin = -Inf, ymax = Inf, alpha = 0.3) +
+    annotate(geom = "rect", xmin = 4.5, xmax = 7.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "steelblue1") +
+    annotate(geom = "rect", xmin = 7.5, xmax = 8.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "darkorange") +
+    annotate(geom = "rect", xmin = 8.5, xmax = 11.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "seagreen4") +
     geom_boxplot() +
-    geom_jitter( shape = 21,width = .1, aes(size = n_sample,
+    geom_jitter( shape = 21,width = .25, aes(size = n_sample,
                                              fill = mod_group), alpha = 0.8) +
     # geom_linerange(data = mod_means, aes(x = y, xmin = ymin, xmax = ymax), color = "black") +
     # geom_point(data = mod_means, aes(y = y), size = 3, shape = 21, color = "white", fill = "black") +
-    guides(fill = guide_legend(override.aes = list(size = 3),
-                               ncol = 3)) +
+    guides(fill = guide_legend(override.aes = list(size = 5),
+                               ncol = 2)) +
     theme_minimal() +
     theme(legend.position = "top",
-          legend.direction = "vertical") +
+          legend.direction = "vertical",
+          strip.text = element_text(size = 12)) +
     # scale_fill_brewer(type = "qual", palette = "Set3") +
     scale_fill_manual(values = pals::kelly(n = n_distinct(mod_dev$mod_group))) +
     scale_x_discrete(guide = guide_axis(n.dodge = 2) ) +
-    facet_wrap(~is_spatial)
+    facet_wrap(~is_spatial, ncol = 1, labeller = labeller(is_spatial = c('TRUE' = "spatial - f(x,y)", 'FALSE' = 'non-spatial')))  +
+    labs(x = NULL, y = "Explained Deviance (%)")
 
 
 
@@ -1580,8 +1647,74 @@ moran_comparison = assess_morans_spatialmod(
 
 
 library(ggplot2)
-res %>%
-    dplyr::filter(vars %in% c('observed', 'expected')) %>%
-    ggplot(aes(x = grid_area , y = value, fill = spatial_model)) +
-    geom_bar(position = "dodge", stat = "identity") +
-    facet_wrap(~model)
+
+plot_moran_comparison <- function(moran_summary,
+                                  prediction_range = "full",
+                                  file,
+                                  height,
+                                  width,
+                                  dpi){
+
+
+    moran_summary %>%
+        dplyr::filter(vars %in% c('observed', 'expected')) %>%
+        ggplot(aes(x = grid_area , y = value, fill = spatial_model)) +
+        geom_bar(position = "dodge", stat = "identity") +
+        facet_wrap(~model) +
+        scale_fill_brewer(type = "qual", palette = 2) +
+        theme_minimal(base_size = base_size)
+
+
+
+    ggplot2::ggsave(filename = file,
+                    plot = gplot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+}
+
+
+# plot resid vs. pred -----------------------------------------------------
+
+
+
+#' Observed vs. Predicted for given model
+#'
+#' @param path_model
+#' @param base_size
+#' @param file
+#' @param height
+#' @param width
+#' @param dpi
+#'
+plot_obs_predicted_model <- function(path_model,
+                                     base_size = 18,
+                                     file,
+                                     height,
+                                     width,
+                                     dpi){
+
+    mod <- readRDS(path_model)
+
+    mod_broomed <- broom::augment(mod)
+
+    ifun <- Gamma(link = "log")$linkinv
+
+    gplot <- mod_broomed %>%
+        ggplot(aes(x = mod$family$linkinv(.fitted), y = dbh_cm)) +
+        geom_hex(bins = 75, color = "transparent") +
+        geom_smooth(method = "lm", color = "red") +
+        scale_fill_viridis_c() +
+        theme_minimal(base_size = 18) +
+        labs(x = "Predicted", y = "Observed", fill = "N")
+
+
+    ggplot2::ggsave(filename = file,
+                    plot = gplot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+
+}
