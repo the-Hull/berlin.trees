@@ -2243,8 +2243,14 @@ make_model_grid <- function(){
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_building_height_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(building_height_m, k = k_uni) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_building_height30_reBEZIRK" =
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(building_height_m30, k = k_uni) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_lcz6_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(lcz_prop_6, k = k_uni) + s(BEZIRK, bs = 're')"),
+        # list("mI_spatial_age_x_temp_by_species_lcz6_30_reBEZIRK" =
+        #          "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(lcz_prop30_6, k = k_uni) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_lcz6_75_reBEZIRK" =
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(lcz_prop75_6, k = k_uni) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_soil_nutrients_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(log10(soil_nutrients_swert), k = k_soilnut) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_baumsch_flaeche_reBEZIRK" =
@@ -2260,8 +2266,14 @@ make_model_grid <- function(){
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_building_height_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(building_height_m, k = k_uni) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_ADD_temp_by_species_building_height30_reBEZIRK" =
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(building_height_m30, k = k_uni) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_lcz6_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(lcz_prop_6, k = k_uni) + s(BEZIRK, bs = 're')"),
+        # list("mI_spatial_age_ADD_temp_by_species_lcz6_30_reBEZIRK" =
+        #          "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(lcz_prop30_6, k = k_uni) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_ADD_temp_by_species_lcz6_75_reBEZIRK" =
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(lcz_prop75_6, k = k_uni) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_soil_nutrients_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(log10(soil_nutrients_swert), k = k_soilnut) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_baumsch_flaeche_reBEZIRK" =
@@ -2293,8 +2305,12 @@ make_model_grid <- function(){
         "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(log10(soil_nutrients_swert),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
     forms$`mI_age_by_species_NOTEMP_var-building_height` <-
         "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(building_height_m,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_age_by_species_NOTEMP_var-building_height30` <-
+        "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(building_height_m30,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
     forms$`mI_age_by_species_NOTEMP_var-baumsch_flaeche` <-
         "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(log10(baumsch_flaeche_m2),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_age_by_species_NOTEMP_var-lcz6` <-
+        "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(lcz_prop_6,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
 
 
     forms$`mI_spatial_age_by_species_NOTEMP_var-nullmodel` <-
@@ -2303,8 +2319,12 @@ make_model_grid <- function(){
         "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(log10(soil_nutrients_swert),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
     forms$`mI_spatial_age_by_species_NOTEMP_var-building_height` <-
         "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(building_height_m,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_spatial_age_by_species_NOTEMP_var-building_height30` <-
+        "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(building_height_m30,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
     forms$`mI_spatial_age_by_species_NOTEMP_var-baumsch_flaeche` <-
         "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(log10(baumsch_flaeche_m2),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_spatial_age_by_species_NOTEMP_var-lcz6` <-
+        "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(lcz_prop_6,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
 
 
 
@@ -2432,12 +2452,80 @@ make_model_prediction_df <- function(
 
 
 
+    # bheight
+    # check which variable is present
+    if(!is.null(fixed_vars[['building_height_m']])){
 
-    bheight <- {if(!is.null(fixed_vars$building_height_m)){
-        fixed_vars$building_height_m
-    } else {
-        median(model_df[['building_height_m']], na.rm = TRUE)
-    }}
+        bheight <- fixed_vars[['building_height_m']]
+        bheight_name <- 'building_height_m'
+    } else if(!is.null(fixed_vars[['building_height_m30']])){
+        bheight <- fixed_vars[['building_height_m30']]
+        bheight_name <- 'building_height_m30'
+
+    } else if(is.null(fixed_vars[['building_height_m']]) &
+              is.null(fixed_vars[['building_height_m30']])){
+        bheight <- median(model_df[['building_height_m']], na.rm = TRUE)
+        bheight_name <- 'building_height_m'
+
+    }
+
+    # lcz prop
+    if(!is.null(fixed_vars[['lcz_prop_6']])){
+
+        lcz <- fixed_vars[['lcz_prop_6']]
+        lcz_name <- 'lcz_prop_6'
+    } else if(!is.null(fixed_vars[['lcz_prop30_6']])){
+        lcz <- fixed_vars[['lcz_prop30_6']]
+        lcz_name <- 'lcz_prop30_6'
+    } else if(!is.null(fixed_vars[['lcz_prop75_6']])){
+        lcz <- fixed_vars[['lcz_prop75_6']]
+        lcz_name <- 'lcz_prop75_6'
+
+    } else if(is.null(fixed_vars[['lcz_prop_6']]) &
+              is.null(fixed_vars[['lcz_prop30_6']]) &
+              is.null(fixed_vars[['lcz_prop75_6']])){
+        lcz <- median(model_df[['lcz_prop_6']], na.rm = TRUE)
+        lcz_name <- 'lcz_prop_6'
+
+    }
+#
+#     lcz <- {if(!is.null(fixed_vars$lcz_prop_6)){
+#         fixed_vars$lcz_prop_6
+#     } else {
+#         median(model_df[['lcz_prop_6']], na.rm = TRUE)
+#     }}
+
+#
+#
+#     if(!is.null(fixed_vars[['building_height_m']])){
+#         bheight <- fixed_vars$building_height_m
+#             # else {
+#         #     median(model_df[['building_height_m']], na.rm = TRUE)
+#         # }
+#
+#         bheight_name <- "building_height_m"
+#
+#     } else if(is.null(fixed_vars[['building_height_m']]) & is.null(fixed_vars[['building_height_m30']]) ){
+#         bheight <- median(model_df[['building_height_m']], na.rm = TRUE)
+#         bheight_name <- "building_height_m"
+#
+#
+#
+#     } else {
+#
+#         bheight <- {if(!is.null(fixed_vars[['building_height_m30']]) & is.null(fixed_vars[['building_height_m']])){
+#             fixed_vars$building_height_m30
+#         }
+#         bheight_name <- "building_height_m30"
+#
+#
+#     }}
+#
+
+
+
+
+
 
     snut <- {if(!is.null(fixed_vars$soil_nutrients_swert)){
         fixed_vars$soil_nutrients_swert
@@ -2452,7 +2540,11 @@ make_model_prediction_df <- function(
                       median(model_df[['baumsch_flaeche_m2']], na.rm = TRUE)
     }}
 
-
+    # lcz <- {if(!is.null(fixed_vars$lcz_prop_6)){
+    #     fixed_vars$lcz_prop_6
+    # } else {
+    #     median(model_df[['lcz_prop_6']], na.rm = TRUE)
+    # }}
 
 
 
@@ -2493,6 +2585,8 @@ make_model_prediction_df <- function(
                 snut,
                 # baumsch
                 baumsch,
+                #lcz,
+                lcz,
                 # BEZIRK
                 as.factor(unique(model_df[['BEZIRK']]))
             )
@@ -2503,13 +2597,15 @@ make_model_prediction_df <- function(
                 "Y",
                 "STANDALTER",
                 "species_corrected",
-                "building_height_m",
+                bheight_name,
                 "soil_nutrients_swert",
                 "baumsch_flaeche_m2",
+                "lcz_prop_6",
                 "BEZIRK"
             )
 
             tmp <- do.call(expand.grid, args_list)
+
 
 
             #
@@ -2551,15 +2647,12 @@ make_model_prediction_df <- function(
 
 
 
-            print("a")
-            print(colnames(pd))
             p <- mgcv::predict.bam(
                 object = mod,
                 newdata = pd,
                 se.fit = TRUE,
                 exclude = "s(BEZIRK)")
 
-            print("b")
 
             pd <- cbind(pd, pred = p) %>%
                 mutate(fit.low = pred.fit - crit_val * pred.se.fit,
@@ -3749,16 +3842,16 @@ make_berlin_climate_plot <- function(
 
 #' Create model overview for SI
 #'
-#' @param sf_data sf-tibble of Berlin trees
-#' @param poly sf-tibble, polygons of Berlin districts
 #' @param file character, file path (use with \code{\link{file_out}}), must include file ending
 #' @param height numeric, height in inches
 #' @param width numeric, width in inches
 #' @param dpi numeric, dpi of output
+#' @param deviance_list list from deviance summary
+#' @param base_size
 #'
 #' @return ggplot object
 #' @import ggplot2
-make_deviance_plot <- function(mod_summary_list,
+make_deviance_plot <- function(deviance_list,
                                base_size = 18,
                                file,
                                height,
@@ -3766,41 +3859,41 @@ make_deviance_plot <- function(mod_summary_list,
                                dpi){
 
 
-    # grab sample size per model
-    mod_n <- mod_summary_list %>%
-        purrr::map_depth(2, "summary") %>%
-        purrr::map_depth(2, "n") %>%
-        purrr::map_depth(2, .f = as.data.frame) %>%
-        purrr::map(dplyr::bind_rows, .id = "expvar")  %>%
-        purrr::map2(names(.),
-                    ~mutate(.x, mod_group = .y)) %>%
-        do.call(rbind, .) %>%
-        `rownames<-`(NULL) %>%
-        rename(n_sample = 2)
-
-
-
-    # extract deviance and add sample sizes
-    mod_dev <- mod_summary_list %>%
-        purrr::map_depth(2, "summary") %>%
-        purrr::map_depth(2, "dev.expl") %>%
-        purrr::map_depth(2, .f = as.data.frame) %>%
-        purrr::map(dplyr::bind_rows, .id = "expvar")  %>%
-        purrr::map2(names(.),
-                    ~mutate(.x, mod_group = .y)) %>%
-        do.call(rbind, .) %>%
-        `rownames<-`(NULL) %>%
-        dplyr::rename(deviance_explained = 2) %>%
-        dplyr::left_join(mod_n, by = c("mod_group", 'expvar'))
-
-    # calc data for points over box plot
-    mod_means <- mod_dev %>%
-        dplyr::group_by(mod_group) %>%
-        dplyr::summarise(ggplot2:::mean_se(deviance_explained)) %>%
-        dplyr::arrange(desc(y))
-
-    mod_dev$mod_group <- forcats::fct_relevel(mod_dev$mod_group, mod_means$mod_group)
-    mod_means$mod_group <- forcats::fct_relevel(mod_means$mod_group, mod_means$mod_group)
+    # # grab sample size per model
+    # mod_n <- mod_summary_list %>%
+    #     purrr::map_depth(2, "summary") %>%
+    #     purrr::map_depth(2, "n") %>%
+    #     purrr::map_depth(2, .f = as.data.frame) %>%
+    #     purrr::map(dplyr::bind_rows, .id = "expvar")  %>%
+    #     purrr::map2(names(.),
+    #                 ~mutate(.x, mod_group = .y)) %>%
+    #     do.call(rbind, .) %>%
+    #     `rownames<-`(NULL) %>%
+    #     rename(n_sample = 2)
+    #
+    #
+    #
+    # # extract deviance and add sample sizes
+    # mod_dev <- mod_summary_list %>%
+    #     purrr::map_depth(2, "summary") %>%
+    #     purrr::map_depth(2, "dev.expl") %>%
+    #     purrr::map_depth(2, .f = as.data.frame) %>%
+    #     purrr::map(dplyr::bind_rows, .id = "expvar")  %>%
+    #     purrr::map2(names(.),
+    #                 ~mutate(.x, mod_group = .y)) %>%
+    #     do.call(rbind, .) %>%
+    #     `rownames<-`(NULL) %>%
+    #     dplyr::rename(deviance_explained = 2) %>%
+    #     dplyr::left_join(mod_n, by = c("mod_group", 'expvar'))
+    #
+    # # calc data for points over box plot
+    # mod_means <- mod_dev %>%
+    #     dplyr::group_by(mod_group) %>%
+    #     dplyr::summarise(ggplot2:::mean_se(deviance_explained)) %>%
+    #     dplyr::arrange(desc(y))
+    #
+    # mod_dev$mod_group <- forcats::fct_relevel(mod_dev$mod_group, mod_means$mod_group)
+    # mod_means$mod_group <- forcats::fct_relevel(mod_means$mod_group, mod_means$mod_group)
 
     # ggplot(mod_dev,
     #        aes(y = mod_group,
@@ -3817,44 +3910,66 @@ make_deviance_plot <- function(mod_summary_list,
     #
 
     gplot <- ggplot(
-        mod_dev %>%
+        deviance_list$deviances %>%
             dplyr::mutate(is_spatial = grepl("spatial", mod_group),
+                          is_tensor = grepl("_x_", fixed = TRUE, ignore.case = FALSE, mod_group),
                           mod_group = forcats::fct_relevel(mod_group, stringr::str_sort(levels(mod_group))),
                           expvar = forcats::fct_relevel(
                               expvar,
                               "nullmodel",
+                              "soil_nutrients",
                               "baumsch_flaeche",
                               "building_height",
-                              "soil_nutrients",
+                              "building_height30",
+                              "lcz6",
                               "urbclim_mod_morning_3_5",
                               "urbclim_mod_afternoon_13_15",
-                              "urbclim_mod_night_21_23")),
+                              "urbclim_mod_night_21_23",
+                              "day_2007",
+                              "night_2007") %>%
+                              forcats::fct_relabel(., .fun = ~gsub("urbclim_mod_", "", x = .x)) %>%
+                              forcats::fct_relabel(., .fun = ~gsub("mod2015_T2M", "", x = .x)) %>%
+                              forcats::fct_relabel(., .fun = ~gsub("HMEA", " H", x = .x))),
         aes(x = expvar,
             y = deviance_explained * 100)) +
         # geom_line(data = mod_means, aes(x = y),  color = "black", group = 1, alpha = 0.3) +
         # annotate("text", x = c(2.5, 5.5, 8, 10), y = rep(0.82, 4), label = c("no temp", "Urbclim", "Landsat", "Berlin UA")) +
         # annotate("text", x = c(1:4), y = rep(0.82, 4), label = c("bla", "blu", "bli", "kli")) +
-        annotate("text", x = c(2.5), y = rep(80, 1), label = "bold(no~temp)", parse = TRUE) +
-        annotate("text", x = c(6),   y = rep(80, 1), label = "bold(Urbclim)", parse = TRUE) +
-        annotate("text", x = c(8),   y = rep(80, 1), label = "bold(Landsat)", parse = TRUE) +
-        annotate("text", x = c(10),  y = rep(80, 1), label = "bold(Berlin~EnvAt)", parse = TRUE) +
-        annotate(geom = "rect", xmin = 0.5, xmax = 4.5, ymin = -Inf, ymax = Inf, alpha = 0.3) +
-        annotate(geom = "rect", xmin = 4.5, xmax = 7.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "steelblue1") +
-        annotate(geom = "rect", xmin = 7.5, xmax = 8.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "darkorange") +
-        annotate(geom = "rect", xmin = 8.5, xmax = 11.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "seagreen4") +
+        annotate("text", x = c(3.5), y = rep(80, 1), label = "bold(no~temp)", parse = TRUE) +
+        annotate("text", x = c(8),   y = rep(80, 1), label = "bold(Urbclim)", parse = TRUE) +
+        annotate("text", x = c(10.5),   y = rep(80, 1), label = "bold(Landsat)", parse = TRUE) +
+        annotate("text", x = c(13),  y = rep(80, 1), label = "bold(Berlin~EnvAt)", parse = TRUE) +
+        annotate(geom = "rect", xmin = 0.5, xmax = 6.5, ymin = -Inf, ymax = Inf, alpha = 0.3) +
+        annotate(geom = "rect", xmin = 6.5, xmax = 9.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "steelblue1") +
+        annotate(geom = "rect", xmin = 9.5, xmax = 11.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "darkorange") +
+        annotate(geom = "rect", xmin = 11.5, xmax = 14.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "seagreen4") +
+
         geom_boxplot() +
-        geom_jitter( shape = 21,width = .25, aes(size = n_sample,
-                                                 fill = mod_group), alpha = 0.8) +
+        geom_jitter(width = .25,
+                    aes(size = n_sample,
+                        shape = is_tensor,
+                        fill = mod_group),
+                    alpha = 0.8) +
         # geom_linerange(data = mod_means, aes(x = y, xmin = ymin, xmax = ymax), color = "black") +
         # geom_point(data = mod_means, aes(y = y), size = 3, shape = 21, color = "white", fill = "black") +
-        guides(fill = guide_legend(override.aes = list(size = 5),
-                                   ncol = 2)) +
+
+        guides(fill = guide_legend(
+            override.aes = list(
+                size = 5,
+                shape = c(rep(21, 2),
+                          23,
+                          rep(21, 8),
+                          rep(23, 7))),
+            ncol = 2),
+            shape = "none") +
         theme_minimal() +
         theme(legend.position = "top",
               legend.direction = "vertical",
               strip.text = element_text(size = 12)) +
         # scale_fill_brewer(type = "qual", palette = "Set3") +
-        scale_fill_manual(values = pals::kelly(n = n_distinct(mod_dev$mod_group))) +
+        scale_shape_manual(values = c(21, 23)) +
+        scale_fill_manual(values = pals::kelly(n = n_distinct(deviance_list$deviances$mod_group)),
+                          aesthetics = c("fill")) +
         scale_x_discrete(guide = guide_axis(n.dodge = 3) ) +
         facet_wrap(~is_spatial, ncol = 1, labeller = labeller(is_spatial = c('TRUE' = "spatial - f(x,y)", 'FALSE' = 'non-spatial')))  +
         labs(x = NULL, y = "Explained Deviance (%)")
@@ -3910,7 +4025,7 @@ plot_dbh_temp_single_var <- function(pred_list,
         tidyr::pivot_longer(cols = dplyr::all_of(names(pred_list$pred_var)),
                             names_to = "uhi_tempvar",
                             values_to = "temp_degc") %>%
-        dplyr::filter(prediction_range == prediction_range) %>%
+        # dplyr::filter(prediction_range == prediction_range) %>%
         dplyr::filter(age_group %nin% age_filter) %>%
         dplyr::arrange(uhi_tempvar) %>%
         tidyr::drop_na(temp_degc) %>%
@@ -3948,12 +4063,15 @@ plot_dbh_temp_single_var <- function(pred_list,
         geom_smooth(aes(group = 1),
                     formula = y ~ x,
                     method = "lm", fill = "transparent",
-                    color = "gray50") +
+                    color = "gray50",
+                    data = plot_data %>% filter(prediction_range == "within")) +
         # geom_ribbon(linetype = 1) +
 
 
         # geom_line(linetype = 1)  +
-        geom_line()  +
+        geom_line(linetype = 3, color = "black", size = 0.75)  +
+        geom_line(data = plot_data %>% filter(prediction_range == "within")) +
+
 
 
         facet_grid(age_group~species_corrected,
@@ -4020,6 +4138,11 @@ plot_dbh_temp_single_var_single_species <- function(pred_list,
                                                     dpi
 ){
 
+    if(is.null(species_filter)){
+        species_filter <- unique(model_df$species_corrected)
+    }
+
+
     `%nin%` <- Negate(`%in%`)
 
     model_df <- model_df %>%
@@ -4073,12 +4196,14 @@ plot_dbh_temp_single_var_single_species <- function(pred_list,
         geom_smooth(aes(group = species_corrected),
                     formula = y ~ x,
                     method = "lm", fill = "transparent",
-                    color = "gray50") +
+                    color = "gray50",
+                    data = plot_data %>% filter(prediction_range == "within")) +
         # geom_ribbon(linetype = 1) +
 
 
-        # geom_line(linetype = 1)  +
-        geom_line()  +
+        geom_line(linetype = 3, color = "black", size = 0.75)  +
+        geom_line(data = plot_data %>% filter(prediction_range == "within")) +
+
 
         #
         facet_grid(~age_group) +
@@ -4136,6 +4261,7 @@ plot_dbh_temp_single_var_flex <- function(pred_list,
                                           base_size = 18,
                                           prediction_range = "full",
                                           file,
+                                          x_label,
                                           height,
                                           width,
                                           dpi
@@ -4143,6 +4269,10 @@ plot_dbh_temp_single_var_flex <- function(pred_list,
 
     `%nin%` <- Negate(`%in%`)
     var <- rlang::sym(var)
+
+    if(is.null(species_filter)){
+        species_filter <- unique(model_df$species_corrected)
+    }
 
 
     model_df <- model_df %>%
@@ -4219,7 +4349,7 @@ plot_dbh_temp_single_var_flex <- function(pred_list,
 
         labs(color = "Species",
              fill = "Species",
-             x = expression('Building height '[bar(150~m)]~(m)),
+             x = x_label,
              y = expression(bar(DBH)~(cm)))
 
 
@@ -4446,6 +4576,54 @@ make_wudapt_landcover_table <- function(wudapt_path, wudapt_desc_path, berlin_po
 # helpers -----------------------------------------------------------------
 
 
+#' Extract relevant metrics from model summary list
+#'
+#' @param mod_summary_list list of model summaries
+#'
+#' @return list, contains
+#' @export
+extract_mod_deviance <- function(mod_summary_list){
+    # grab sample size per model
+    mod_n <- mod_summary_list %>%
+        purrr::map_depth(2, "summary") %>%
+        purrr::map_depth(2, "n") %>%
+        purrr::map_depth(2, .f = as.data.frame) %>%
+        purrr::map(dplyr::bind_rows, .id = "expvar")  %>%
+        purrr::map2(names(.),
+                    ~mutate(.x, mod_group = .y)) %>%
+        do.call(rbind, .) %>%
+        `rownames<-`(NULL) %>%
+        rename(n_sample = 2)
+
+
+
+    # extract deviance and add sample sizes
+    mod_dev <- mod_summary_list %>%
+        purrr::map_depth(2, "summary") %>%
+        purrr::map_depth(2, "dev.expl") %>%
+        purrr::map_depth(2, .f = as.data.frame) %>%
+        purrr::map(dplyr::bind_rows, .id = "expvar")  %>%
+        purrr::map2(names(.),
+                    ~mutate(.x, mod_group = .y)) %>%
+        do.call(rbind, .) %>%
+        `rownames<-`(NULL) %>%
+        dplyr::rename(deviance_explained = 2) %>%
+        dplyr::left_join(mod_n, by = c("mod_group", 'expvar'))
+
+    # calc data for points over box plot
+    mod_means <- mod_dev %>%
+        dplyr::group_by(mod_group) %>%
+        dplyr::summarise(ggplot2:::mean_se(deviance_explained)) %>%
+        dplyr::arrange(desc(y))
+
+    mod_dev$mod_group <- forcats::fct_relevel(mod_dev$mod_group, mod_means$mod_group)
+    mod_means$mod_group <- forcats::fct_relevel(mod_means$mod_group, mod_means$mod_group)
+
+    return(list(deviances = mod_dev, variables_means = mod_means))
+
+
+}
+
 
 #' Shorten species label to X. yyyy
 #'
@@ -4605,7 +4783,10 @@ combine_covariates <- function(data_list){
                     "soil_type",
                     "soil_nutrients",
                     "lcz_cover_prop",
+                    # "lcz_cover_prop30",
+                    "lcz_cover_prop75",
                     "building_height_mean_m",
+                    "building_height_mean_m_30",
                     "berlin_heat_model",
                     "berlin_urbclim_heat_model")
 
@@ -4622,7 +4803,10 @@ combine_covariates <- function(data_list){
                           prefix_names(sf::st_drop_geometry(data_list$soil_type)[, soil_type_cols ], "soil_type"),
                           prefix_names(apply(sf::st_drop_geometry(data_list$soil_nutrients)[, soil_nutrient_cols], MAR = 2, as.numeric), "soil_nutrients"),
                           building_height_m = data_list$building_height_mean_m,
+                          building_height_m30 = data_list$building_height_mean_m_30,
                           prefix_names(data_list$lcz_cover_prop, "lcz_prop"),
+                          # prefix_names(data_list$lcz_cover_prop30, "lcz_prop30"),
+                          prefix_names(data_list$lcz_cover_prop75, "lcz_prop75"),
                           prefix_names(data_list$berlin_heat_model, "mod2015"),
                           prefix_names(data_list$berlin_urbclim_heat_model, "urbclim_mod")
     )
@@ -4742,7 +4926,6 @@ augment_prediction_range <- function(prediction_df, model_df, group_var, range_v
 
     split_df <- split(as.data.frame(model_df), model_df[, group_var])
 
-    print("here")
 
     # get group variable range
     group_range <- lapply(split_df,

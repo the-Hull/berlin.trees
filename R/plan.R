@@ -9,7 +9,7 @@ library(dplyr)
 redownload <- FALSE
 
 
-plan <- drake_plan(
+plan <- drake::drake_plan(
 
     # getting data
 
@@ -151,6 +151,14 @@ plan <- drake_plan(
                                                       5000),
                                            ~assess_relative_lcz_cover(.x, wudapt_lcz, 150),
                                            .progress = FALSE),
+    # lcz_cover_prop30 = furrr::future_map_dfr(split_by_n(full_data_set_clean,
+    #                                                   5000),
+    #                                        ~assess_relative_lcz_cover(.x, wudapt_lcz, 30),
+    #                                        .progress = FALSE),
+    lcz_cover_prop75 = furrr::future_map_dfr(split_by_n(full_data_set_clean,
+                                                      5000),
+                                           ~assess_relative_lcz_cover(.x, wudapt_lcz, 75),
+                                           .progress = FALSE),
 
     building_height_mean_m = furrr::future_map(split_by_n(full_data_set_clean,
                                      75000),
@@ -158,6 +166,17 @@ plan <- drake_plan(
                                                            bh_raster = berlin_building_height,
                                                            buff_dist = 150),
                           .progress = FALSE) %>%
+        unlist() %>%
+        unname(),
+
+
+
+    building_height_mean_m_30 = furrr::future_map(split_by_n(full_data_set_clean,
+                                                          75000),
+                                               ~assess_relative_building_height(sf_data =  .x,
+                                                                                bh_raster = berlin_building_height,
+                                                                                buff_dist = 30),
+                                               .progress = FALSE) %>%
         unlist() %>%
         unname(),
 
@@ -186,7 +205,10 @@ plan <- drake_plan(
                             soil_type = soil_type_data,
                             soil_nutrients = soil_nutrient_data,
                             building_height_mean_m = building_height_mean_m,
+                            building_height_mean_m_30 = building_height_mean_m_30,
                             lcz_cover_prop = lcz_cover_prop,
+                            # lcz_cover_prop30 = lcz_cover_prop30,
+                            lcz_cover_prop75 = lcz_cover_prop75,
                             berlin_heat_model = berlin_heat_model,
                             berlin_urbclim_heat_model = berlin_urbclim_heat_model)),
 
@@ -317,12 +339,12 @@ plan <- drake_plan(
                                            min_individuals = 1000),
 
 
-   path_model_dir_filtered = "analysis/data/models/stat/filtered/",
+   path_model_dir_filtered = drake::file_in("analysis/data/models/stat/filtered/"),
    path_model_files_filtered = list.files(path_model_dir_filtered, full.names = TRUE),
 
 
 
-   mod_groups_filtered = {list.files(path_model_dir_filtered) %>%
+   mod_groups_filtered = {list.files(path = path_model_dir_filtered, ignore.case = TRUE) %>%
        gsub("_var-.*Rds$", "", .) %>%
        as.factor()},
 
@@ -419,7 +441,57 @@ plan <- drake_plan(
        group_vars = "building_height_m"),
 
 
+   pred_data_single_tempvar_fixed_build30 =  pred_dbh_temp_single_var(
+       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_building_height30_reBEZIRK_var-day_2007', 'model_file_path'],
+       model_df = model_df_stat_filtered,
+       fixed_vars = list(
+           tempvar = 3,
+           X = 388141,
+           Y = 5818534,
+           STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
+           building_height_m30 = seq(1, 25, by = 0.25)),
+       age_expression = age_expr,
+       group_vars = "building_height_m30"),
 
+   pred_data_single_tempvar_fixed_build30_temp15 =  pred_dbh_temp_single_var(
+       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_building_height30_reBEZIRK_var-day_2007', 'model_file_path'],
+       model_df = model_df_stat_filtered,
+       fixed_vars = list(
+           tempvar = 1.5,
+           X = 388141,
+           Y = 5818534,
+           STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
+           building_height_m30 = seq(1, 25, by = 0.25)),
+       age_expression = age_expr,
+       group_vars = "building_height_m30"),
+
+
+
+   pred_data_single_tempvar_fixed_build30_temp_multi =  pred_dbh_temp_single_var(
+       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_building_height30_reBEZIRK_var-day_2007', 'model_file_path'],
+       model_df = model_df_stat_filtered,
+       fixed_vars = list(
+           tempvar = c(-3, -1.5, 0, 1.5,3, 4.5, 6),
+           X = 388141,
+           Y = 5818534,
+           STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
+           building_height_m30 = seq(1, 25, by = 0.25)),
+       age_expression = age_expr,
+       group_vars = c("building_height_m30")),
+
+
+
+   pred_data_single_tempvar_fixed_lcz6 =  pred_dbh_temp_single_var(
+       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_lcz6_reBEZIRK_var-day_2007', 'model_file_path'],
+       model_df = model_df_stat_filtered,
+       fixed_vars = list(
+           tempvar = 3,
+           X = 388141,
+           Y = 5818534,
+           STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
+           lcz_prop_6 = seq(0, 1, by = 0.025)),
+       age_expression = age_expr,
+       group_vars = "lcz_prop_6"),
 
 
 
@@ -559,8 +631,11 @@ plan <- drake_plan(
 
    ### stat: GAMM deviance ------------------
 
+
+   gam_deviances = extract_mod_deviance(readRDS(drake::file_in("analysis/data/models/stat/summary/mod_filtered_summary.Rds"))),
+
    plot_gam_deviance = make_deviance_plot(
-       mod_summary_list = readRDS(mod_summaries_filtered),
+       deviance_list = gam_deviances,
        base_size = 18,
        file = drake::file_out("./analysis/figures/fig_model_deviance.png"),
        height = 10,
@@ -622,7 +697,54 @@ plan <- drake_plan(
                                  age_expression = age_expr,
                                  prediction_range = "within",
                                  base_size = 18,
+                                 x_label = expression('Building height '[bar(150~m)]~(m)),
                                  file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_building_height_tilia.png"),
+                                 height = 7,
+                                 width = 8,
+                                 dpi = 300),
+
+
+   plot_gam_temp_prediction_single_genus_building_height30 = plot_dbh_temp_single_var_flex(pred_list = pred_data_single_tempvar_fixed_build30,
+                                 model_df = model_df_stat_filtered,
+                                 var = "building_height_m30",
+                                 age_filter = c("[45 - 50]", "[60 - 65]", '[75 - 80]', '[90 - 95]'),
+                                 species_filter = c("Tilia cordata", "Tilia platyphyllos"),
+                                 # species_filter = c("Tilia cordata","Platanus acerifolia"),
+                                 age_expression = age_expr,
+                                 prediction_range = "within",
+                                 base_size = 18,
+                                 x_label = expression('Building height '[bar(30~m)]~(m)),
+                                 file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_building_height30_tilia.png"),
+                                 height = 7,
+                                 width = 8,
+                                 dpi = 300),
+   plot_gam_temp_prediction_single_genus_building_height30_temp15 = plot_dbh_temp_single_var_flex(pred_list = pred_data_single_tempvar_fixed_build30_temp15,
+                                 model_df = model_df_stat_filtered,
+                                 var = "building_height_m30",
+                                 age_filter = c("[45 - 50]", "[60 - 65]", '[75 - 80]', '[90 - 95]'),
+                                 species_filter = c("Tilia cordata", "Tilia platyphyllos"),
+                                 # species_filter = c("Tilia cordata","Platanus acerifolia"),
+                                 age_expression = age_expr,
+                                 prediction_range = "within",
+                                 base_size = 18,
+                                 x_label = expression('Building height '[bar(30~m)]~(m)),
+                                 file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_building_height30_temp1-5_tilia.png"),
+                                 height = 7,
+                                 width = 8,
+                                 dpi = 300),
+
+
+   plot_gam_temp_prediction_single_genus_lcz6 = plot_dbh_temp_single_var_flex(pred_list = pred_data_single_tempvar_fixed_lcz6,
+                                 model_df = model_df_stat_filtered,
+                                 var = "lcz_prop_6",
+                                 age_filter = c("[45 - 50]", "[60 - 65]", '[75 - 80]', '[90 - 95]'),
+                                 species_filter = c("Tilia cordata", "Tilia platyphyllos"),
+                                 # species_filter = c("Tilia cordata","Platanus acerifolia"),
+                                 age_expression = age_expr,
+                                 prediction_range = "within",
+                                 base_size = 18,
+                                 x_label = "Proportional Cover - LCZ6",
+                                 file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_lcz6_tilia.png"),
                                  height = 7,
                                  width = 8,
                                  dpi = 300),
