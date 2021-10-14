@@ -2243,14 +2243,14 @@ make_model_grid <- function(){
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_building_height_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(building_height_m, k = k_uni) + s(BEZIRK, bs = 're')"),
-        list("mI_spatial_age_x_temp_by_species_building_height30_reBEZIRK" =
-                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(building_height_m30, k = k_uni) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_building_height300_reBEZIRK" =
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(building_height_m300, k = k_uni) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_lcz6_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(lcz_prop_6, k = k_uni) + s(BEZIRK, bs = 're')"),
         # list("mI_spatial_age_x_temp_by_species_lcz6_30_reBEZIRK" =
         #          "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(lcz_prop30_6, k = k_uni) + s(BEZIRK, bs = 're')"),
-        list("mI_spatial_age_x_temp_by_species_lcz6_75_reBEZIRK" =
-                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(lcz_prop75_6, k = k_uni) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_x_temp_by_species_lcz6_300_reBEZIRK" =
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(lcz_prop300_6, k = k_uni) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_soil_nutrients_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + te(STANDALTER, %s, by = species_corrected, m = 1, k = k_te) + species_corrected + +s(log10(soil_nutrients_swert), k = k_soilnut) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_x_temp_by_species_baumsch_flaeche_reBEZIRK" =
@@ -2266,14 +2266,14 @@ make_model_grid <- function(){
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_building_height_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(building_height_m, k = k_uni) + s(BEZIRK, bs = 're')"),
-        list("mI_spatial_age_ADD_temp_by_species_building_height30_reBEZIRK" =
-                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(building_height_m30, k = k_uni) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_ADD_temp_by_species_building_height300_reBEZIRK" =
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(building_height_m300, k = k_uni) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_lcz6_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(lcz_prop_6, k = k_uni) + s(BEZIRK, bs = 're')"),
         # list("mI_spatial_age_ADD_temp_by_species_lcz6_30_reBEZIRK" =
         #          "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(lcz_prop30_6, k = k_uni) + s(BEZIRK, bs = 're')"),
-        list("mI_spatial_age_ADD_temp_by_species_lcz6_75_reBEZIRK" =
-                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(lcz_prop75_6, k = k_uni) + s(BEZIRK, bs = 're')"),
+        list("mI_spatial_age_ADD_temp_by_species_lcz6_300_reBEZIRK" =
+                 "dbh_cm ~  s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(lcz_prop300_6, k = k_uni) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_soil_nutrients_reBEZIRK" =
                  "dbh_cm ~  s(X,Y, k = k_spatial_soilnutmodel, bs = 'gp', m = 3) + s(STANDALTER, by = species_corrected, k = k_age) +s(%s, by = species_corrected, k = k_uni)  + species_corrected + +s(log10(soil_nutrients_swert), k = k_soilnut) + s(BEZIRK, bs = 're')"),
         list("mI_spatial_age_ADD_temp_by_species_baumsch_flaeche_reBEZIRK" =
@@ -2305,12 +2305,14 @@ make_model_grid <- function(){
         "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(log10(soil_nutrients_swert),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
     forms$`mI_age_by_species_NOTEMP_var-building_height` <-
         "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(building_height_m,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
-    forms$`mI_age_by_species_NOTEMP_var-building_height30` <-
-        "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(building_height_m30,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_age_by_species_NOTEMP_var-building_height300` <-
+        "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(building_height_m300,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
     forms$`mI_age_by_species_NOTEMP_var-baumsch_flaeche` <-
         "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(log10(baumsch_flaeche_m2),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
     forms$`mI_age_by_species_NOTEMP_var-lcz6` <-
         "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(lcz_prop_6,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_age_by_species_NOTEMP_var-lcz6_300` <-
+        "dbh_cm ~ s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(lcz_prop300_6,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
 
 
     forms$`mI_spatial_age_by_species_NOTEMP_var-nullmodel` <-
@@ -2319,12 +2321,14 @@ make_model_grid <- function(){
         "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(log10(soil_nutrients_swert),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
     forms$`mI_spatial_age_by_species_NOTEMP_var-building_height` <-
         "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(building_height_m,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
-    forms$`mI_spatial_age_by_species_NOTEMP_var-building_height30` <-
-        "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(building_height_m30,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_spatial_age_by_species_NOTEMP_var-building_height300` <-
+        "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(building_height_m300,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
     forms$`mI_spatial_age_by_species_NOTEMP_var-baumsch_flaeche` <-
         "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(log10(baumsch_flaeche_m2),  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
     forms$`mI_spatial_age_by_species_NOTEMP_var-lcz6` <-
         "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(lcz_prop_6,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
+    forms$`mI_spatial_age_by_species_NOTEMP_var-lcz6_300` <-
+        "dbh_cm ~ s(X,Y, k = k_spatial, bs = 'gp', m = 3) + s(STANDALTER,  by = species_corrected, m = 1, k = k_age) + s(lcz_prop300_6,  by = species_corrected, m = 1, k = k_uni) + species_corrected + s(BEZIRK, bs = 're')"
 
 
 
@@ -2458,12 +2462,12 @@ make_model_prediction_df <- function(
 
         bheight <- fixed_vars[['building_height_m']]
         bheight_name <- 'building_height_m'
-    } else if(!is.null(fixed_vars[['building_height_m30']])){
-        bheight <- fixed_vars[['building_height_m30']]
-        bheight_name <- 'building_height_m30'
+    } else if(!is.null(fixed_vars[['building_height_m300']])){
+        bheight <- fixed_vars[['building_height_m300']]
+        bheight_name <- 'building_height_m300'
 
     } else if(is.null(fixed_vars[['building_height_m']]) &
-              is.null(fixed_vars[['building_height_m30']])){
+              is.null(fixed_vars[['building_height_m300']])){
         bheight <- median(model_df[['building_height_m']], na.rm = TRUE)
         bheight_name <- 'building_height_m'
 
@@ -2477,13 +2481,13 @@ make_model_prediction_df <- function(
     } else if(!is.null(fixed_vars[['lcz_prop30_6']])){
         lcz <- fixed_vars[['lcz_prop30_6']]
         lcz_name <- 'lcz_prop30_6'
-    } else if(!is.null(fixed_vars[['lcz_prop75_6']])){
-        lcz <- fixed_vars[['lcz_prop75_6']]
-        lcz_name <- 'lcz_prop75_6'
+    } else if(!is.null(fixed_vars[['lcz_prop300_6']])){
+        lcz <- fixed_vars[['lcz_prop300_6']]
+        lcz_name <- 'lcz_prop300_6'
 
     } else if(is.null(fixed_vars[['lcz_prop_6']]) &
               is.null(fixed_vars[['lcz_prop30_6']]) &
-              is.null(fixed_vars[['lcz_prop75_6']])){
+              is.null(fixed_vars[['lcz_prop300_6']])){
         lcz <- median(model_df[['lcz_prop_6']], na.rm = TRUE)
         lcz_name <- 'lcz_prop_6'
 
@@ -2505,7 +2509,7 @@ make_model_prediction_df <- function(
 #
 #         bheight_name <- "building_height_m"
 #
-#     } else if(is.null(fixed_vars[['building_height_m']]) & is.null(fixed_vars[['building_height_m30']]) ){
+#     } else if(is.null(fixed_vars[['building_height_m']]) & is.null(fixed_vars[['building_height_m300']]) ){
 #         bheight <- median(model_df[['building_height_m']], na.rm = TRUE)
 #         bheight_name <- "building_height_m"
 #
@@ -2513,10 +2517,10 @@ make_model_prediction_df <- function(
 #
 #     } else {
 #
-#         bheight <- {if(!is.null(fixed_vars[['building_height_m30']]) & is.null(fixed_vars[['building_height_m']])){
-#             fixed_vars$building_height_m30
+#         bheight <- {if(!is.null(fixed_vars[['building_height_m300']]) & is.null(fixed_vars[['building_height_m']])){
+#             fixed_vars$building_height_m300
 #         }
-#         bheight_name <- "building_height_m30"
+#         bheight_name <- "building_height_m300"
 #
 #
 #     }}
@@ -2685,13 +2689,15 @@ make_model_prediction_df <- function(
 #' Hard-coded 8 parallel sessions to summarise models
 #'
 #' @param mgroups factor, model subgroups
+#' @param bam_df data.frame, output from apply gam models (for dependency only)
 #' @param path_model_dir character, path to model dir (filtered/nonfiltered)
 #' @param path_model_files character, path to model files
 #' @param path_out character, path to save RDS of model summary on disk
 #'
 #'
 #' @return list of model summaries
-model_summarize <- function(mgroups, path_model_dir, path_model_files,path_out){
+model_summarize <- function(mgroups, bam_df, path_model_dir, path_model_files,path_out){
+
 
 
 
@@ -2710,10 +2716,13 @@ model_summarize <- function(mgroups, path_model_dir, path_model_files,path_out){
 
                                    s <- m %>%
                                        summary()
+                                   g <- broom::glance(m)
 
                                    m <- broom::augment(m,
                                                        type.residuals = "response",
                                                        type.response = "response")
+
+
 
                                    v <- {
                                        if(grepl("mI_spatial", x = x)){
@@ -2724,6 +2733,7 @@ model_summarize <- function(mgroups, path_model_dir, path_model_files,path_out){
 
                                    return(
                                        list(summary = s,
+                                            summary_broom = g,
                                             variogramm = v,
                                             fitted_response = m[ , c("dbh_cm", ".fitted", ".resid")]))
 
@@ -3958,8 +3968,8 @@ make_deviance_plot <- function(deviance_list,
                 size = 5,
                 shape = c(rep(21, 2),
                           23,
-                          rep(21, 8),
-                          rep(23, 7))),
+                          rep(21, 9),
+                          rep(23, 8))),
             ncol = 2),
             shape = "none") +
         theme_minimal() +
@@ -4435,7 +4445,7 @@ plot_obs_predicted_model <- function(path_model,
     gplot <- mod_broomed %>%
         ggplot(aes(x = mod$family$linkinv(.fitted), y = dbh_cm)) +
         geom_hex(bins = 75, color = "transparent") +
-        geom_smooth(method = "lm", color = "red") +
+        geom_smooth(method = "lm", formula = "y ~ x - 1", color = "red") +
         scale_fill_viridis_c() +
         theme_minimal(base_size = 18) +
         labs(x = "Predicted", y = "Observed", fill = "N")
@@ -4784,9 +4794,9 @@ combine_covariates <- function(data_list){
                     "soil_nutrients",
                     "lcz_cover_prop",
                     # "lcz_cover_prop30",
-                    "lcz_cover_prop75",
+                    "lcz_cover_prop300",
                     "building_height_mean_m",
-                    "building_height_mean_m_30",
+                    "building_height_mean_m_300",
                     "berlin_heat_model",
                     "berlin_urbclim_heat_model")
 
@@ -4803,10 +4813,10 @@ combine_covariates <- function(data_list){
                           prefix_names(sf::st_drop_geometry(data_list$soil_type)[, soil_type_cols ], "soil_type"),
                           prefix_names(apply(sf::st_drop_geometry(data_list$soil_nutrients)[, soil_nutrient_cols], MAR = 2, as.numeric), "soil_nutrients"),
                           building_height_m = data_list$building_height_mean_m,
-                          building_height_m30 = data_list$building_height_mean_m_30,
+                          building_height_m300 = data_list$building_height_mean_m_300,
                           prefix_names(data_list$lcz_cover_prop, "lcz_prop"),
                           # prefix_names(data_list$lcz_cover_prop30, "lcz_prop30"),
-                          prefix_names(data_list$lcz_cover_prop75, "lcz_prop75"),
+                          prefix_names(data_list$lcz_cover_prop300, "lcz_prop300"),
                           prefix_names(data_list$berlin_heat_model, "mod2015"),
                           prefix_names(data_list$berlin_urbclim_heat_model, "urbclim_mod")
     )
@@ -5052,6 +5062,7 @@ check_moran <- function(dframe, grid, min_obs = 1000, var){
 #' Compare Variable and residuals
 #'
 #' @param mod_list list, mod_group_list
+#' @param bam_df data.frame, for dependency management only
 #' @param var_response character, column name of response variable, e.g. dbh_cm, must be used in model from `mod_list`
 #' @param var_resid character, column name of residuals, typically `.resid` from `broom::augment`
 #' @param gridp sf df, 2x2 grid squares to subset data - currently split by column `grid_region`
@@ -5059,9 +5070,11 @@ check_moran <- function(dframe, grid, min_obs = 1000, var){
 #' @return list with nesting from mod_list, with ouput from `ape::Moran.I()`
 assess_morans_spatialmod <- function(mod_list,
                                      gridp,
+                                     bam_df,
                                      var_response,
                                      var_resid){
 
+    invisible(is.null(bam_df))
 
     # cycle through
     moran_mods <- purrr::map2(mod_list,

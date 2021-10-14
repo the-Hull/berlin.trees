@@ -1558,16 +1558,20 @@ short_mod[[1]] <- short_mod[[1]][1:2]
 #' Compare Variable and residuals
 #'
 #' @param mod_list list, mod_group_list
+#' @param bam_df data.frame, for dependency management only
 #' @param var_response character, column name of response variable, e.g. dbh_cm, must be used in model from `mod_list`
 #' @param var_resid character, column name of residuals, typically `.resid` from `broom::augment`
 #' @param gridp sf df, 2x2 grid squares to subset data - currently split by column `grid_region`
 #'
 #' @return list with nesting from mod_list, with ouput from `ape::Moran.I()`
 assess_morans_spatialmod <- function(mod_list,
+                                     bam_df,
                                      gridp,
                                      var_response,
                                      var_resid){
 
+
+    invisible(is.null(bam_df))
 
     # cycle through
     moran_mods <- purrr::map2(mod_list,
@@ -1718,3 +1722,194 @@ plot_obs_predicted_model <- function(path_model,
 
 
 }
+
+
+
+# BIWI --------------------------------------------------------------------
+
+series_long <- prep_rwl_data(path_meta_cores = "C:/Users/ahurl/Documents/_work/p024_gfz_berlin-trees/ext_data/BIWI/dendro_da/Dendro/BIWi_INV_20190123.xlsx",
+                             path_meta_trees = "C:/Users/ahurl/Documents/_work/p024_gfz_berlin-trees/ext_data/BIWI/dendro_da/Dendro/BIWi_INV_20190123.xlsx",
+                             path_meta_sites = "C:/Users/ahurl/Documents/_work/p024_gfz_berlin-trees/ext_data/BIWI/dendro_da/Dendro/BIWi_INV_20190123.xlsx",
+                             path_dir_fh = "C:/Users/ahurl/Documents/_work/p024_gfz_berlin-trees/ext_data/BIWI/dendro_da/Dendro/RAW/")
+
+
+slide_rwl <- make_rwl_windows(df = series_long,
+                              window_n = 5,
+                              type = "slide")
+
+move_rwl <- make_rwl_windows(df = series_long,
+                             window_n = 5,
+                             type = "move")
+
+
+
+#' Estimates time and age trend in BIWI data
+#'
+#' @param df data.frame, either all series raw or moving data
+#' @return mgcv::gamm output
+apply_gam_biwi <- function(df){
+
+    # define inner fncs
+    make_urban_df <- function(df, year_min, year_max,year_break, cambial_age_max){
+        urban_rwl <- df %>%
+            mutate(age_group = cut(cambial_age, seq(from = 0, to = 120, by = 5)),
+                   site_global = case_when(
+                       site_type %in% c("natural", "rural") ~ "forest",
+                       TRUE ~ "urban"),
+                   year_break = as.factor(
+                       ifelse(
+                           year <= year_break,
+                           sprintf("<=%s", year_break),
+                           sprintf(">%s", year_break))),
+                   location_short = as.factor(location_short)) %>%
+            filter(site_global == "urban",
+                   year >= year_min,
+                   year <= year_max,
+                   cambial_age <= cambial_age_max,
+                   cambial_age >= 0,
+                   !is.na(rwl_mm)) %>%
+            arrange(tree_id, year)
+
+        return(urban_rwl)
+    }
+
+    urban_rwl <- make_urban_df(df,
+                               year_min = 1920,
+                               year_max = 2000,
+                               year_break = 1960,
+                               cambial_age_max = 100)
+
+
+    library(mgcv)
+    ctrl <- list(niterEM = 0, msVerbose = TRUE, optimMethod="L-BFGS-B")
+
+    # mod <- gamm(rwl_mm ~ s(year, k = 30) + s(cambial_age, k = 6, by = year_break) + year_break,
+    #
+    #                     data = urban_rwl,
+    #                     family = Gamma(link = "log"),
+    #                     correlation = corARMA(form = ~ year | tree_id, p = 3),
+    #                     random = list(tree_id = ~1,
+    #                                   species = ~ 1),
+    # niterPQL = 50)
+
+
+    mod <- gam(list(rwl_mm ~ s(year, k = 30) + s(cambial_age, k = 6, by = year_break) + year_break,
+                    ~ s(cambial_age, k = 6, by = year_break) + year_break),
+               data = urban_rwl,
+               family = mgcv::gammals(link = list("identity", "log")),
+               correlation = corARMA(form = ~ year | tree_id, p = 3),
+               # random = list(tree_id = ~1,
+               # species = ~ 1),
+               niterPQL = 50)
+
+
+
+    mod$df <- urban_rwl
+
+
+    return(mod)
+
+
+}
+
+
+
+mod6 <- apply_gam_biwi(df = series_long)
+mod7 <- apply_gam_biwi(df = series_long)
+
+
+layout(matrix(1:2, ncol = 2))
+res <- resid(mod6$lme, type = "normalized")
+res <- resid(mod7, type = "deviance")
+acf(res, lag.max = 10, main = "ACF - AR(2) errors")
+pacf(res, lag.max = 10, main = "pACF- AR(2) errors")
+layout(1)
+
+
+
+
+
+
+
+new_dat <- expand.grid(cambial_age = c(0:80), year = c(1920:2000)) %>%
+    mutate(year_break = as.factor(ifelse(year <= 1960, "<=1960", ">1960")))
+preds <- predict(mod6$gam, newdata = new_dat, type = "link", se.fit = TRUE)
+# preds <- predict(mod_growth$gam, newdata = new_dat, type = "terms", exclude = "s(location_short,species)")
+
+# sapply(mod_growth$smooth, '[[',  'label')
+# mod_fixed <- rowSums(preds) + attr(preds, "constant")
+# new_dat$fitted <- family(mod_growth)$linkinv(mod_fixed)
+# new_dat$fitted <- preds
+
+
+new_dat <- cbind(new_dat, preds) %>%
+    mutate(year_group = as.factor(year <= 1950))
+
+
+serror <- function(x){
+
+    return(sqrt(sum(x^2))/length(x))
+
+}
+
+
+means <- new_dat %>%
+    group_by(cambial_age, year_break) %>%
+    summarize(mean_link = mean(fit),
+              mean_fit_response = Gamma(link="log")$linkinv(mean_link),
+              mean_se_response_low = Gamma(link="log")$linkinv(mean_link - 1.96 * serror(se.fit)),
+              mean_se_response_high = Gamma(link="log")$linkinv(mean_link + 1.96 * serror(se.fit)))
+
+
+# ggplot(new_dat, aes(x = cambial_age, y = fitted, color = year <= 1950, group = year)) +
+#     geom_line(alpha = 0.3) +
+#     stat_summary(geom = "ribbon", fun.data = "mean_cl_boot", aes(group  = year <= 1950, fill = year <= 1950), alpha = 0.6) +
+#     theme_minimal()
+ggplot(new_dat, aes(x = cambial_age, y = Gamma(link="log")$linkinv(fit), color = year_break, group = year)) +
+    geom_line(alpha = 0.2) +
+    geom_ribbon(data = means,
+                inherit.aes = FALSE,
+                aes(x = cambial_age, y = mean_fit_response,
+                    ymin = mean_se_response_low,
+                    ymax = mean_se_response_high,
+                    color = year_break,
+                    fill = year_break,
+                    group = year_break),
+                alpha = 0.35) +
+    geom_line(data = means,
+              inherit.aes = FALSE,
+              aes(x = cambial_age,
+                  y = mean_fit_response,
+                  group = year_break,
+                  color = year_break),
+              size = 1) +
+    # lims(y = c(0, 7)) +
+    scale_fill_brewer(type = "qual", palette = 2) +
+    scale_color_brewer(type = "qual", palette = 2) +
+    theme_test(base_family = "serif")
+
+
+
+
+ggplot(mod6$df,
+       aes(x = cambial_age,
+           y = rwl_mm,
+           color = year_break,
+           group = tree_id)) +
+    geom_line()
+
+
+
+bam_gls <- mgcv::gam(formula = list(rwl_mm ~ s(year, k = 30) +
+                                        s(cambial_age, k = 8, by = year_break, m = 2) +
+                                        year_break +
+                                        s(tree_id, species, bs = "re"),
+                                    ~ s(cambial_age, k = 8, by = year_break) + year_break),
+                     family = gammals(),
+                     data = mod6$df)
+
+gam.check(bam_gls)
+plot(bam_gls, scheme = 2, pages = 1)
+
+
+

@@ -155,9 +155,9 @@ plan <- drake::drake_plan(
     #                                                   5000),
     #                                        ~assess_relative_lcz_cover(.x, wudapt_lcz, 30),
     #                                        .progress = FALSE),
-    lcz_cover_prop75 = furrr::future_map_dfr(split_by_n(full_data_set_clean,
+    lcz_cover_prop300 = furrr::future_map_dfr(split_by_n(full_data_set_clean,
                                                       5000),
-                                           ~assess_relative_lcz_cover(.x, wudapt_lcz, 75),
+                                           ~assess_relative_lcz_cover(.x, wudapt_lcz, 300),
                                            .progress = FALSE),
 
     building_height_mean_m = furrr::future_map(split_by_n(full_data_set_clean,
@@ -171,11 +171,11 @@ plan <- drake::drake_plan(
 
 
 
-    building_height_mean_m_30 = furrr::future_map(split_by_n(full_data_set_clean,
+    building_height_mean_m_300 = furrr::future_map(split_by_n(full_data_set_clean,
                                                           75000),
                                                ~assess_relative_building_height(sf_data =  .x,
                                                                                 bh_raster = berlin_building_height,
-                                                                                buff_dist = 30),
+                                                                                buff_dist = 300),
                                                .progress = FALSE) %>%
         unlist() %>%
         unname(),
@@ -205,10 +205,10 @@ plan <- drake::drake_plan(
                             soil_type = soil_type_data,
                             soil_nutrients = soil_nutrient_data,
                             building_height_mean_m = building_height_mean_m,
-                            building_height_mean_m_30 = building_height_mean_m_30,
+                            building_height_mean_m_300 = building_height_mean_m_300,
                             lcz_cover_prop = lcz_cover_prop,
                             # lcz_cover_prop30 = lcz_cover_prop30,
-                            lcz_cover_prop75 = lcz_cover_prop75,
+                            lcz_cover_prop300 = lcz_cover_prop300,
                             berlin_heat_model = berlin_heat_model,
                             berlin_urbclim_heat_model = berlin_urbclim_heat_model)),
 
@@ -285,13 +285,13 @@ plan <- drake::drake_plan(
 
     model_grid = make_model_grid(),
 
-    bam_dbh_fulldf = apply_gam_mod(path = "./analysis/data/models/stat/fulldf/",
+    bam_dbh_fulldf = apply_gam_mod(path = drake::file_out("./analysis/data/models/stat/fulldf/"),
                                    model_grid = model_grid,
                                    dat = model_df_full,
                                    overwrite = TRUE),
     #
     #
-    bam_dbh_filtered = apply_gam_mod(path = "./analysis/data/models/stat/filtered/",
+    bam_dbh_filtered = apply_gam_mod(path = drake::file_out("./analysis/data/models/stat/filtered/"),
                                      model_grid = model_grid,
                                      dat = model_df_stat_filtered,
                                      overwrite = TRUE),
@@ -339,14 +339,18 @@ plan <- drake::drake_plan(
                                            min_individuals = 1000),
 
 
-   path_model_dir_filtered = drake::file_in("analysis/data/models/stat/filtered/"),
-   path_model_files_filtered = list.files(path_model_dir_filtered, full.names = TRUE),
+   # path_model_dir_filtered = drake::file_in("analysis/data/models/stat/filtered/"),
+   path_model_files_filtered = {
+
+       invisible(is.null(bam_dbh_filtered))
+       list.files(drake::file_in("analysis/data/models/stat/filtered/"), full.names = TRUE)}
+   ,
 
 
 
-   mod_groups_filtered = {list.files(path = path_model_dir_filtered, ignore.case = TRUE) %>%
+   mod_groups_filtered = list.files(path = drake::file_in("analysis/data/models/stat/filtered/"), ignore.case = TRUE) %>%
        gsub("_var-.*Rds$", "", .) %>%
-       as.factor()},
+       as.factor(),
 
 
    # grab model paths and format into list
@@ -363,7 +367,7 @@ plan <- drake::drake_plan(
                               }) %>%
                    setNames(
                        fs::path_ext_remove(
-                           list.files(path_model_dir_filtered)[idx]
+                           list.files(drake::file_in("analysis/data/models/stat/filtered/"))[idx]
                        )  %>%
                            gsub(pattern = ".*var-",
                                 replacement = "",
@@ -375,7 +379,8 @@ plan <- drake::drake_plan(
 
 
    mod_summaries_filtered = model_summarize(mgroups = mod_groups_filtered,
-                                    path_model_dir = path_model_dir_filtered,
+                                            bam_df = bam_dbh_filtered,
+                                    path_model_dir = drake::file_in("analysis/data/models/stat/filtered/"),
                                     path_model_files = path_model_files_filtered,
                                     path_out = drake::file_out("./analysis/data/models/stat/summary/mod_filtered_summary.Rds")),
 
@@ -441,43 +446,43 @@ plan <- drake::drake_plan(
        group_vars = "building_height_m"),
 
 
-   pred_data_single_tempvar_fixed_build30 =  pred_dbh_temp_single_var(
-       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_building_height30_reBEZIRK_var-day_2007', 'model_file_path'],
+   pred_data_single_tempvar_fixed_build300 =  pred_dbh_temp_single_var(
+       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_building_height300_reBEZIRK_var-day_2007', 'model_file_path'],
        model_df = model_df_stat_filtered,
        fixed_vars = list(
            tempvar = 3,
            X = 388141,
            Y = 5818534,
            STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
-           building_height_m30 = seq(1, 25, by = 0.25)),
+           building_height_m300 = seq(1, 25, by = 0.25)),
        age_expression = age_expr,
-       group_vars = "building_height_m30"),
+       group_vars = "building_height_m300"),
 
-   pred_data_single_tempvar_fixed_build30_temp15 =  pred_dbh_temp_single_var(
-       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_building_height30_reBEZIRK_var-day_2007', 'model_file_path'],
+   pred_data_single_tempvar_fixed_build300_temp15 =  pred_dbh_temp_single_var(
+       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_building_height300_reBEZIRK_var-day_2007', 'model_file_path'],
        model_df = model_df_stat_filtered,
        fixed_vars = list(
            tempvar = 1.5,
            X = 388141,
            Y = 5818534,
            STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
-           building_height_m30 = seq(1, 25, by = 0.25)),
+           building_height_m300 = seq(1, 25, by = 0.25)),
        age_expression = age_expr,
-       group_vars = "building_height_m30"),
+       group_vars = "building_height_m300"),
 
 
 
-   pred_data_single_tempvar_fixed_build30_temp_multi =  pred_dbh_temp_single_var(
-       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_building_height30_reBEZIRK_var-day_2007', 'model_file_path'],
+   pred_data_single_tempvar_fixed_build300_temp_multi =  pred_dbh_temp_single_var(
+       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_building_height300_reBEZIRK_var-day_2007', 'model_file_path'],
        model_df = model_df_stat_filtered,
        fixed_vars = list(
            tempvar = c(-3, -1.5, 0, 1.5,3, 4.5, 6),
            X = 388141,
            Y = 5818534,
            STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
-           building_height_m30 = seq(1, 25, by = 0.25)),
+           building_height_m300 = seq(1, 25, by = 0.25)),
        age_expression = age_expr,
-       group_vars = c("building_height_m30")),
+       group_vars = c("building_height_m300")),
 
 
 
@@ -494,6 +499,18 @@ plan <- drake::drake_plan(
        group_vars = "lcz_prop_6"),
 
 
+   pred_data_single_tempvar_fixed_lcz6_300 =  pred_dbh_temp_single_var(
+       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_lcz6_300_reBEZIRK_var-day_2007', 'model_file_path'],
+       model_df = model_df_stat_filtered,
+       fixed_vars = list(
+           tempvar = 3,
+           X = 388141,
+           Y = 5818534,
+           STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
+           lcz_prop_6 = seq(0, 1, by = 0.025)),
+       age_expression = age_expr,
+       group_vars = "lcz_prop300_6"),
+
 
    # Stat Spatial ---------------------------
 
@@ -504,6 +521,7 @@ plan <- drake::drake_plan(
        mod_list = mod_group_list_filtered[grepl(
            pattern = "(mI_spatial_age_ADD_temp_by_species_reBEZIRK$|mI_spatial_age_x_temp_by_species_reBEZIRK$)",
            x = names(mod_group_list_filtered))],
+       bam_df = bam_dbh_filtered,
        gridp = gridp,
        var_response = "dbh_cm",
        var_resid = ".resid"
@@ -632,7 +650,8 @@ plan <- drake::drake_plan(
    ### stat: GAMM deviance ------------------
 
 
-   gam_deviances = extract_mod_deviance(readRDS(drake::file_in("analysis/data/models/stat/summary/mod_filtered_summary.Rds"))),
+   gam_deviances = extract_mod_deviance(readRDS(mod_summaries_filtered)),
+   # gam_deviances = extract_mod_deviance(readRDS(drake::file_in("analysis/data/models/stat/summary/mod_filtered_summary.Rds"))),
 
    plot_gam_deviance = make_deviance_plot(
        deviance_list = gam_deviances,
@@ -704,30 +723,30 @@ plan <- drake::drake_plan(
                                  dpi = 300),
 
 
-   plot_gam_temp_prediction_single_genus_building_height30 = plot_dbh_temp_single_var_flex(pred_list = pred_data_single_tempvar_fixed_build30,
+   plot_gam_temp_prediction_single_genus_building_height300 = plot_dbh_temp_single_var_flex(pred_list = pred_data_single_tempvar_fixed_build300,
                                  model_df = model_df_stat_filtered,
-                                 var = "building_height_m30",
+                                 var = "building_height_m300",
                                  age_filter = c("[45 - 50]", "[60 - 65]", '[75 - 80]', '[90 - 95]'),
                                  species_filter = c("Tilia cordata", "Tilia platyphyllos"),
                                  # species_filter = c("Tilia cordata","Platanus acerifolia"),
                                  age_expression = age_expr,
                                  prediction_range = "within",
                                  base_size = 18,
-                                 x_label = expression('Building height '[bar(30~m)]~(m)),
-                                 file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_building_height30_tilia.png"),
+                                 x_label = expression('Building height '[bar(300~m)]~(m)),
+                                 file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_building_height300_tilia.png"),
                                  height = 7,
                                  width = 8,
                                  dpi = 300),
-   plot_gam_temp_prediction_single_genus_building_height30_temp15 = plot_dbh_temp_single_var_flex(pred_list = pred_data_single_tempvar_fixed_build30_temp15,
+   plot_gam_temp_prediction_single_genus_building_height300_temp15 = plot_dbh_temp_single_var_flex(pred_list = pred_data_single_tempvar_fixed_build300_temp15,
                                  model_df = model_df_stat_filtered,
-                                 var = "building_height_m30",
+                                 var = "building_height_m300",
                                  age_filter = c("[45 - 50]", "[60 - 65]", '[75 - 80]', '[90 - 95]'),
                                  species_filter = c("Tilia cordata", "Tilia platyphyllos"),
                                  # species_filter = c("Tilia cordata","Platanus acerifolia"),
                                  age_expression = age_expr,
                                  prediction_range = "within",
                                  base_size = 18,
-                                 x_label = expression('Building height '[bar(30~m)]~(m)),
+                                 x_label = expression('Building height '[bar(300~m)]~(m)),
                                  file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_building_height30_temp1-5_tilia.png"),
                                  height = 7,
                                  width = 8,
@@ -743,16 +762,31 @@ plan <- drake::drake_plan(
                                  age_expression = age_expr,
                                  prediction_range = "within",
                                  base_size = 18,
-                                 x_label = "Proportional Cover - LCZ6",
+                                 x_label = expression('Proportional Cover - LCZ6'[bar(150~m)]),
                                  file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_lcz6_tilia.png"),
                                  height = 7,
                                  width = 8,
                                  dpi = 300),
 
 
+   plot_gam_temp_prediction_single_genus_lcz6_300 = plot_dbh_temp_single_var_flex(
+       pred_list = pred_data_single_tempvar_fixed_lcz6_300,
+       model_df = model_df_stat_filtered,
+       var = "lcz_prop300_6",
+       age_filter = c("[45 - 50]", "[60 - 65]", '[75 - 80]', '[90 - 95]'),
+       species_filter = c("Tilia cordata", "Tilia platyphyllos"),
+       # species_filter = c("Tilia cordata","Platanus acerifolia"),
+       age_expression = age_expr,
+       prediction_range = "within",
+       base_size = 18,
+       x_label = expression('Proportional Cover - LCZ6'[bar(300~m)]),
+       file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_lcz6_300_tilia.png"),
+       height = 7,
+       width = 8,
+       dpi = 300),
 
 
-    ### stat: Obs vs. Pred --------------------------------------------------
+   ### stat: Obs vs. Pred --------------------------------------------------
 
 
    plot_obs_pred = plot_obs_predicted_model(path_model = bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_reBEZIRK_var-day_2007', 'model_file_path'],

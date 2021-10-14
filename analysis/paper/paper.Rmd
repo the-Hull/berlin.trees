@@ -87,6 +87,75 @@ library(kableExtra)
 
 # Introduction {#sec:intro}
 
+The manifold ecological and societal benefits urban trees provide [e.g., @roy2012] depend critically on their health and performance. 
+For instance, trees alter local energy budgets [@grimmond1996 ; @hertel2019] through shading and transpiration [@gillner2015;@endlicher2016], and therefore can reduce ambient temperatures, infrastructure power-consumption and (human) thermal discomfort  [e.g. @gulyas2006; @akbari2001; @mayer1987; @hoyano1988].
+However, excess heat common for cities [i.e. Urban Heat Island, UHI; @oke1982], combined with other urban conditions, affects tree physiological functioning with outcomes ranging from enhanced growth to early senescence, branch die-back, and even mortality [e.g., @hilbert2019;@au2018;@gillner2014]. 
+Thus, assessing the effect of increased temperatures on trees, as part of urban green infrastructure, is instrumental for understanding as well as adapting to current and expected conditions in this century [@ward2007], especially considering ever more urbanized societies  and the potential for UHI effects to compound with more frequent atmospheric drought [@roloff2009;@brune2016;@norton2015].
+
+
+The UHI effect, i.e., the difference between urban and adjacent rural (air) temperatures, has been intensively studied for several decades [cf. @oke1982;@stewart2011].
+It is typically related to the structure and density of urban land-use [@kuttler2015], which can be characterized through local climate zones, and modulated by physiographic and urban characteristics, such as vicinity to water bodies, predominant wind and street direction, etc. [@stewart2012]; yet, the physical basis for the excess heat in cities is to a large extent found in the altered surface energy balance as the proportional cover of vegetation decreases compared to rural (or reference) systems [@hertel2019; @oke1992].
+In temperate climates, this results in strongest UHI magnitudes at night [cf. @fenner2014].
+For example, Berlin features the most intense UHI in Germany due to its large extent and development intensity  with an average air temperature increase of around 5 K at night-times [2001-2010] with maxima of up to 11 K [@fenner2014] in urban $vs.$ rural areas.
+
+**Add refs**
+Increased air temperatures due to UHIs can affect growth through altering several physiological processes.
+Higher temperatures lead to more rapid reaction times at cellular level in the cambium (incremental growth) and during photosynthesis, can extend leaf-on phases, and  may be associated with less cloudy conditions, indirectly increasing the availability of energy for photosynthesis.
+However, if temperatures exceed photosynthetic optima, productivity may decline rapidly followed by (permanent) tissue damage in leaves.
+As warmer air is typically drier, high temperatures can also lead to closure of stomata (major leaf gas exchange pathway) to prevent excessive loss of water to a "demanding" atmosphere. 
+Additionally, high temperatures at night can increase respiration rates, leading to increased loss of carbohydrates.
+Where high temperatures and dry air are compounded by atmospheric or soil drought, trees thus not only experience decreased growth, but also may face extensive tissue damage and ultimately starvation.
+	- Compounded by decreased Precip in cities?! Moser reischl?
+
+
+**Urban tree growth is highly location specific**
+Urban trees show a tendency for enhanced growth rates and/or productivity compared to rural conspecifics, which is typically attributed to increased temperatures [@jia2018; @pretzsch2017], yet feature a broad range of effect size ranges and signs (i.e., reduced growth) specific to species and location.
+@zhao2016 showed that productivity rates, as a proxy for growth, increased within urban clusters as urbanization intensifies using remotely sensed vegetation indices.
+Further, @moser-reischl2019a identified positive associations between air temperature and radial growth for two species (total of 20 individuals) commonly selected by urban planners (*T. cordata*, *Rubinia pseudoacacia*) in Munich.
+
+
+[@briber2015; @obrien2012] … generally increased growth
+Contrastingly,  @gillner2014 highlight decreased growth for *Acer* species  (*A. platanoides* and *pseudoplatanus*), *Platanus x hispanica* and *Quercus rubra* with higher summer temperatures of the preceding year, especially when compounded with drought, in another German metropolis (Dresden). 
+@quigley2004 identified absolute growth potential decreased for species between rural and urban conspecifics, yet 
+<!-- lacked spatially-explicit effect size estimates across the urban-rural space and  -->
+was limited to comparatively small sample sizes per group ($n_{total}~=~230$ divided in 15 species, 3 groups and 2 locations) - also lacked multi-modal responses
+@pretzsch2017 inferred enhanced growth in recent decades and across urban locations spanning several latitudes, including Berlin - however, only 145 individuals of one species (*T. cordata*) were assessed there.
+As mentioned previously, climate-growth relationships can vary substantially between species, and in fact, @quigley2004 and @pretzsch2017 report contrasting results regarding average tree diameter, i.e. smaller or larger for urban $vs.$ rural trees of same age, **consider other studies mentioned above**
+Similarly, for Berlin, @dahlhausen2018, identified enhanced growth in highly urbanized environments (using basal area increments of 252 trees) for *Tilia cordata* Mill, the most abundant tree of the city, which they attributed to the UHI effect, while intermediate development intensity was adverse for tree growth.
+
+These differences in growth trends may result from contrasting species-specific responses to increased temperatures, but are indeed affected by other (time-varying) factors and stochastic processes, such as water availability, pollution and road-salt loading, structural impedance by infrastructure, or management, etc. [@rhoades1999; @quigley2004; @randrup2001; @pauleit2002].
+**expand on location-specific factors that can affect growth**
+This can hinder the extrapolation from individual sampling sites toward predicting effect across entire urban areas and tree stocks, especially where studies rely on labor-intensive methods which are limited logistically by sampling effort, reducing sample sizes, and species as well as spatial coverage.
+This is exacerbated by a lack of co-located environmental variables (i.e. measured in situ) at pertinent spatial scales, for instance, as noted by @wohlfart2019 for air temperature and tree leaf phenology, which may lead to incorrect inferences and interpretations for the role of climate change on growth/productivity when applying space-for-time substitutions.
+
+
+Space-for-time substitutions are a common approach (cf. studies above) to generate inferences in observational (rather than treatment-control) studies, where manipulations are costly or logistically infeasible due to time and/or financial constraints.  
+However, they require  accounting for confounding factors specific to trees' environments, such as street characteristics, development intensity, available soil volume, etc.
+While several of the aforementioned studies applied the space-for-time approach to quantify temperature and excess heat on growth, they typically compare trees grouped using qualitative or summary descriptors of sampling sites, disregarding the spatio-temporal variability in location-specific factors noted above.
+This can hinder the extrapolation from individual sampling sites toward predicting effects across entire urban areas and tree stocks, especially when studies rely on labor-intensive methods which are limited logistically by sampling effort, reducing sample sizes, and species as well as spatial coverage.
+This can be  exacerbated by a lack of co-located environmental variables (i.e. measured in situ) at pertinent spatial scales, for instance, as noted by @wohlfart2019 for air temperature and tree leaf phenology, which may lead to incorrect inferences and interpretations for the role of climate change on growth/productivity when applying space-for-time substitutions.
+It is thus likely that the varying and even contrasting growth responses observed for urban trees across and within studies is at least modulated by several confounding factors, making the attribution to a single driver, such as excess heat, more difficult and possibly less accurate. 
+
+
+These limitations could be overcome by relying on large data sets with extensive ancillary data coverage. 
+Berlin, as one of the greenest cities in Europe, provides an openly accessible tree inventory, with spatio-temporal environmental data sets pertinent to tree growth, through its Environmental Agency. 
+It features a total of 650000 individuals covering 94 genera and at least 600 species and/or cultivars, listing information on location, trunk diameter (at breast height; $DBH$; see Tab.$~$\@ref(tab:tab-tree-overview)), and stem height, amongst other variables, for the majority of street and park trees.
+For this study, our object was to assess the impact of excess urban heat, i.e. the UHI effect, on tree growth using this openly available inventory data set, complemented by additional open data sources as well as incremental growth data from tree cores. 
+The assessment relied on flexible statistical models that could capture species and location-specific responses to heat and other urban factors.
+Specifically, we aimed to (1) assess heat exposure of most abundant species; (2) determine the impact of (excess) heat on stem growth with space-for-time substitution to increase coverage; (3) h ighlight the role of location-specific environmental factors in mediating temperature responses.
+While this work constitutes a case study for Berlin, we believe the results are a valuable contribution toward Berlin's current and future management of its tree stock. 
+This is because the high temporal and spatial variability of controls on growth, and thus variability in responses, require that assessments are developed for a specific region, because well-understood tree characteristics [e.g., see @brune2016;@roloff2009], could be strongly modulated  in predicable ways at a given location or time due to management, planting practices, or other environmental controls; for example, if drought hardiness is related to extensive root networks, small soil volumes available to street trees could render a species vulnerable to water stress. 
+As such, the approach can also serve as a framework for base-line assessments for other cities with available or growing inventory and ancillary data [cite something on tree diversity in tree stocks, management, etc.], and also inform species-climate matrices regarding temperature sensitivity…..
+
+
+
+---
+
+
+**OLD**
+
+
+
 Berlin features the most intense Urban Heat Island (UHI) in Germany due to its large extent and development intensity [@kuttler2015], with temperature increases of up to $12~K$ during day-time and $6~K$ on average for night-times [2001-2010, @fenner2014] in urban $vs.$ rural areas.
 Consequently, urban green (infrastructure) systems are subjected to increased heat more frequently, potentially affecting their process dynamics - either positively or adversely. 
 Their performance and health, however, is closely tied to local energy budgets [@grimmond1996 ; @hertel2019], which in turn are decisive for controlling human wellbeing [e.g. @maras2016], amongst other factors.
