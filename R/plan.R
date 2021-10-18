@@ -378,11 +378,12 @@ plan <- drake::drake_plan(
 
 
 
-   mod_summaries_filtered = model_summarize(mgroups = mod_groups_filtered,
+   mod_summaries_filtered = drake::target(model_summarize(mgroups = mod_groups_filtered,
                                             bam_df = bam_dbh_filtered,
                                     path_model_dir = drake::file_in("analysis/data/models/stat/filtered/"),
                                     path_model_files = path_model_files_filtered,
                                     path_out = drake::file_out("./analysis/data/models/stat/summary/mod_filtered_summary.Rds")),
+                                    format = "file"),
 
 
    ## predictions
@@ -507,7 +508,7 @@ plan <- drake::drake_plan(
            X = 388141,
            Y = 5818534,
            STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
-           lcz_prop_6 = seq(0, 1, by = 0.025)),
+           lcz_prop300_6 = seq(0, 1, by = 0.025)),
        age_expression = age_expr,
        group_vars = "lcz_prop300_6"),
 
@@ -661,6 +662,17 @@ plan <- drake::drake_plan(
        width = 12,
        dpi = 300),
 
+
+   ### stat: GAMM AIC ------------------
+   gam_aic = extract_mod_AIC(readRDS(mod_summaries_filtered)),
+
+   plot_gam_aic = make_aic_plot(
+       aic_list = gam_aic,
+       base_size = 18,
+       file = drake::file_out("./analysis/figures/fig_model_aic.png"),
+       height = 10,
+       width = 12,
+       dpi = 300),
    ### stat: GAMM day_2007 prediction ----------------
 
    plot_gam_temp_prediction = plot_dbh_temp_single_var(

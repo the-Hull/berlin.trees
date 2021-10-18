@@ -1701,17 +1701,30 @@ plot_obs_predicted_model <- function(path_model,
 
     mod <- readRDS(path_model)
 
-    mod_broomed <- broom::augment(mod)
+    mod_broomed <- broom::augment(mod) %>%
+        dplyr::mutate(.fitted_response = mod$family$linkinv(.fitted))
+
+    mod_preds <- lm(dbh_cm ~ .fitted_response, data = mod_broomed)
+
+    adjr <- summary(mod_preds)$adj.r.squared
+
+    mod_rmse <- mod_preds %>%
+        broom::augment() %>%
+        dplyr::summarise(sqrt(sum(.fitted - dbh_cm)^2/dplyr::n()))
+
+
+
 
     ifun <- Gamma(link = "log")$linkinv
 
     gplot <- mod_broomed %>%
-        ggplot(aes(x = mod$family$linkinv(.fitted), y = dbh_cm)) +
+        ggplot(aes(x = .fitted_response, y = dbh_cm)) +
         geom_hex(bins = 75, color = "transparent") +
         geom_smooth(method = "lm", color = "red") +
         scale_fill_viridis_c() +
         theme_minimal(base_size = 18) +
-        labs(x = "Predicted", y = "Observed", fill = "N")
+        labs(x = "Predicted", y = "Observed", fill = "N") +
+        annotate("text", x = 20, y = )
 
 
     ggplot2::ggsave(filename = file,

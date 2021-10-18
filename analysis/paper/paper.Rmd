@@ -98,14 +98,22 @@ It is typically related to the structure and density of urban land-use [@kuttler
 In temperate climates, this results in strongest UHI magnitudes at night [cf. @fenner2014].
 For example, Berlin features the most intense UHI in Germany due to its large extent and development intensity  with an average air temperature increase of around 5 K at night-times [2001-2010] with maxima of up to 11 K [@fenner2014] in urban $vs.$ rural areas.
 
-**Add refs**
-Increased air temperatures due to UHIs can affect growth through altering several physiological processes.
-Higher temperatures lead to more rapid reaction times at cellular level in the cambium (incremental growth) and during photosynthesis, can extend leaf-on phases, and  may be associated with less cloudy conditions, indirectly increasing the availability of energy for photosynthesis.
-However, if temperatures exceed photosynthetic optima, productivity may decline rapidly followed by (permanent) tissue damage in leaves.
-As warmer air is typically drier, high temperatures can also lead to closure of stomata (major leaf gas exchange pathway) to prevent excessive loss of water to a "demanding" atmosphere. 
-Additionally, high temperatures at night can increase respiration rates, leading to increased loss of carbohydrates.
-Where high temperatures and dry air are compounded by atmospheric or soil drought, trees thus not only experience decreased growth, but also may face extensive tissue damage and ultimately starvation.
-	- Compounded by decreased Precip in cities?! Moser reischl?
+Increased air temperatures due to UHIs can affect growth through altering several physiological processes across plant organs directly or indirectly [@dusenge2019].
+Generally, reaction times at cellular level increase with temperature up to a maximum, after which a drop in enzymatic activity results in a species-dependent optimum curve  [@arcus2016; @parent2010]. 
+In leaves this optimum response is reflected in the net assimilation rate of carbohydrates, as a balance of photosynthesis and respiration, with losses exceeding gains more rapidly with increasing temperatures [@long1991].
+These responses vary between species [@tjoelker2001] as well as intra-specifically due to local acclimation, i.e., a shift of optimum temperature responses after prolonged exposure [@yamori2014], and threshold temperatures before tissue damage occurs [for review see @geange2021].
+High temperatures in temperate areas are often coincident with low relative air humidity (i.e., large vapor pressure deficit), which in turn can decrease stomatal conductance governing the majority of gas exchange in leaves [@grossiord2020], and thus the capacity for photosynthesis.
+Under prolonged stomatal closure (or decreased conductance) with high temperatures, trees may thus face decreased growth (in subsequent years) or even starvation as their carbohydrate reserves are depleted yet not replenished at sufficient rates [@mcdowell2008].
+Furthermore, air (and soil temperatures) affect the initiation, speed and cessation of cambial activity, and thus radial growth throughout a growing season [e.g., see @rathgeber2016; @begum2013].
+Radial growth is increasingly considered to be limited by wood formation dynamics and their relation with environmental drivers, rather than solely by photosynthetic activity [@korner2015].
+In particular, the availability of soil water is critical for cell expansion [e.g., @peters2021a] and limits  radial growth before photosynthesis [@fatichi2014]; however, this water availability is again linked to local climate as higher temperatures drive evaporation and thus may contribute to the depletion of soil water storage.
+
+<!-- Higher temperatures lead to more rapid reaction times at cellular level in the cambium , i.e., controlling incremental growth [@begum2013],  and during photosynthesis [@yamori2014], can extend leaf-on phases, and  may be associated with less cloudy conditions, indirectly increasing the availability of energy for photosynthesis. -->
+<!-- However, if temperatures exceed photosynthetic optima, productivity may decline rapidly followed by (permanent) tissue damage in leaves. -->
+<!-- As warmer air is typically drier, high temperatures can also lead to closure of stomata (major leaf gas exchange pathway) to prevent excessive loss of water to a "demanding" atmosphere.  -->
+<!-- Additionally, high temperatures at night can increase respiration rates, leading to increased loss of carbohydrates. -->
+<!-- Where high temperatures and dry air are compounded by atmospheric or soil drought, trees thus not only experience decreased growth, but also may face extensive tissue damage and ultimately starvation. -->
+<!-- 	- Compounded by decreased Precip in cities?! Moser reischl? -->
 
 
 **Urban tree growth is highly location specific**
@@ -673,9 +681,17 @@ knitr::include_graphics(here::here("analysis/figures/plot_03_ranef_species_dbh_u
 
 1. Temperature, environmental and urban controls on tree growth  
 	+ Intra specific differences
+	  + management
+	  + root vs. canopy (huber value?)
+	  + comparison young vs. old -> increased CO2, perhaps limitation of space for time,
+	     as lower conductance under high CO2 may result in more water savings (check WUE
+	     in old vs. young trees? future direction).[@dusenge2019] [@mccarthy2011]
 	+ Sensitive trees in hot spots
 	+ Temporal dynamics  
 	+ Validity and limitations  
+	
+	
+	
 	
 	
 	

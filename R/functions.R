@@ -2492,6 +2492,7 @@ make_model_prediction_df <- function(
         lcz_name <- 'lcz_prop_6'
 
     }
+
 #
 #     lcz <- {if(!is.null(fixed_vars$lcz_prop_6)){
 #         fixed_vars$lcz_prop_6
@@ -2604,7 +2605,7 @@ make_model_prediction_df <- function(
                 bheight_name,
                 "soil_nutrients_swert",
                 "baumsch_flaeche_m2",
-                "lcz_prop_6",
+                lcz_name,
                 "BEZIRK"
             )
 
@@ -2637,6 +2638,7 @@ make_model_prediction_df <- function(
 
         }) %>%
         setNames(mod_names)
+
 
 
 
@@ -3923,6 +3925,7 @@ make_deviance_plot <- function(deviance_list,
         deviance_list$deviances %>%
             dplyr::mutate(is_spatial = grepl("spatial", mod_group),
                           is_tensor = grepl("_x_", fixed = TRUE, ignore.case = FALSE, mod_group),
+                          mod_class = sub("(.*[_]species[_])(.*)", replacement = "\\2", mod_group),
                           mod_group = forcats::fct_relevel(mod_group, stringr::str_sort(levels(mod_group))),
                           expvar = forcats::fct_relevel(
                               expvar,
@@ -3930,8 +3933,9 @@ make_deviance_plot <- function(deviance_list,
                               "soil_nutrients",
                               "baumsch_flaeche",
                               "building_height",
-                              "building_height30",
+                              "building_height300",
                               "lcz6",
+                              "lcz6_300",
                               "urbclim_mod_morning_3_5",
                               "urbclim_mod_afternoon_13_15",
                               "urbclim_mod_night_21_23",
@@ -3945,20 +3949,21 @@ make_deviance_plot <- function(deviance_list,
         # geom_line(data = mod_means, aes(x = y),  color = "black", group = 1, alpha = 0.3) +
         # annotate("text", x = c(2.5, 5.5, 8, 10), y = rep(0.82, 4), label = c("no temp", "Urbclim", "Landsat", "Berlin UA")) +
         # annotate("text", x = c(1:4), y = rep(0.82, 4), label = c("bla", "blu", "bli", "kli")) +
-        annotate("text", x = c(3.5), y = rep(80, 1), label = "bold(no~temp)", parse = TRUE) +
-        annotate("text", x = c(8),   y = rep(80, 1), label = "bold(Urbclim)", parse = TRUE) +
-        annotate("text", x = c(10.5),   y = rep(80, 1), label = "bold(Landsat)", parse = TRUE) +
-        annotate("text", x = c(13),  y = rep(80, 1), label = "bold(Berlin~EnvAt)", parse = TRUE) +
-        annotate(geom = "rect", xmin = 0.5, xmax = 6.5, ymin = -Inf, ymax = Inf, alpha = 0.3) +
-        annotate(geom = "rect", xmin = 6.5, xmax = 9.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "steelblue1") +
-        annotate(geom = "rect", xmin = 9.5, xmax = 11.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "darkorange") +
-        annotate(geom = "rect", xmin = 11.5, xmax = 14.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "seagreen4") +
+        annotate("text", x = c(4), y = rep(80, 1), label = "bold(no~temp)", parse = TRUE) +
+        annotate("text", x = c(9),   y = rep(80, 1), label = "bold(Urbclim)", parse = TRUE) +
+        annotate("text", x = c(11.5),   y = rep(80, 1), label = "bold(Landsat)", parse = TRUE) +
+        annotate("text", x = c(14),  y = rep(80, 1), label = "bold(Berlin~EnvAt)", parse = TRUE) +
+        annotate(geom = "rect", xmin = 0.5, xmax = 7.5, ymin = -Inf, ymax = Inf, alpha = 0.3) +
+        annotate(geom = "rect", xmin = 7.5, xmax = 10.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "steelblue1") +
+        annotate(geom = "rect", xmin = 10.5, xmax = 12.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "darkorange") +
+        annotate(geom = "rect", xmin = 12.5, xmax = 15.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "seagreen4") +
 
         geom_boxplot() +
         geom_jitter(width = .25,
                     aes(size = n_sample,
                         shape = is_tensor,
-                        fill = mod_group),
+                        # fill = mod_group),
+                        fill = mod_class),
                     alpha = 0.8) +
         # geom_linerange(data = mod_means, aes(x = y, xmin = ymin, xmax = ymax), color = "black") +
         # geom_point(data = mod_means, aes(y = y), size = 3, shape = 21, color = "white", fill = "black") +
@@ -3966,23 +3971,26 @@ make_deviance_plot <- function(deviance_list,
         guides(fill = guide_legend(
             override.aes = list(
                 size = 5,
-                shape = c(rep(21, 2),
-                          23,
-                          rep(21, 9),
-                          rep(23, 8))),
+                shape = 21
+                # shape = c(rep(21, 2),
+                #           23,
+                #           rep(21, 9),
+                #           rep(23, 8))
+                ),
             ncol = 2),
-            shape = "none") +
+            shape = guide_legend(override.aes = list(size = 5))) +
         theme_minimal() +
         theme(legend.position = "top",
               legend.direction = "vertical",
               strip.text = element_text(size = 12)) +
         # scale_fill_brewer(type = "qual", palette = "Set3") +
-        scale_shape_manual(values = c(21, 23)) +
-        scale_fill_manual(values = pals::kelly(n = n_distinct(deviance_list$deviances$mod_group)),
+        scale_shape_manual(values = c("TRUE" = 23, "FALSE" = 21), labels = c("Interaction", "Additive")) +
+        scale_fill_manual(values = pals::kelly(n = n_distinct(sub("(.*[_]species[_])(.*)", replacement = "\\2", deviance_list$deviances$mod_group))),
+        # scale_fill_manual(values = pals::kelly(n = n_distinct(deviance_list$deviances$mod_group)),
                           aesthetics = c("fill")) +
         scale_x_discrete(guide = guide_axis(n.dodge = 3) ) +
         facet_wrap(~is_spatial, ncol = 1, labeller = labeller(is_spatial = c('TRUE' = "spatial - f(x,y)", 'FALSE' = 'non-spatial')))  +
-        labs(x = NULL, y = "Explained Deviance (%)")
+        labs(x = NULL, y = "Explained Deviance (%)", shape = "Temperature structure")
 
     ggplot2::ggsave(filename = file,
                     plot = gplot,
@@ -3992,6 +4000,161 @@ make_deviance_plot <- function(deviance_list,
 
     return(gplot)
 }
+
+
+
+
+
+
+#' Create model overview for SI
+#'
+#' @param file character, file path (use with \code{\link{file_out}}), must include file ending
+#' @param height numeric, height in inches
+#' @param width numeric, width in inches
+#' @param dpi numeric, dpi of output
+#' @param deviance_list list from deviance summary
+#' @param base_size
+#'
+#' @return ggplot object
+#' @import ggplot2
+make_aic_plot <- function(aic_list,
+                               base_size = 18,
+                               file,
+                               height,
+                               width,
+                               dpi){
+
+
+    # # grab sample size per model
+    # mod_n <- mod_summary_list %>%
+    #     purrr::map_depth(2, "summary") %>%
+    #     purrr::map_depth(2, "n") %>%
+    #     purrr::map_depth(2, .f = as.data.frame) %>%
+    #     purrr::map(dplyr::bind_rows, .id = "expvar")  %>%
+    #     purrr::map2(names(.),
+    #                 ~mutate(.x, mod_group = .y)) %>%
+    #     do.call(rbind, .) %>%
+    #     `rownames<-`(NULL) %>%
+    #     rename(n_sample = 2)
+    #
+    #
+    #
+    # # extract deviance and add sample sizes
+    # mod_dev <- mod_summary_list %>%
+    #     purrr::map_depth(2, "summary") %>%
+    #     purrr::map_depth(2, "dev.expl") %>%
+    #     purrr::map_depth(2, .f = as.data.frame) %>%
+    #     purrr::map(dplyr::bind_rows, .id = "expvar")  %>%
+    #     purrr::map2(names(.),
+    #                 ~mutate(.x, mod_group = .y)) %>%
+    #     do.call(rbind, .) %>%
+    #     `rownames<-`(NULL) %>%
+    #     dplyr::rename(deviance_explained = 2) %>%
+    #     dplyr::left_join(mod_n, by = c("mod_group", 'expvar'))
+    #
+    # # calc data for points over box plot
+    # mod_means <- mod_dev %>%
+    #     dplyr::group_by(mod_group) %>%
+    #     dplyr::summarise(ggplot2:::mean_se(deviance_explained)) %>%
+    #     dplyr::arrange(desc(y))
+    #
+    # mod_dev$mod_group <- forcats::fct_relevel(mod_dev$mod_group, mod_means$mod_group)
+    # mod_means$mod_group <- forcats::fct_relevel(mod_means$mod_group, mod_means$mod_group)
+
+    # ggplot(mod_dev,
+    #        aes(y = mod_group,
+    #            x = deviance_explained)) +
+    #     geom_line(data = mod_means, aes(x = y),  color = "black", group = 1, alpha = 0.3) +
+    #     geom_jitter( shape = 21,height = .1, aes(size = n_sample,
+    #                                              fill = expvar), alpha = 0.8) +
+    #     # geom_jitter( shape = 21, color = "white", fill = "gray60",height = .1, aes(size = n_sample), alpha = 0.5) +
+    #     geom_linerange(data = mod_means, aes(x = y, xmin = ymin, xmax = ymax), color = "black") +
+    #     geom_point(data = mod_means, aes(x = y), size = 3, shape = 21, color = "white", fill = "black") +
+    #     guides(fill = guide_legend(override.aes = list(size = 5))) +
+    #     theme_minimal() +
+    #     scale_fill_brewer(type = "qual", palette = "Set3")
+    #
+
+    gplot <- ggplot(
+        aic_list$AIC %>%
+            dplyr::mutate(is_spatial = grepl("spatial", mod_group),
+                          is_tensor = grepl("_x_", fixed = TRUE, ignore.case = FALSE, mod_group),
+                          mod_class = sub("(.*[_]species[_])(.*)", replacement = "\\2", mod_group),
+                          mod_group = forcats::fct_relevel(mod_group, stringr::str_sort(levels(mod_group))),
+                          expvar = forcats::fct_relevel(
+                              expvar,
+                              "nullmodel",
+                              "soil_nutrients",
+                              "baumsch_flaeche",
+                              "building_height",
+                              "building_height300",
+                              "lcz6",
+                              "lcz6_300",
+                              "urbclim_mod_morning_3_5",
+                              "urbclim_mod_afternoon_13_15",
+                              "urbclim_mod_night_21_23",
+                              "day_2007",
+                              "night_2007") %>%
+                              forcats::fct_relabel(., .fun = ~gsub("urbclim_mod_", "", x = .x)) %>%
+                              forcats::fct_relabel(., .fun = ~gsub("mod2015_T2M", "", x = .x)) %>%
+                              forcats::fct_relabel(., .fun = ~gsub("HMEA", " H", x = .x))),
+        aes(x = expvar,
+            y = AIC)) +
+        # geom_line(data = mod_means, aes(x = y),  color = "black", group = 1, alpha = 0.3) +
+        # annotate("text", x = c(2.5, 5.5, 8, 10), y = rep(0.82, 4), label = c("no temp", "Urbclim", "Landsat", "Berlin UA")) +
+        # annotate("text", x = c(1:4), y = rep(0.82, 4), label = c("bla", "blu", "bli", "kli")) +
+        annotate("text", x = c(4), y = rep(80, 1), label = "bold(no~temp)", parse = TRUE) +
+        annotate("text", x = c(9),   y = rep(80, 1), label = "bold(Urbclim)", parse = TRUE) +
+        annotate("text", x = c(11.5),   y = rep(80, 1), label = "bold(Landsat)", parse = TRUE) +
+        annotate("text", x = c(14),  y = rep(80, 1), label = "bold(Berlin~EnvAt)", parse = TRUE) +
+        annotate(geom = "rect", xmin = 0.5, xmax = 7.5, ymin = -Inf, ymax = Inf, alpha = 0.3) +
+        annotate(geom = "rect", xmin = 7.5, xmax = 10.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "steelblue1") +
+        annotate(geom = "rect", xmin = 10.5, xmax = 12.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "darkorange") +
+        annotate(geom = "rect", xmin = 12.5, xmax = 15.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "seagreen4") +
+
+        geom_boxplot() +
+        geom_jitter(width = .25,
+                    aes(size = nobs,
+                        shape = is_tensor,
+                        # fill = mod_group),
+                        fill = mod_class),
+                    alpha = 0.8) +
+        # geom_linerange(data = mod_means, aes(x = y, xmin = ymin, xmax = ymax), color = "black") +
+        # geom_point(data = mod_means, aes(y = y), size = 3, shape = 21, color = "white", fill = "black") +
+
+        guides(fill = guide_legend(
+            override.aes = list(
+                size = 5,
+                shape = 21
+                # shape = c(rep(21, 2),
+                #           23,
+                #           rep(21, 9),
+                #           rep(23, 8))
+            ),
+            ncol = 2),
+            shape = guide_legend(override.aes = list(size = 5))) +
+        theme_minimal() +
+        theme(legend.position = "top",
+              legend.direction = "vertical",
+              strip.text = element_text(size = 12)) +
+        # scale_fill_brewer(type = "qual", palette = "Set3") +
+        scale_shape_manual(values = c("TRUE" = 23, "FALSE" = 21), labels = c("Interaction", "Additive")) +
+        scale_fill_manual(values = pals::kelly(n = n_distinct(sub("(.*[_]species[_])(.*)", replacement = "\\2", aic_list$AIC$mod_group))),
+                          # scale_fill_manual(values = pals::kelly(n = n_distinct(deviance_list$deviances$mod_group)),
+                          aesthetics = c("fill")) +
+        scale_x_discrete(guide = guide_axis(n.dodge = 3) ) +
+        facet_wrap(~is_spatial, ncol = 1, labeller = labeller(is_spatial = c('TRUE' = "spatial - f(x,y)", 'FALSE' = 'non-spatial')))  +
+        labs(x = NULL, y = "AIC", shape = "Temperature structure")
+
+    ggplot2::ggsave(filename = file,
+                    plot = gplot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+    return(gplot)
+}
+
 
 
 #' Make single-temp var plot
@@ -4635,6 +4798,44 @@ extract_mod_deviance <- function(mod_summary_list){
 }
 
 
+
+
+#' Extract relevant metrics from model summary list
+#'
+#' @param mod_summary_list list of model summaries
+#'
+#' @return list, contains
+#' @export
+extract_mod_AIC <- function(mod_summary_list){
+
+
+
+
+    # extract AIC and add sample sizes
+    mod_aic <- mod_summary_list %>%
+        purrr::map_depth(2, "summary_broom") %>%
+        purrr::map_depth(2, .f = as.data.frame) %>%
+        purrr::map(dplyr::bind_rows, .id = "expvar")  %>%
+        purrr::map2(names(.),
+                    ~mutate(.x, mod_group = .y)) %>%
+        do.call(rbind, .) %>%
+        `rownames<-`(NULL)
+
+    # calc data for points over box plot
+    mod_means <- mod_aic %>%
+        dplyr::group_by(mod_group) %>%
+        dplyr::summarise(ggplot2:::mean_se(AIC)) %>%
+        dplyr::arrange(desc(y))
+
+    mod_aic$mod_group <- forcats::fct_relevel(mod_aic$mod_group, mod_means$mod_group)
+    mod_means$mod_group <- forcats::fct_relevel(mod_means$mod_group, mod_means$mod_group)
+
+    return(list(AIC = mod_aic, variables_means = mod_means))
+
+
+}
+
+
 #' Shorten species label to X. yyyy
 #'
 #' @param species vector, character/factor
@@ -4950,7 +5151,6 @@ augment_prediction_range <- function(prediction_df, model_df, group_var, range_v
                                       na.rm = TRUE),
                                   na.rm = TRUE)
 
-                              print(r)
 
                               return(r)
                           })
