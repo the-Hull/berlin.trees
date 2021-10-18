@@ -4601,17 +4601,40 @@ plot_obs_predicted_model <- function(path_model,
 
     mod <- readRDS(path_model)
 
-    mod_broomed <- broom::augment(mod)
+
+    mod_broomed <- broom::augment(mod) %>%
+        dplyr::mutate(predicted = mod$family$linkinv(.fitted))
+
+    mod_preds <- lm(dbh_cm ~ predicted, data = mod_broomed)
+
+    adjr <- format(summary(mod_preds)$adj.r.squared, digits = 3)
+
+    mod_rmse <- mod_preds %>%
+        broom::augment() %>%
+        dplyr::summarise(sqrt(sum(.fitted - dbh_cm)^2/dplyr::n())) %>%
+        as.numeric() %>%
+        format(digits = 2)
+
+    mod_mae <- mod_preds %>%
+        broom::augment() %>%
+        dplyr::summarise(mean(abs(.fitted - dbh_cm))) %>%
+        as.numeric() %>%
+        round(2)
 
     ifun <- Gamma(link = "log")$linkinv
 
     gplot <- mod_broomed %>%
-        ggplot(aes(x = mod$family$linkinv(.fitted), y = dbh_cm)) +
+        ggplot(aes(x = predicted, y = dbh_cm)) +
         geom_hex(bins = 75, color = "transparent") +
-        geom_smooth(method = "lm", formula = "y ~ x - 1", color = "red") +
+        geom_smooth(method = "lm", formula = "y ~ x", color = "red") +
+        geom_abline(slope = 1, intercept = 0, linetype = 2, color = "gray40") +
         scale_fill_viridis_c() +
         theme_minimal(base_size = 18) +
-        labs(x = "Predicted", y = "Observed", fill = "N")
+        labs(x = "Predicted", y = "Observed", fill = "N") +
+        annotate("text",
+                 x = 50,
+                 y = 200,
+                 label = as.expression(bquote(R[adj]^2~'='~.(adjr)~~~~RMSE~'='~.(mod_rmse)~~~~MAE~'='~.(mod_mae))))
 
 
     ggplot2::ggsave(filename = file,

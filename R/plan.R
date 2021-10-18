@@ -801,8 +801,13 @@ plan <- drake::drake_plan(
    ### stat: Obs vs. Pred --------------------------------------------------
 
 
-   plot_obs_pred = plot_obs_predicted_model(path_model = bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_reBEZIRK_var-day_2007', 'model_file_path'],
+   plot_obs_pred_single_temp = plot_obs_predicted_model(path_model = bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_reBEZIRK_var-day_2007', 'model_file_path'],
                                             file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_obs_pred.png"),
+                                            height = 7,
+                                            width = 8,
+                                            dpi = 300),
+   plot_obs_pred_single_temp_lcz6 = plot_obs_predicted_model(path_model = bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_lcz6_reBEZIRK_var-day_2007', 'model_file_path'],
+                                            file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_lcz6_obs_pred.png"),
                                             height = 7,
                                             width = 8,
                                             dpi = 300),
