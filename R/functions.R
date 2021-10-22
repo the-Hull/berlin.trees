@@ -4230,7 +4230,8 @@ plot_dbh_temp_single_var <- function(pred_list,
                      alpha = 0.4) +
 
 
-        geom_ribbon( alpha = 0.5, color = "transparent") +
+        geom_ribbon(data = plot_data %>% filter(prediction_range == "within"),
+                    alpha = 0.5, color = "transparent") +
         # geom_line(color = "black")  +
 
         geom_smooth(aes(group = 1),
@@ -4242,7 +4243,7 @@ plot_dbh_temp_single_var <- function(pred_list,
 
 
         # geom_line(linetype = 1)  +
-        geom_line(linetype = 3, color = "black", size = 0.75)  +
+        geom_line(linetype = 3, color = "black", size = 0.35)  +
         geom_line(data = plot_data %>% filter(prediction_range == "within")) +
 
 
@@ -4312,18 +4313,20 @@ plot_dbh_temp_single_var_single_species <- function(pred_list,
 ){
 
     if(is.null(species_filter)){
-        species_filter <- unique(model_df$species_corrected)
+        species_filter <- shorten_species(unique(model_df$species_corrected))
     }
 
 
     `%nin%` <- Negate(`%in%`)
 
     model_df <- model_df %>%
-        dplyr::filter(age_group %nin% age_filter,
-                      species_corrected %in% species_filter) %>%
         mutate(age_group = eval(age_expression),
                species_corrected = shorten_species(species_corrected)) %>%
+        dplyr::filter(
+            age_group %nin% age_filter,
+            species_corrected %in% species_filter) %>%
         tidyr::drop_na(age_group)
+
 
 
     plot_data <- pred_list$pred_groups %>%
@@ -4331,15 +4334,20 @@ plot_dbh_temp_single_var_single_species <- function(pred_list,
         tidyr::pivot_longer(cols = dplyr::all_of(names(pred_list$pred_var)),
                             names_to = "uhi_tempvar",
                             values_to = "temp_degc") %>%
+        dplyr::mutate(temp_degc_scaled = scales::rescale(temp_degc, to = c(0,1)),
+                      species_corrected = shorten_species(species_corrected)) %>%
         dplyr::filter(prediction_range == prediction_range) %>%
         dplyr::filter(age_group %nin% age_filter) %>%
-        dplyr::filter(species_corrected %in% species_filter) %>%
+        dplyr::filter(species_corrected %in% shorten_species(species_filter)) %>%
         dplyr::arrange(uhi_tempvar) %>%
         tidyr::drop_na(temp_degc) %>%
-        dplyr::group_by(species_corrected, uhi_tempvar) %>%
-        dplyr::mutate(temp_degc_scaled = scales::rescale(temp_degc, to = c(0,1)),
-                      species_corrected = shorten_species(species_corrected))
-
+        dplyr::group_by(species_corrected, age_group)
+    # %>%
+    #     mutate(
+    #         response.fit.mean = response.fit.mean - mean(response.fit.mean),
+    #         response.low.mean = response.low.mean - mean(response.low.mean),
+    #         response.high.mean = response.high.mean - mean(response.high.mean)
+    #         )
 
 
 
@@ -4353,29 +4361,32 @@ plot_dbh_temp_single_var_single_species <- function(pred_list,
                         ymax = response.high.mean)) +
 
 
-        stat_density(inherit.aes = FALSE,
-                     data = model_df,
-                     aes(x = day_2007,
-                         y = ..scaled..*100,
-                         fill = as.factor(species_corrected)),
-                     position = "dodge",
-                     geom = "area",
-                     alpha = 0.2) +
+        # stat_density(inherit.aes = FALSE,
+        #              data = model_df,
+        #              aes(x = day_2007,
+        #                  y = ..scaled..*100,
+        #                  fill = as.factor(species_corrected)),
+        #              position = "dodge",
+        #              geom = "area",
+        #              alpha = 0.2) +
 
 
-        geom_ribbon( alpha = 0.5, color = "transparent") +
+        geom_ribbon(data = plot_data %>% filter(prediction_range == "within"),
+                    alpha = 0.2, color = "transparent") +
         # geom_line(color = "black")  +
 
         geom_smooth(aes(group = species_corrected),
                     formula = y ~ x,
-                    method = "lm", fill = "transparent",
-                    color = "gray50",
+                    method = "lm",
+                    # fill = "transparent",
+                    # color = "gray50",
                     data = plot_data %>% filter(prediction_range == "within")) +
         # geom_ribbon(linetype = 1) +
 
 
-        geom_line(linetype = 3, color = "black", size = 0.75)  +
-        geom_line(data = plot_data %>% filter(prediction_range == "within")) +
+        # geom_line(linetype = 3, color = "black", size = 0.35, alpha = 0.2)  +
+        # geom_line(data = plot_data %>% filter(prediction_range == "within"),
+        #           alpha = 0.2) +
 
 
         #
@@ -4387,8 +4398,13 @@ plot_dbh_temp_single_var_single_species <- function(pred_list,
               panel.spacing = unit(2, "lines"),
               strip.text = element_text(size = 12)) +
 
-        scale_color_brewer(palette = 2, type = "qual") +
-        scale_fill_brewer(palette = 2, type = "qual") +
+        # scale_color_brewer(palette = 2, type = "qual") +
+        # scale_fill_brewer(palette = 2, type = "qual") +
+
+        scale_fill_manual(
+            values = pals::tol(n = n_distinct(plot_data$species_corrected)),
+            aesthetics = c("fill", "color")) +
+
 
         labs(color = "Species",
              fill = "Species",
@@ -4646,6 +4662,106 @@ plot_obs_predicted_model <- function(path_model,
 
 }
 
+
+
+
+
+#' Pairs Plot
+#'
+#' @param dframe data.frame, model df
+#' @param var_names character, names of variables to include in pairs plot
+#' @param ... additional arguments to pair plot
+#'
+#' @return NULL
+plot_pairs <- function(dframe,
+                       var_names,
+                       ...){
+
+
+    usr <- par("usr"); on.exit(par(usr))
+    # define lm function with R2
+    panel.lm <- function(x, y, digits = 2, prefix = "", cex.r2)
+    {
+        usr <- par("usr"); on.exit(par(usr))
+        lms <- lm(y ~ x)
+        txt <- round(summary(lms)$r.squared, 3)
+
+        # if(missing(cex.r2)) cex.r2 <- 0.8/strwidth(txt)
+        points(y ~ x)
+        abline(lms, col = "red")
+        par(usr = c(0, 1, 0, 1))
+        text(0.55, 0.25, bquote(R^2~'='~.(txt)), cex = 2, col = "red")
+    }
+
+    # label
+    panel.text <- function(x, y, labels, cex, font)
+    {
+        usr <- par("usr"); on.exit(par(usr))
+
+        # if(missing(cex.r2)) cex.r2 <- 0.8/strwidth(txt)
+        par(usr = c(0, 1, 0, 1))
+        text(0.5, 0.5, labels, col = "gray40", cex = 0.75)
+    }
+
+
+    dframe %>%
+        dplyr::select(dplyr::contains(var_names)) %>%
+        pairs(lower.panel = panel.lm,
+              upper.panel = NULL,
+              text.panel = panel.text,
+              ...)
+
+}
+
+
+#' Make and save pair plots
+#'
+#' @param dframe data.frame, model df
+#' @param varlabs, named list of lists with items var and main, i.e. list(morning = list(var = 'x', main = "y"))
+#' @param ... additional arguments to plot pairs
+#' @param res,width,height numeric, details for plotting
+#' @param units character, centimeter?
+#' @param path_out character, path to dir
+#'
+
+#' @examples
+make_plot_pairs <- function(dframe,
+                            varlabs =  list(afternoon = list(var = c("T2M14", "mod_afternoon", "day_2007"),
+                                                             main = "Air Temperature / UHI Measure: \n Afternoon"),
+                                            night = list(var = c("T2M22", "mod_night", "night_2007"),
+                                                         main = "Air Temperature / UHI Measure: \n Night"),
+                                            morning = list(var = c("T2M04", "mod_afternoon"),
+                                                           main = "Air Temperature / UHI Measure: \n Morning")),
+                            ...,
+                            res = 300,
+                            width = 12,
+                            height = 12,
+                            units = "cm",
+                            path_out){
+
+
+
+    purrr::map2(varlabs,
+                names(varlabs),
+                function(x,y){
+
+                    path_out <- fs::path(path_out, sprintf("fig-tempvar_comparison-%s.png", y))
+
+                    png(filename = path_out,
+                        width = width,
+                        height = height,
+                        units = units,
+                        res = res)
+                    plot_pairs(dframe,
+                               var_names = x$var,
+                               main = x$main,
+                               oma = c(2,2,7,2))
+                    dev.off()
+
+                })
+
+}
+
 # Tables ------------------------------------------------------------------
 
 #' Make overview table
@@ -4866,7 +4982,7 @@ extract_mod_AIC <- function(mod_summary_list){
 #' @return factor vector, same length as species
 shorten_species <- function(species){
     spec_list <- species %>%
-        droplevels() %>%
+        # droplevels() %>%
         as.character() %>%
         strsplit(" ")
 

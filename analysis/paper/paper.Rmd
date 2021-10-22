@@ -89,24 +89,24 @@ library(kableExtra)
 
 The manifold ecological and societal benefits urban trees provide [e.g., @roy2012] depend critically on their health and performance. 
 For instance, trees alter local energy budgets [@grimmond1996 ; @hertel2019] through shading and transpiration [@gillner2015;@endlicher2016], and therefore can reduce ambient temperatures, infrastructure power-consumption and (human) thermal discomfort  [e.g. @gulyas2006; @akbari2001; @mayer1987; @hoyano1988].
-However, excess heat common for cities [i.e. Urban Heat Island, UHI; @oke1982], combined with other urban conditions, affects tree physiological functioning with outcomes ranging from enhanced growth to early senescence, branch die-back, and even mortality [e.g., @hilbert2019;@au2018;@gillner2014]. 
+However, excess heat common for cities [i.e., Urban Heat Island, UHI, @oke1982], combined with other urban conditions, affects tree physiological functioning with outcomes ranging from enhanced growth to early senescence, branch die-back, and even mortality [e.g., @hilbert2019;@au2018;@gillner2014]. 
 Thus, assessing the effect of increased temperatures on trees, as part of urban green infrastructure, is instrumental for understanding as well as adapting to current and expected conditions in this century [@ward2007], especially considering ever more urbanized societies  and the potential for UHI effects to compound with more frequent atmospheric drought [@roloff2009;@brune2016;@norton2015].
 
 
 The UHI effect, i.e., the difference between urban and adjacent rural (air) temperatures, has been intensively studied for several decades [cf. @oke1982;@stewart2011].
 It is typically related to the structure and density of urban land-use [@kuttler2015], which can be characterized through local climate zones, and modulated by physiographic and urban characteristics, such as vicinity to water bodies, predominant wind and street direction, etc. [@stewart2012]; yet, the physical basis for the excess heat in cities is to a large extent found in the altered surface energy balance as the proportional cover of vegetation decreases compared to rural (or reference) systems [@hertel2019; @oke1992].
 In temperate climates, this results in strongest UHI magnitudes at night [cf. @fenner2014].
-For example, Berlin features the most intense UHI in Germany due to its large extent and development intensity  with an average air temperature increase of around 5 K at night-times [2001-2010] with maxima of up to 11 K [@fenner2014] in urban $vs.$ rural areas.
+For example, Berlin features the most intense UHI in Germany due to its large extent and development intensity  with an average air temperature increase of around 5 K at night-times (2001-2010) with maxima of up to 11 K [@fenner2014] in urban $vs.$ rural areas.
 
-Increased air temperatures due to UHIs can affect growth through altering several physiological processes across plant organs directly or indirectly [@dusenge2019].
+Increased air temperatures due to UHIs can affect tree growth through altering several physiological processes across plant organs directly or indirectly [@dusenge2019].
 Generally, reaction times at cellular level increase with temperature up to a maximum, after which a drop in enzymatic activity results in a species-dependent optimum curve  [@arcus2016; @parent2010]. 
 In leaves this optimum response is reflected in the net assimilation rate of carbohydrates, as a balance of photosynthesis and respiration, with losses exceeding gains more rapidly with increasing temperatures [@long1991].
 These responses vary between species [@tjoelker2001] as well as intra-specifically due to local acclimation, i.e., a shift of optimum temperature responses after prolonged exposure [@yamori2014], and threshold temperatures before tissue damage occurs [for review see @geange2021].
 High temperatures in temperate areas are often coincident with low relative air humidity (i.e., large vapor pressure deficit), which in turn can decrease stomatal conductance governing the majority of gas exchange in leaves [@grossiord2020], and thus the capacity for photosynthesis.
 Under prolonged stomatal closure (or decreased conductance) with high temperatures, trees may thus face decreased growth (in subsequent years) or even starvation as their carbohydrate reserves are depleted yet not replenished at sufficient rates [@mcdowell2008].
-Furthermore, air (and soil temperatures) affect the initiation, speed and cessation of cambial activity, and thus radial growth throughout a growing season [e.g., see @rathgeber2016; @begum2013].
+Furthermore, air (and soil temperatures) affect the initiation, speed and cessation of cambial activity, and thus radial growth throughout a growing season [e.g., see @begum2013; @rathgeber2016].
 Radial growth is increasingly considered to be limited by wood formation dynamics and their relation with environmental drivers, rather than solely by photosynthetic activity [@korner2015].
-In particular, the availability of soil water is critical for cell expansion [e.g., @peters2021a] and limits  radial growth before photosynthesis [@fatichi2014]; however, this water availability is again linked to local climate as higher temperatures drive evaporation and thus may contribute to the depletion of soil water storage.
+In particular, the availability of soil water is critical for cell expansion [e.g., @peters2021a] and most likely limits radial growth before photosynthesis [@fatichi2014]; however, this water availability is again linked to local climate as higher temperatures drive evaporation and thus may contribute to the depletion of soil water storage, impeding growth.
 
 <!-- Higher temperatures lead to more rapid reaction times at cellular level in the cambium , i.e., controlling incremental growth [@begum2013],  and during photosynthesis [@yamori2014], can extend leaf-on phases, and  may be associated with less cloudy conditions, indirectly increasing the availability of energy for photosynthesis. -->
 <!-- However, if temperatures exceed photosynthetic optima, productivity may decline rapidly followed by (permanent) tissue damage in leaves. -->
@@ -116,7 +116,6 @@ In particular, the availability of soil water is critical for cell expansion [e.
 <!-- 	- Compounded by decreased Precip in cities?! Moser reischl? -->
 
 
-**Urban tree growth is highly location specific**
 Urban trees show a tendency for enhanced growth rates and/or productivity compared to rural conspecifics, which is typically attributed to increased temperatures [@jia2018; @pretzsch2017], yet feature a broad range of effect size ranges and signs (i.e., reduced growth) specific to species and location.
 @zhao2016 showed that productivity rates, as a proxy for growth, increased within urban clusters as urbanization intensifies using remotely sensed vegetation indices.
 Further, @moser-reischl2019a identified positive associations between air temperature and radial growth for two species (total of 20 individuals) commonly selected by urban planners (*T. cordata*, *Rubinia pseudoacacia*) in Munich.
@@ -134,14 +133,14 @@ Similarly, for Berlin, @dahlhausen2018, identified enhanced growth in highly urb
 These differences in growth trends may result from contrasting species-specific responses to increased temperatures, but are indeed affected by other (time-varying) factors and stochastic processes, such as water availability, pollution and road-salt loading, structural impedance by infrastructure, or management, etc. [@rhoades1999; @quigley2004; @randrup2001; @pauleit2002].
 **expand on location-specific factors that can affect growth**
 This can hinder the extrapolation from individual sampling sites toward predicting effect across entire urban areas and tree stocks, especially where studies rely on labor-intensive methods which are limited logistically by sampling effort, reducing sample sizes, and species as well as spatial coverage.
-This is exacerbated by a lack of co-located environmental variables (i.e. measured in situ) at pertinent spatial scales, for instance, as noted by @wohlfart2019 for air temperature and tree leaf phenology, which may lead to incorrect inferences and interpretations for the role of climate change on growth/productivity when applying space-for-time substitutions.
+This is exacerbated by a lack of co-located environmental variables (i.e. measured in situ) at pertinent spatial scales, for instance, as noted by @wohlfahrt2019 for air temperature and tree leaf phenology, which may lead to incorrect inferences and interpretations for the role of climate change on growth/productivity when applying space-for-time substitutions.
 
 
 Space-for-time substitutions are a common approach (cf. studies above) to generate inferences in observational (rather than treatment-control) studies, where manipulations are costly or logistically infeasible due to time and/or financial constraints.  
 However, they require  accounting for confounding factors specific to trees' environments, such as street characteristics, development intensity, available soil volume, etc.
 While several of the aforementioned studies applied the space-for-time approach to quantify temperature and excess heat on growth, they typically compare trees grouped using qualitative or summary descriptors of sampling sites, disregarding the spatio-temporal variability in location-specific factors noted above.
 This can hinder the extrapolation from individual sampling sites toward predicting effects across entire urban areas and tree stocks, especially when studies rely on labor-intensive methods which are limited logistically by sampling effort, reducing sample sizes, and species as well as spatial coverage.
-This can be  exacerbated by a lack of co-located environmental variables (i.e. measured in situ) at pertinent spatial scales, for instance, as noted by @wohlfart2019 for air temperature and tree leaf phenology, which may lead to incorrect inferences and interpretations for the role of climate change on growth/productivity when applying space-for-time substitutions.
+This can be  exacerbated by a lack of co-located environmental variables (i.e. measured in situ) at pertinent spatial scales, for instance, as noted by @wohlfahrt2019 for air temperature and tree leaf phenology, which may lead to incorrect inferences and interpretations for the role of climate change on growth/productivity when applying space-for-time substitutions.
 It is thus likely that the varying and even contrasting growth responses observed for urban trees across and within studies is at least modulated by several confounding factors, making the attribution to a single driver, such as excess heat, more difficult and possibly less accurate. 
 
 
@@ -287,12 +286,33 @@ The city provides extensive public green space covering around 30$~\%$ of its ar
 It has a pronounced urban heat island, owing to its high degree of built-up and sealed surfaces, with air temperatures up to 12$^\circ C$ higher in urban compared to adjacent rural areas [@fenner2014].
 
 
-## Data sources
+## Dendrochronological sampling and analyses
 
-An overview of all data used in this study, including sources, types, and application, is provided in Table X.
-Most notably, characteristics of street trees and their respective environments were collated from the city's tree inventory, as well as various elements of the Berlin Environment Atlas, which are openly available via daten.berlin.de and curated by the city's government.
+## Statistical Analyses
+
+### Model development and selection
+#### General approach: space-for-time analyses
+
+#### Data sources
+
+An overview of data used for models, including sources, types, and application, is provided in Table X.
+
+**Trees**  
+Characteristics of street trees and their respective environments were collated from the city's tree inventory, as well as various elements of the Berlin Environment Atlas, which are openly available via https://daten.berlin.de and curated by the city's government.
 The data used from the inventory includes species, location, age, and diameter at breast height (dbh).
-The environment atlas holds information on several variables relevant to tree growth, such as soil type and nutrient exchange capacity, distance to groundwater, surface area of tree planting beds ("Baumscheibe"), as well as general characteristics of the urban environment like building height.
+
+**Temperature/UHI data sets**  
+
+**Ancillary data sets**  
+Following the general approach described above, four ancillary dependent variables next to a temperature measure were employed in models; these were chosen due to their availability at high spatial resolution and coverage, and because their influence on growth was previously identified in literature or their likely impact could be deduced using ecophysiological principles.
+We included planting bed area, the sum of exchangeable basic cation as a proxy for soil nutrient availability, adjacent building height,  and the proportional coverage of local climate zone 6 (LCZ6; open mid-rise, see @demuzere2019 and @stewart2012 for details).
+The latter was chosen as an increase reflects a transition away from densely urbanized areas. Note that only street trees in urban, not rural areas or within greenspaces, were considered here, but individual trees may grow along streets adjacent to greenspaces and parks of varying sizes.
+
+
+were considered to have 
+The environment atlas also provided soil nutrient exchange capacity as a measure of growth-favoring soil conditions, 
+
+surface area of tree planting beds ("Baumscheibe"), as well as general characteristics of the urban environment like building height.
 It also includes spatially-explicit model outputs for local climate simulations representative of typical conditions, such as air temperature (2 m) on a 2015 summer's day at different hours (0400, 1400, 2200). 
 These model outputs were preferred over *in situ* measurements as **more representative based on averaged conditions, physiologically more relevant than surface urban heat island products**.
 These outputs are available at city block or planning unit level, and were used as a proxy for the general temperature distribution influenced by urbanization across the investigated growth period across the previous 80 years (see section X for details).
@@ -319,11 +339,15 @@ dsources$Accessed <- format(dsources$Accessed, "%b '%y")
 
 caption <- "Data description used for generating maps and route optimization. Resolution and radius are provided in $m$, the latter referring to the buffer size across which data was averaged to estimate trees' environmental conditions. A zero-radius refers to a point extraction from categorical and location specific data. **Planting Bed Area, and Soil type are not currently used.**"
 
+dsource <- dsources[-which(dsources$File == 'Wintertime_gridded_UHI_data.zip'), ]
+
 
 dsources <- dsources %>%
+    dplyr::mutate(Category = forcats::fct_relevel(Category, 'trees', 'temperature', 'landuse', 'ancillary', 'gov')) %>% 
+    arrange(Category) %>%
   dplyr::select(Name = `Name-eng`, Accessed, Type, Unit = `Unit-latex`, Resolution, Radius, Source = `Source-short`, Reference = TextRef) %>%
-  dplyr::filter(Name != "UHI Berlin",
-                Name != "Park Trees",
+  # dplyr::filter(Name != "UHI Berlin",
+  dplyr::filter(Name != "Park Trees",
                 Name != "Riparian Trees") 
 
 
@@ -434,16 +458,16 @@ Further, models were established for the three most abundant species per genera 
 <!-- We caution, that 1) the presented model results are preliminary, 2) initial diagnostics indicate that modification of the current model structure (e.g. by accounting for individual-level variability) may be required and 3) that further, time-intensive data cleaning is necessary.  -->
 <!-- First tests, however, showed that while the magnitude of effects changes with different model structures, their direction appears stable. -->
 
-## Available and required data
+<!-- ## Available and required data -->
 
 
-Additional remote sensing data for local context, higher resolution UHI data, and most important, temporally-resolved tree growth data are still required and/or would greatly improve the confidence in effect size estimates (see Section$~$\@ref(sec:intro)).
-See Tab.$~$\@ref(tab:tab-data-req) for details on data sets.
+<!-- Additional remote sensing data for local context, higher resolution UHI data, and most important, temporally-resolved tree growth data are still required and/or would greatly improve the confidence in effect size estimates (see Section$~$\@ref(sec:intro)). -->
+<!-- See Tab.$~$\@ref(tab:tab-data-req) for details on data sets. -->
 
 
 
 
-```{r tab-data-req,echo=FALSE}
+```{r tab-data-req,echo=FALSE, eval = FALSE}
 
 dat_req <- read.csv(here::here("analysis", "data", "tables", "01_data_requirements.csv"), header = TRUE)
 
@@ -690,7 +714,7 @@ knitr::include_graphics(here::here("analysis/figures/plot_03_ranef_species_dbh_u
 	+ Temporal dynamics  
 	+ Validity and limitations  
 	
-	
+	[@bussotti2014]
 	
 	
 	

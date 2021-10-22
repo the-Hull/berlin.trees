@@ -410,6 +410,17 @@ plan <- drake::drake_plan(
        group_vars = NULL),
 
 
+   pred_data_single_tempvar_fixed_lcz6 =  pred_dbh_temp_single_var(
+       path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_lcz6_reBEZIRK_var-day_2007', 'model_file_path'],
+       model_df = model_df_stat_filtered,
+       fixed_vars = list(X = 388141,
+                         Y = 5818534,
+                         STANDALTER = c(30:35, 45:50, 60:65, 75:80, 90:95),
+                         lcz_prop_6 = 0.5),
+       age_expression = age_expr,
+       group_vars = NULL),
+
+
    pred_data_single_tempvar_fullmodel =  pred_dbh_temp_single_var(
        path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_reBEZIRK_full_var-day_2007', 'model_file_path'],
        model_df = model_df_stat_filtered,
@@ -487,7 +498,7 @@ plan <- drake::drake_plan(
 
 
 
-   pred_data_single_tempvar_fixed_lcz6 =  pred_dbh_temp_single_var(
+   pred_data_single_tempvar_multi_lcz6 =  pred_dbh_temp_single_var(
        path_model =    bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_lcz6_reBEZIRK_var-day_2007', 'model_file_path'],
        model_df = model_df_stat_filtered,
        fixed_vars = list(
@@ -687,6 +698,17 @@ plan <- drake::drake_plan(
        width = 18,
        dpi = 300),
 
+   plot_gam_temp_lcz6_prediction = plot_dbh_temp_single_var(
+       pred_list = pred_data_single_tempvar_fixed_lcz6,
+       model_df = model_df_stat_filtered,
+       age_filter = NULL,
+       age_expression = age_expr,
+       prediction_range = "within",
+       base_size = 18,
+       file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_lcz6.png"),
+       height = 11,
+       width = 18,
+       dpi = 300),
 
    plot_gam_temp_prediction_fullmodel = plot_dbh_temp_single_var(
        pred_list = pred_data_single_tempvar_fullmodel,
@@ -704,18 +726,35 @@ plan <- drake::drake_plan(
 
 
 
-   plot_gam_temp_prediction_single_genus = plot_dbh_temp_single_var_single_species(pred_list = pred_data_single_tempvar,
-                                           model_df = model_df_stat_filtered,
-                                           age_filter = NULL,
-                                           species_filter = c("Tilia cordata", "Tilia platyphyllos"),
-                                           # species_filter = c("Tilia cordata","Platanus acerifolia"),
-                                           age_expression = age_expr,
-                                           prediction_range = "within",
-                                           base_size = 18,
-                                           file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_tilia.png"),
-                                           height = 6,
-                                           width = 12,
-                                           dpi = 300),
+   plot_gam_temp_prediction_single_genus = plot_dbh_temp_single_var_single_species(
+       pred_list = pred_data_single_tempvar_fixed_lcz6,
+       model_df = model_df_stat_filtered,
+       age_filter = NULL,
+       species_filter = c("Tilia cordata", "Tilia platyphyllos"),
+       # species_filter = c("Tilia cordata","Platanus acerifolia"),
+       age_expression = age_expr,
+       prediction_range = "within",
+       base_size = 18,
+       file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007-lcz6_tilia.png"),
+       height = 6,
+       width = 12,
+       dpi = 300),
+
+
+   plot_gam_temp_prediction_genus_comparison = plot_dbh_temp_single_var_single_species(
+       pred_list = pred_data_single_tempvar_fixed_lcz6,
+       model_df = model_df_stat_filtered,
+       age_filter = c('[45 - 50]', '[75 - 80]'),
+       species_filter = NULL,
+       # species_filter = c("Tilia cordata", "Tilia platyphyllos"),
+       # species_filter = c("Tilia cordata","Platanus acerifolia"),
+       age_expression = age_expr,
+       prediction_range = "within",
+       base_size = 18,
+       file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007-lcz6_all_genus.png"),
+       height = 6,
+       width = 12,
+       dpi = 300),
 
 
 
@@ -765,7 +804,7 @@ plan <- drake::drake_plan(
                                  dpi = 300),
 
 
-   plot_gam_temp_prediction_single_genus_lcz6 = plot_dbh_temp_single_var_flex(pred_list = pred_data_single_tempvar_fixed_lcz6,
+   plot_gam_temp_prediction_single_genus_lcz6 = plot_dbh_temp_single_var_flex(pred_list = pred_data_single_tempvar_multi_lcz6,
                                  model_df = model_df_stat_filtered,
                                  var = "lcz_prop_6",
                                  age_filter = c("[45 - 50]", "[60 - 65]", '[75 - 80]', '[90 - 95]'),
@@ -827,6 +866,18 @@ plan <- drake::drake_plan(
                          width = 14,
                          dpi = 300),
 
+   ### SI: Heat comparison ------------------------------
+
+   plot_heat_comparison = make_plot_pairs(dframe = model_df_stat_filtered,
+                   varlabs = list(afternoon = list(var = c("T2M14", "mod_afternoon", "day_2007"),
+                                                   main = "Air Temperature / UHI Measure: \n Afternoon"),
+                                  night = list(var = c("T2M22", "mod_night", "night_2007"),
+                                               main = "Air Temperature / UHI Measure: \n Night"),
+                                  morning = list(var = c("T2M04", "mod_afternoon"),
+                                                 main = "Air Temperature / UHI Measure: \n Morning")),
+                   path_out = "./analysis/figures/"),
+
+
     # tables ------------------------------------------
 
     overview_table = make_overview_table(full_data_set_clean),
@@ -848,13 +899,13 @@ plan <- drake::drake_plan(
 
 
     # Reporting ------------------------------
-    # paper_html = rmarkdown::render(
-    #     knitr_in("./analysis/paper/paper.Rmd"),
-    #     output_dir = "./analysis/paper/",
-    #     output_file = file_out("paper_knit.html"),
-    #     output_format = bookdown::html_document2(),
-    #     quiet = TRUE
-    # ),
+    paper_html = rmarkdown::render(
+        knitr_in("./analysis/paper/paper.Rmd"),
+        output_dir = "./analysis/paper/",
+        output_file = file_out("paper_knit.html"),
+        output_format = bookdown::html_document2(),
+        quiet = TRUE
+    ),
     # paper_word = rmarkdown::render(
     #     knitr_in("./analysis/paper/paper.Rmd"),
     #     output_dir = "./analysis/paper/",
