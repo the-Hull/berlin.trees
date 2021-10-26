@@ -866,6 +866,19 @@ plan <- drake::drake_plan(
                          width = 14,
                          dpi = 300),
 
+
+   ### BIWI: cambial age vs. annual growth
+
+   series_long = prep_rwl_data(path_meta_cores = "./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx",
+                                path_meta_trees = "./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx",
+                                path_meta_sites = "./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx",
+                                path_dir_fh = "./analysis/data/raw_data/biwi/rwl/"),
+
+   biwi_preds = biwi_mod_predict(series_long),
+
+   biwi_plot =
+
+
    ### SI: Heat comparison ------------------------------
 
    plot_heat_comparison = make_plot_pairs(dframe = model_df_stat_filtered,

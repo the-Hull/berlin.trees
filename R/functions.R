@@ -5975,3 +5975,24 @@ apply_gam_biwi <- function(df){
 
 
 }
+
+
+#' Estimate model and generate predictions for BIWI mod
+#'
+#' @param dframe data.frame from `prep_rwl_data`
+#'
+#' @return
+biwi_mod_predict <- function(dframe){
+
+    biwimod <- apply_gam_biwi(df = dframe)
+
+
+
+    new_dat <- expand.grid(cambial_age = c(0:80),
+                           year = c(1920:2001),
+                           species = unique(biwimod$df$species)) %>%
+        mutate(year_break = as.factor(ifelse(year <= 1960, "<=1960", ">1960")))
+    preds <- predict(biwimod$gam, newdata = new_dat, type = "link", se.fit = TRUE, exclude = "s(species)")
+    return(preds)
+
+}
