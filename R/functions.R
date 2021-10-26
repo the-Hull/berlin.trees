@@ -5340,7 +5340,7 @@ summarize_age_groups <- function(dset,model_df, groupvars, age_break_expr){
         # filter(STANDALTER < 100) %>%
         group_by(age_group, !!! groupvars_sym, species_corrected) %>%
         summarise(mean_dbh = mean(pred.fit, na.rm = TRUE),
-                  mean_se = sqrt(sum(pred.se.fit))/n()) %>%
+                  mean_se = sqrt(sum(pred.se.fit^2)/n())) %>%
         mutate(response.fit.mean = ifun(mean_dbh),
                response.low.mean = ifun(mean_dbh - 1.96 * mean_se),
                response.high.mean = ifun(mean_dbh + 1.96 * mean_se)) %>%
@@ -5668,6 +5668,17 @@ make_rwl_windows <- function(df, window_n = 5, type = "slide"){
 
 
 
+#' Makes df of rwl time series, custom for BIWI data structure
+#'
+#' @param path_meta_cores  character, inventory file
+#' @param path_meta_trees character, inventory file
+#' @param path_meta_sites character, inventory file
+#' @param path_dir_fh character, path to raw rwl folders
+#'
+#' @return
+#' @export
+#'
+#' @examples
 prep_rwl_data <- function(path_meta_cores,
                           path_meta_trees,
                           path_meta_sites,
@@ -5881,6 +5892,86 @@ prep_rwl_data <- function(path_meta_cores,
 
 
     return(all_series_rwl_long)
+
+
+}
+
+
+
+#' Estimates time and age trend in BIWI data
+#'
+#' @param df data.frame, either all series raw or moving data
+#' @return mgcv::gamm output
+apply_gam_biwi <- function(df){
+
+    # define inner fncs
+    make_urban_df <- function(df, year_min, year_max,year_break, cambial_age_max){
+        urban_rwl <- df %>%
+            mutate(age_group = cut(cambial_age, seq(from = 0, to = 120, by = 5)),
+                   site_global = case_when(
+                       site_type %in% c("natural", "rural") ~ "forest",
+                       TRUE ~ "urban"),
+                   year_break = as.factor(
+                       ifelse(
+                           year <= year_break,
+                           sprintf("<=%s", year_break),
+                           sprintf(">%s", year_break))),
+                   location_short = as.factor(location_short)) %>%
+            filter(site_global == "urban",
+                   year >= year_min,
+                   year <= year_max,
+                   cambial_age <= cambial_age_max,
+                   cambial_age >= 0,
+                   !is.na(rwl_mm)) %>%
+            arrange(tree_id, year)
+
+        return(urban_rwl)
+    }
+
+    urban_rwl <- make_urban_df(df,
+                               year_min = 1920,
+                               year_max = 2001,
+                               year_break = 1960,
+                               cambial_age_max = 100)
+
+
+    # library(mgcv)
+    ctrl <- list(niterEM = 0, msVerbose = TRUE, optimMethod="L-BFGS-B")
+
+    # mod <- gamm(rwl_mm ~ s(year, k = 30) + s(cambial_age, k = 6, by = year_break) + year_break,
+    #
+    #                     data = urban_rwl,
+    #                     family = Gamma(link = "log"),
+    #                     correlation = corARMA(form = ~ year | tree_id, p = 3),
+    #                     random = list(tree_id = ~1,
+    #                                   species = ~ 1),
+    # niterPQL = 50)
+
+
+    mod <- gamm(rwl_mm ~ s(year, k = 15) + s(cambial_age, k = 6, by = year_break) + year_break + s(species, bs = "re"),
+               data = urban_rwl,
+               family = Gamma(link ="log"),
+               correlation = corARMA(form = ~ year | tree_id, p = 3),
+               # correlation = corAR1(form = ~ year | tree_id),
+               # random = list(tree_id = ~1,
+               # species = ~ 1),
+               niterPQL = 50)
+    # mod <- gam(list(rwl_mm ~ s(year, k = 30) + s(cambial_age, k = 6, by = year_break) + year_break,
+    #                 ~ s(cambial_age, k = 6, by = year_break) + year_break),
+    #            data = urban_rwl,
+    #            family = mgcv::gammals(link = list("identity", "log")),
+    #            correlation = corARMA(form = ~ year | tree_id, p = 15, q = 3),
+    #            # correlation = corAR1(form = ~ year | tree_id),
+    #            # random = list(tree_id = ~1,
+    #            # species = ~ 1),
+    #            niterPQL = 50)
+
+
+
+    mod$df <- urban_rwl
+
+
+    return(mod)
 
 
 }

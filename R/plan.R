@@ -814,7 +814,7 @@ plan <- drake::drake_plan(
                                  prediction_range = "within",
                                  base_size = 18,
                                  x_label = expression('Proportional Cover - LCZ6'[bar(150~m)]),
-                                 file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_lcz6_tilia.png"),
+                                 file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_xvar-lcz6_tilia.png"),
                                  height = 7,
                                  width = 8,
                                  dpi = 300),

@@ -1740,102 +1740,23 @@ plot_obs_predicted_model <- function(path_model,
 
 # BIWI --------------------------------------------------------------------
 
-series_long <- prep_rwl_data(path_meta_cores = "C:/Users/ahurl/Documents/_work/p024_gfz_berlin-trees/ext_data/BIWI/dendro_da/Dendro/BIWi_INV_20190123.xlsx",
-                             path_meta_trees = "C:/Users/ahurl/Documents/_work/p024_gfz_berlin-trees/ext_data/BIWI/dendro_da/Dendro/BIWi_INV_20190123.xlsx",
-                             path_meta_sites = "C:/Users/ahurl/Documents/_work/p024_gfz_berlin-trees/ext_data/BIWI/dendro_da/Dendro/BIWi_INV_20190123.xlsx",
-                             path_dir_fh = "C:/Users/ahurl/Documents/_work/p024_gfz_berlin-trees/ext_data/BIWI/dendro_da/Dendro/RAW/")
-
-
-slide_rwl <- make_rwl_windows(df = series_long,
-                              window_n = 5,
-                              type = "slide")
-
-move_rwl <- make_rwl_windows(df = series_long,
-                             window_n = 5,
-                             type = "move")
+series_long <- prep_rwl_data(path_meta_cores = "./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx",
+                             path_meta_trees = "./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx",
+                             path_meta_sites = "./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx",
+                             path_dir_fh = "./analysis/data/raw_data/biwi/rwl/")
 
 
 
-#' Estimates time and age trend in BIWI data
-#'
-#' @param df data.frame, either all series raw or moving data
-#' @return mgcv::gamm output
-apply_gam_biwi <- function(df){
-
-    # define inner fncs
-    make_urban_df <- function(df, year_min, year_max,year_break, cambial_age_max){
-        urban_rwl <- df %>%
-            mutate(age_group = cut(cambial_age, seq(from = 0, to = 120, by = 5)),
-                   site_global = case_when(
-                       site_type %in% c("natural", "rural") ~ "forest",
-                       TRUE ~ "urban"),
-                   year_break = as.factor(
-                       ifelse(
-                           year <= year_break,
-                           sprintf("<=%s", year_break),
-                           sprintf(">%s", year_break))),
-                   location_short = as.factor(location_short)) %>%
-            filter(site_global == "urban",
-                   year >= year_min,
-                   year <= year_max,
-                   cambial_age <= cambial_age_max,
-                   cambial_age >= 0,
-                   !is.na(rwl_mm)) %>%
-            arrange(tree_id, year)
-
-        return(urban_rwl)
-    }
-
-    urban_rwl <- make_urban_df(df,
-                               year_min = 1920,
-                               year_max = 2000,
-                               year_break = 1960,
-                               cambial_age_max = 100)
 
 
-    library(mgcv)
-    ctrl <- list(niterEM = 0, msVerbose = TRUE, optimMethod="L-BFGS-B")
-
-    # mod <- gamm(rwl_mm ~ s(year, k = 30) + s(cambial_age, k = 6, by = year_break) + year_break,
-    #
-    #                     data = urban_rwl,
-    #                     family = Gamma(link = "log"),
-    #                     correlation = corARMA(form = ~ year | tree_id, p = 3),
-    #                     random = list(tree_id = ~1,
-    #                                   species = ~ 1),
-    # niterPQL = 50)
-
-
-    mod <- gam(list(rwl_mm ~ s(year, k = 30) + s(cambial_age, k = 6, by = year_break) + year_break,
-                    ~ s(cambial_age, k = 6, by = year_break) + year_break),
-               data = urban_rwl,
-               family = mgcv::gammals(link = list("identity", "log")),
-               correlation = corARMA(form = ~ year | tree_id, p = 3),
-               # random = list(tree_id = ~1,
-               # species = ~ 1),
-               niterPQL = 50)
-
-
-
-    mod$df <- urban_rwl
-
-
-    return(mod)
-
-
-}
-
-
-
-mod6 <- apply_gam_biwi(df = series_long)
-mod7 <- apply_gam_biwi(df = series_long)
+biwimod <- apply_gam_biwi(df = series_long)
 
 
 layout(matrix(1:2, ncol = 2))
-res <- resid(mod6$lme, type = "normalized")
-res <- resid(mod7, type = "deviance")
-acf(res, lag.max = 10, main = "ACF - AR(2) errors")
-pacf(res, lag.max = 10, main = "pACF- AR(2) errors")
+res <- resid(biwimod, type = "deviance")
+res <- resid(biwimod$lme, type = "normalized")
+acf(res, lag.max = 15, main = "ACF - AR(2) errors")
+pacf(res, lag.max = 15, main = "pACF- AR(2) errors")
 layout(1)
 
 
@@ -1843,10 +1764,11 @@ layout(1)
 
 
 
-
-new_dat <- expand.grid(cambial_age = c(0:80), year = c(1920:2000)) %>%
+new_dat <- expand.grid(cambial_age = c(0:80),
+                       year = c(1920:2001),
+                       species = unique(biwimod$df$species)) %>%
     mutate(year_break = as.factor(ifelse(year <= 1960, "<=1960", ">1960")))
-preds <- predict(mod6$gam, newdata = new_dat, type = "link", se.fit = TRUE)
+preds <- predict(biwimod$gam, newdata = new_dat, type = "link", se.fit = TRUE, exclude = "s(species)")
 # preds <- predict(mod_growth$gam, newdata = new_dat, type = "terms", exclude = "s(location_short,species)")
 
 # sapply(mod_growth$smooth, '[[',  'label')
@@ -1856,7 +1778,8 @@ preds <- predict(mod6$gam, newdata = new_dat, type = "link", se.fit = TRUE)
 
 
 new_dat <- cbind(new_dat, preds) %>%
-    mutate(year_group = as.factor(year <= 1950))
+    mutate(year_group = as.factor(year <= 1950)) %>%
+    mutate(year_break = as.factor(ifelse(year <= 1960, "1920 - 1960", "1961 - 2001")))
 
 
 serror <- function(x){
@@ -1867,6 +1790,7 @@ serror <- function(x){
 
 
 means <- new_dat %>%
+    mutate(year_break = as.factor(ifelse(year <= 1960, "1920 - 1960", "1961 - 2001"))) %>%
     group_by(cambial_age, year_break) %>%
     summarize(mean_link = mean(fit),
               mean_fit_response = Gamma(link="log")$linkinv(mean_link),
@@ -1888,7 +1812,8 @@ ggplot(new_dat, aes(x = cambial_age, y = Gamma(link="log")$linkinv(fit), color =
                     color = year_break,
                     fill = year_break,
                     group = year_break),
-                alpha = 0.35) +
+                alpha = 0.35,
+                show.legend = FALSE) +
     geom_line(data = means,
               inherit.aes = FALSE,
               aes(x = cambial_age,
@@ -1896,33 +1821,20 @@ ggplot(new_dat, aes(x = cambial_age, y = Gamma(link="log")$linkinv(fit), color =
                   group = year_break,
                   color = year_break),
               size = 1) +
+    labs(x = "Cambial Age (a)",
+         y = "Annual Growth (mm)",
+         color = NULL,
+         fill = NULL) +
     # lims(y = c(0, 7)) +
-    scale_fill_brewer(type = "qual", palette = 2) +
-    scale_color_brewer(type = "qual", palette = 2) +
-    theme_test(base_family = "serif")
+    # scale_fill_brewer(type = "qual", palette = 2) +
+    # scale_color_brewer(type = "qual", palette = 2) +
+    scale_color_manual(values = pals::tol(2), aesthetics = c("fill", "color")) +
+    theme_minimal(base_size = 18) +
+    theme(legend.position = c(0.75, y = 0.75))
 
 
 
 
-ggplot(mod6$df,
-       aes(x = cambial_age,
-           y = rwl_mm,
-           color = year_break,
-           group = tree_id)) +
-    geom_line()
-
-
-
-bam_gls <- mgcv::gam(formula = list(rwl_mm ~ s(year, k = 30) +
-                                        s(cambial_age, k = 8, by = year_break, m = 2) +
-                                        year_break +
-                                        s(tree_id, species, bs = "re"),
-                                    ~ s(cambial_age, k = 8, by = year_break) + year_break),
-                     family = gammals(),
-                     data = mod6$df)
-
-gam.check(bam_gls)
-plot(bam_gls, scheme = 2, pages = 1)
 
 
 

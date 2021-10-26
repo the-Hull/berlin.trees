@@ -295,13 +295,21 @@ It has a pronounced urban heat island, owing to its high degree of built-up and 
 
 #### Data sources
 
-An overview of data used for models, including sources, types, and application, is provided in Table X.
+An overview of data used for models, including sources, types, and application, is provided in Table$~$\@ref(tab:dsources).
 
 **Trees**  
 Characteristics of street trees and their respective environments were collated from the city's tree inventory, as well as various elements of the Berlin Environment Atlas, which are openly available via https://daten.berlin.de and curated by the city's government.
 The data used from the inventory includes species, location, age, and diameter at breast height (dbh).
 
 **Temperature/UHI data sets**  
+Temperature and UHI data were summarized temporally either by the provider or manually to provide a characteristic representation of heat loading during summer at different times (morning, afternoon/day, night), from which tree averages (radius of 150$~m$) were calculated.
+Two data sets of urban air and one surface temperature were tested as explanatory variables in GAMM models.
+The air temperatures from the Berlin environmental atlas (EnvAt) were model outputs that are representations of typical summer conditions at 0400, 1400 and 2200 hours; these data are provided at city block basis (spatial polygons), from which weighted averages were extracted.
+UrbClim air temperatures are hourly model outputs (100$~m$ resolution, **ref**) based on ERA5 re-analyses data (ECMWF) for which data of the hottest month in the record (June, 2011) were averaged to hours equivalent to EnvAt data by using a window of $\pm~1~$hour (i.e., 0300 to 0500, etc.).
+Subsequently, a land-use and landcover mask (2018,      Copernicus CORINE **ref**) was used to define urban and rural/forested areas, by which the urban heat loading was calculated as $UHI_{x,y} = T_{Air_{2m}~x,y} - \overline{T_{Air_{2m}~Rural}}$, where $x$ and $y$ define an urban grid cell.
+The surface UHI data set by @chakraborty2019 derives its measure in a similar fashion and the reader is referred to the detailed description therein; note this data set provides day and night-time averaged UHI estimates at 500$~m$ resolution, which were extracted for the hottest summer in this record (2007).
+
+
 
 **Ancillary data sets**  
 Following the general approach described above, four ancillary dependent variables next to a temperature measure were employed in models; these were chosen due to their availability at high spatial resolution and coverage, and because their influence on growth was previously identified in literature or their likely impact could be deduced using ecophysiological principles.
