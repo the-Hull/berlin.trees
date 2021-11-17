@@ -2010,8 +2010,9 @@ prep_model_df <- function(dset,
                           path = "./analysis/figures/diagnostic_01_model_data.png"){
 
 
-    dset <- sf::st_drop_geometry(dset) %>%
-        mutate(species_corrected = as.factor(gsub("Tilia intermedia.*", "Tilia intermedia", x = species_corrected)))
+    dset <- sf::st_drop_geometry(dset)
+    # %>%
+        # mutate(species_corrected = as.factor(gsub("Tilia intermedia.*", "Tilia intermedia", x = species_corrected)))
 
     #
     top_species <- dset %>%
@@ -2205,10 +2206,11 @@ make_model_grid <- function(){
 
     model_params <- new.env()
 
-    model_params$k_uni <- 25
+    model_params$k_uni <- 7
     model_params$k_age <- 5
     # model_params$k_te <- c(7, 20)
-    model_params$k_te <- c(5, 15)
+    # model_params$k_te <- c(5, 15)
+    model_params$k_te <- c(5, 7)
     model_params$k_spatial <- 400
     model_params$k_spatial_soilnutmodel <- 250
     model_params$k_soilnut <- 25
@@ -4762,6 +4764,98 @@ make_plot_pairs <- function(dframe,
 
 }
 
+
+
+
+#' BIWI Generate growth ~ age plot
+#'
+#' @param biwi_preds predictions from biwi gam
+#' @param base_size
+#' @param file
+#' @param height
+#' @param width
+#' @param dpi
+#'
+#' @return
+#' @export
+#'
+#' @examples
+make_biwi_plot <- function(biwi_preds,
+                           base_size = 18,
+                           file,
+                           height,
+                           width,
+                           dpi){
+
+
+
+
+    # helper for error propagation
+    serror <- function(x){
+
+        return(sqrt(sum(x^2)/length(x)))
+
+
+        # sqrt(sum(pred.se.fit^2))/n())
+
+    }
+
+    means <- biwi_preds %>%
+        mutate(year_break = as.factor(ifelse(year <= 1960, "1920 - 1960", "1961 - 2001"))) %>%
+        group_by(cambial_age, year_break) %>%
+        summarize(mean_link = mean(fit),
+                  mean_fit_response = Gamma(link="log")$linkinv(mean_link),
+                  mean_se_response_low = Gamma(link="log")$linkinv(mean_link - 1.96 * serror(se.fit)),
+                  mean_se_response_high = Gamma(link="log")$linkinv(mean_link + 1.96 * serror(se.fit)))
+
+
+    gplot <-     ggplot(biwi_preds,
+                    aes(x = cambial_age,
+                        y = Gamma(link="log")$linkinv(fit),
+                        color = year_break,
+                        group = year)) +
+        geom_line(alpha = 0.2) +
+        geom_ribbon(data = means,
+                    inherit.aes = FALSE,
+                    aes(x = cambial_age, y = mean_fit_response,
+                        ymin = mean_se_response_low,
+                        ymax = mean_se_response_high,
+                        color = year_break,
+                        fill = year_break,
+                        group = year_break),
+                    alpha = 0.35,
+                    show.legend = FALSE) +
+        geom_line(data = means,
+                  inherit.aes = FALSE,
+                  aes(x = cambial_age,
+                      y = mean_fit_response,
+                      group = year_break,
+                      color = year_break),
+                  size = 1) +
+        labs(x = "Cambial Age (a)",
+             y = "Annual Growth (mm)",
+             color = NULL,
+             fill = NULL) +
+        # lims(y = c(0, 7)) +
+        # scale_fill_brewer(type = "qual", palette = 2) +
+        # scale_color_brewer(type = "qual", palette = 2) +
+        scale_color_manual(values = pals::tol(2), aesthetics = c("fill", "color")) +
+        theme_minimal(base_size = 18) +
+        theme(legend.position = c(0.75, y = 0.75))
+
+
+
+
+    ggplot2::ggsave(filename = file,
+                    plot = gplot,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+    return(file)
+
+}
+
 # Tables ------------------------------------------------------------------
 
 #' Make overview table
@@ -4817,7 +4911,7 @@ make_age_table <- function(df, max_age = 120, break_interval = 20){
 
 
     # make df with age breaks
-    age_df <- data.table(df)[ , .(STANDALTER, gattung_short)][
+    age_df <- data.table(df)[provenance == "s_wfs_baumbestand" , .(STANDALTER, gattung_short)][
         , age_group := cut(STANDALTER, breaks = c(seq(0, max_age, break_interval), max(STANDALTER, na.rm = TRUE)), right = TRUE)]
 
     species_totals <- age_df[ ,.(n_total = .N), by = gattung_short]
@@ -5948,10 +6042,10 @@ apply_gam_biwi <- function(df){
     # niterPQL = 50)
 
 
-    mod <- gamm(rwl_mm ~ s(year, k = 15) + s(cambial_age, k = 6, by = year_break) + year_break + s(species, bs = "re"),
+    mod <- mgcv::gamm(rwl_mm ~ s(year, k = 15) + s(cambial_age, k = 6, by = year_break) + year_break + s(species, bs = "re"),
                data = urban_rwl,
                family = Gamma(link ="log"),
-               correlation = corARMA(form = ~ year | tree_id, p = 3),
+               correlation = nlme::corARMA(form = ~ year | tree_id, p = 3),
                # correlation = corAR1(form = ~ year | tree_id),
                # random = list(tree_id = ~1,
                # species = ~ 1),
@@ -5993,6 +6087,12 @@ biwi_mod_predict <- function(dframe){
                            species = unique(biwimod$df$species)) %>%
         mutate(year_break = as.factor(ifelse(year <= 1960, "<=1960", ">1960")))
     preds <- predict(biwimod$gam, newdata = new_dat, type = "link", se.fit = TRUE, exclude = "s(species)")
-    return(preds)
+
+
+    new_dat <- cbind(new_dat, preds) %>%
+        mutate(year_group = as.factor(year <= 1950)) %>%
+        mutate(year_break = as.factor(ifelse(year <= 1960, "1920 - 1960", "1961 - 2001")))
+    return(new_dat)
 
 }
+

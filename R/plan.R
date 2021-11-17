@@ -184,7 +184,7 @@ plan <- drake::drake_plan(
     # heat polygons based on block level - 20 m captures canopy
     berlin_heat_model = assess_mean_temps(full_data_set_clean,
                                           berlin_heat_model_2015,
-                                          20),
+                                          buff_dist = 150),
 
     # raster has 100 m resolution
     berlin_urbclim_heat_model = assess_mean_temps_urbclim(full_data_set_clean,
@@ -867,16 +867,21 @@ plan <- drake::drake_plan(
                          dpi = 300),
 
 
-   ### BIWI: cambial age vs. annual growth
+   ### BIWI: cambial age vs. annual growth -------------------
 
-   series_long = prep_rwl_data(path_meta_cores = "./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx",
-                                path_meta_trees = "./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx",
-                                path_meta_sites = "./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx",
-                                path_dir_fh = "./analysis/data/raw_data/biwi/rwl/"),
+   series_long = prep_rwl_data(path_meta_cores = drake::file_in("./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx"),
+                                path_meta_trees = drake::file_in("./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx"),
+                                path_meta_sites = drake::file_in("./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx"),
+                                path_dir_fh = drake::file_in("./analysis/data/raw_data/biwi/rwl/")),
 
    biwi_preds = biwi_mod_predict(series_long),
 
-   biwi_plot =
+   biwi_plot = make_biwi_plot(biwi_preds,
+                              base_size = 18,
+                              file = drake::file_out("./analysis/figures/fig-biwi-growth.png"),
+                              height = 8,
+                              width = 8,
+                              dpi = 300),
 
 
    ### SI: Heat comparison ------------------------------
@@ -918,7 +923,7 @@ plan <- drake::drake_plan(
         output_file = file_out("paper_knit.html"),
         output_format = bookdown::html_document2(),
         quiet = TRUE
-    ),
+    )
     # paper_word = rmarkdown::render(
     #     knitr_in("./analysis/paper/paper.Rmd"),
     #     output_dir = "./analysis/paper/",
