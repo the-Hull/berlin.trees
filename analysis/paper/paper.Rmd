@@ -146,7 +146,7 @@ These limitations could be overcome by relying on dendroecological surveys (i.e.
 Such data are increasingly more available due to open data policies and because their value is recognized across several domains [e.g. @ossola2020].
 Berlin, as one of the greenest cities in Europe, provides an openly accessible tree inventory, with spatio-temporal environmental data sets relevant to tree growth. 
 It features a total of 650000 individuals covering 94 genera and at least 600 species and/or cultivars, listing information on location, stem diameter (at breast height; $DBH$), and stem height, amongst other variables, for the majority of street and park trees.
-For this study, our objective was to assess the impact of excess urban heat, i.e. the UHI effect, on tree growth using this openly available inventory data set, complemented by additional open data sources as well as incremental growth data from tree cores. 
+For this study, our objective was to assess the impact of excess urban heat, i.e. the UHI effect, on tree growth ($DBH$) using this openly available inventory data set, complemented by additional open data sources as well as incremental growth data from tree cores. 
 The assessment relied on flexible statistical models that could capture species and location-specific responses to heat and other urban factors.
 Specifically, we aimed to (1) assess heat exposure of most abundant species; (2) determine the impact of (excess) heat on stem growth with space-for-time substitution to increase coverage; (3) highlight the role of location-specific environmental factors in mediating temperature responses.
 <!-- This work constitutes a case study for Berlin, the results are a valuable contribution toward Berlin's current and future management of its tree stock.  -->
@@ -235,29 +235,22 @@ table_ov <- overview_table %>%
 
 ```
 
+<!-- In a space-for-time substitution, growth of individual species can be assessed across the entire city of Berlin, and related to effects of the UHI, while accounting for other location-specific factors, such as street characteristics, development intensity, available soil volume, etc. -->
+<!-- Comparable applications are found, for example, in @quigley2004 and @pretzsch2017. -->
+<!-- The former  inferred absolute growth potential for species across successional groups (early, mid, late stage), and between rural and urban conspecifics, yet lacked spatially-explicit effect size estimates across the urban-rural space and was limited to comparatively small sample sizes per group ($n_{total}~=~230$ divided in 15 species, 3 groups and 2 locations). -->
+<!-- @pretzsch2017 applied linear hierarchical models to infer growth modulation on annual basis for different time periods and urban $vs.$ rural locations while accounting for stand-level variability; -->
+<!-- however, for Berlin only 145 individuals of one species (*T. cordata*) were assessed. -->
+<!-- As mentioned previously, climate-growth relationships can vary substantially between species, and in fact, @quigley2004 and @pretzsch2017 report contrasting results regarding average tree diameter, i.e. smaller or larger for urban $vs.$ rural trees of same age. -->
+<!-- Consequently, this variability of effect sizes and directions calls for a more comprehensive assessment across species and with greater spatial coverage throughout Berlin. -->
 
-In a space-for-time substitution, growth of individual species can be assessed across the entire city of Berlin, and related to effects of the UHI, while accounting for other location-specific factors, such as street characteristics, development intensity, available soil volume, etc.
-Comparable applications are found, for example, in @quigley2004 and @pretzsch2017.
-The former  inferred absolute growth potential for species across successional groups (early, mid, late stage), and between rural and urban conspecifics, yet lacked spatially-explicit effect size estimates across the urban-rural space and was limited to comparatively small sample sizes per group ($n_{total}~=~230$ divided in 15 species, 3 groups and 2 locations).
-@pretzsch2017 applied linear hierarchical models to infer growth modulation on annual basis for different time periods and urban $vs.$ rural locations while accounting for stand-level variability;
-however, for Berlin only 145 individuals of one species (*T. cordata*) were assessed.
-As mentioned previously, climate-growth relationships can vary substantially between species, and in fact, @quigley2004 and @pretzsch2017 report contrasting results regarding average tree diameter, i.e. smaller or larger for urban $vs.$ rural trees of same age.
-Consequently, this variability of effect sizes and directions calls for a more comprehensive assessment across species and with greater spatial coverage throughout Berlin.
-
-**We therefore propose applying a statistical model that is fully spatially explicit, while also allowing to account for the nested nature of the data set (e.g. streets and districts) as well as other pertinent factors using hierarchical, generalized additive models (see Section$~$\@ref(sec:methods)).
-As a result, the absolute growth potential of a species can be inferred given, for example, a specific location, age or UHI magnitude. 
-Further, the impact of UHI loading can be predicted for a single species across all of Berlin as a continuous surface.**
-The inclusion of independent, tree-level growth data, however, is paramount as it allows:  
-
-1) validating the publicly-available Senate dataset ($DBH$) while providing a more reliable estimate of tree age,  
-2) applying the model with annual basal area as a response (enabling incorporating effects of varying climate/UHI intensities over time), and  
-3) comparing $DBH$ (Senate data) and basal area-derived models for a subset of locations and species, increasing confidence in Berlin-wide predictions. 
-
+<!-- **We therefore propose applying a statistical model that is fully spatially explicit, while also allowing to account for the nested nature of the data set (e.g. streets and districts) as well as other pertinent factors using hierarchical, generalized additive models (see Section$~$\@ref(sec:methods)). -->
+<!-- As a result, the absolute growth potential of a species can be inferred given, for example, a specific location, age or UHI magnitude.  -->
+<!-- Further, the impact of UHI loading can be predicted for a single species across all of Berlin as a continuous surface.** -->
+<!-- The inclusion of independent, tree-level growth data, however, is paramount as it allows:   -->
+<!-- 1) validating the publicly-available Senate dataset ($DBH$) while providing a more reliable estimate of tree age,   -->
+<!-- 2) applying the model with annual basal area as a response (enabling incorporating effects of varying climate/UHI intensities over time), and   -->
+<!-- 3) comparing $DBH$ (Senate data) and basal area-derived models for a subset of locations and species, increasing confidence in Berlin-wide predictions.  -->
 <!-- We acknolwedge results from [@gregg2003], which indicated impeded growth adjacent to intense urban clusters, rather than enhancement within them. -->
-
-
-
-
 
 
 # Methods {#sec:methods}
@@ -270,18 +263,37 @@ Berlin features low relief (approximately 30$~m$ to 60$~m$ with 120$~m$ at solit
 The city provides extensive public green space covering around 30$~\%$ of its area [@suvkberlin2019], with an extensive urban forest of nearly 700000 publicly-managed trees along streets, in parks and in riparian areas.
 <!-- It has a pronounced urban heat island, owing to its high degree of built-up and sealed surfaces, with air temperatures up to 12$^\circ C$ higher in urban compared to adjacent rural areas [@fenner2014]. -->
 
+## General approach: space-for-time analyses
 
-## Data sources
+Species-specifc growth responses in relation across Berlin were assessed in relat
 
-An overview of data used for models, including sources, types, and application, is provided in Table$~$\@ref(tab:tab-dsources).
+We modeled the stem diameter ($DBH$) of Berlin’s ten most abundant species (contingent to ancillary data availability) in relationship to their location, age, a measure of excess heat [UrbClim by @deridder2015; Berlin Environmental Atlas models; LandSat-derived surface urban heat island by @chakraborty2019], and additional environmental covariates with generalized additive models (GAMs, see Section$~$\@ref(stat-gam) for details).
+Covariates were extracted at 150 and 300$~m$ to infer the impact of reference scale of the urban fabric on tree growth. 
+From all tested models the most suitable (i.e., parsimonious with highest explanatory) was employed for further analyses.
+An overview of data used for models, including sources, types, and application, is provided in Section$~$\@ref(dsources) and in Table$~$\@ref(tab:tab-dsources).
+
+## Data sources {#dsources}
+
+<!-- Berlin’s open data provided tree inventories (species, age, location, diameter which were processed with a bespoke software datacleanr by Hurley et al., submitted), planting bed area, estimates of soil nutrient availability, and adjacent building height. With WUDAPT local climate zones (Demuzere et al., 2019), these were used to determine trees’ growing conditions (locally, or within a radius of 150 m / 300 m).  -->
 
 ### Street trees  
-Characteristics of street trees and their respective environments were collated from the city's tree inventory, as well as various elements of the Berlin Environment Atlas, which are openly available via https://daten.berlin.de and curated by the city's government.
-The data used from the inventory includes species, location, age, and diameter at breast height (dbh).
-**quality control** - filtered dataset to remove drastic outliers --> fit poly model, used Median Absolute deviance with multiplier of X to exclude points. 
-Focused on 9 most abundant species to and Cultivars and hybrids were combined to increase sample sizes. **check which ones**
 
+Berlin’s open data provided tree inventories including species, age, location, and circumference.
+Unplausible observations, likely from erroneous data entry, were removed.
+Additional manual data processing for quality control was done with a bespoke software  `datacleanr` by Hurley *et al*. (submitted), where obvious outliers or clearly interpolated data were removed; the latter was deemed necessary, as several observations in multiple city districts were derived by a linear relationship, which does not captures the ontogenic growth dynamics of trees, while leaving no unexplained variation related to variables other than age.
+All of these operations were recorded, and can be viewed and reproduced via the supplementary code.
+Lastly, observations with unlikely diameter-age combinations were identified via the residuals of a generalized linear model between diameter and age with a Gamma log-link distribution: if individual residuals exceeded seven times the median absolute deviation of all residuals, they were removed.
+The median absolute deviation (MAD) is comparable to the inter quartile range, yet more robust to outliers:
+
+$$MAD = median(|X_i - median(X)|) $$
+This approach is considered conservative (see supplementary information), yet all analyses were carried forward with the filtered and unfiltered data set.
+No considerable differences were found for the unfiltered and filtered data, yet all subsequent sections use the latter.
+<!-- which were processed with the bespoke software datacleanr by Hurley et al., submitted), -->
+<!-- Characteristics of street trees and their respective environments were collated from the city's tree inventory, as well as various elements of the Berlin Environment Atlas, which are openly available via https://daten.berlin.de and curated by the city's government. -->
+<!-- The data used from the inventory includes species, location, age, and diameter at breast height (dbh). -->
+<!-- **quality control** - filtered dataset to remove drastic outliers --> fit poly model, used Median Absolute deviance with multiplier of X to exclude points.  -->
 Table$~$\@ref(tab:tab-age) shows the binned distribution of genera across age classes.
+Final sample sizes 
 
 
 
@@ -481,7 +493,7 @@ table_ds %>%
 
 ## Dendrochronological sampling and analyses
 
-## Statistical Analyses
+## Statistical Analyses {#stat-gam}
 
 ### General approach: space-for-time analyses
 
