@@ -4266,7 +4266,7 @@ plot_dbh_temp_single_var <- function(pred_list,
 
         labs(color = "Age Group",
              fill = "Age Group",
-             x = expression(UHI~Magnitude~(degree~C)),
+             x = expression(UHI~Magnitude~(degree*C)),
              y = expression(bar(DBH)~(cm)))
 
 
@@ -4410,7 +4410,7 @@ plot_dbh_temp_single_var_single_species <- function(pred_list,
 
         labs(color = "Species",
              fill = "Species",
-             x = expression(UHI~Magnitude~(degree~C)),
+             x = expression(UHI~Magnitude~(degree*C)),
              y = expression(bar(DBH)~(cm)))
 
 
@@ -4661,6 +4661,8 @@ plot_obs_predicted_model <- function(path_model,
                     height = height,
                     width = width)
 
+    return(gplot)
+
 
 }
 
@@ -4855,6 +4857,540 @@ make_biwi_plot <- function(biwi_preds,
     return(file)
 
 }
+
+
+
+
+## HICAM report ---------------------------------------------------------
+
+
+
+plot_dbh_temp_single_var_GG <- function(pred_list,
+                                     model_df,
+                                     age_filter,
+                                     age_expression,
+                                     base_size = 18,
+                                     prediction_range = "full"){
+
+    `%nin%` <- Negate(`%in%`)
+
+    model_df <- model_df %>%
+        mutate(age_group = eval(age_expression),
+               species_corrected = shorten_species(species_corrected) %>%
+                   as.character()) %>%
+        tidyr::drop_na(age_group) %>%
+        dplyr::mutate(species_corrected =
+                          dplyr::case_when(
+                              species_corrected == "A. hippocastanum" ~ "A. hippo- castanum",
+                              species_corrected == "A. platanoides" ~ "A. plata- noides",
+                              species_corrected == "A. pseudoplatanus" ~ "A. pseudopla- tanus",
+                              species_corrected == "T. platyphyllos" ~ "T. platy- phyllos",
+                              TRUE ~ species_corrected))
+
+
+
+
+    plot_data <- pred_list$pred_groups %>%
+        # dplyr::select(-tempvar) %>%
+        tidyr::pivot_longer(cols = dplyr::all_of(names(pred_list$pred_var)),
+                            names_to = "uhi_tempvar",
+                            values_to = "temp_degc") %>%
+        # dplyr::filter(prediction_range == prediction_range) %>%
+        dplyr::filter(age_group %nin% age_filter) %>%
+        dplyr::arrange(uhi_tempvar) %>%
+        tidyr::drop_na(temp_degc) %>%
+        dplyr::group_by(species_corrected, uhi_tempvar) %>%
+        dplyr::mutate(temp_degc_scaled = scales::rescale(temp_degc, to = c(0,1)),
+                      species_corrected = shorten_species(species_corrected) %>%
+                          as.character(),
+                      species_corrected =
+                          dplyr::case_when(
+                              species_corrected == "A. hippocastanum" ~ "A. hippo- castanum",
+                              species_corrected == "A. platanoides" ~ "A. plata- noides",
+                              species_corrected == "A. pseudoplatanus" ~ "A. pseudopla- tanus",
+                              species_corrected == "T. platyphyllos" ~ "T. platy- phyllos",
+                              TRUE ~ species_corrected))
+
+
+
+
+
+
+    gplot <- ggplot(data = plot_data %>%
+                      ungroup(),
+                  aes(y = response.fit.mean,
+                      x = temp_degc,
+                      colour = as.factor(age_group),
+                      fill =  as.factor(age_group),
+                      ymin = response.low.mean,
+                      ymax = response.high.mean)) +
+
+
+        stat_density(inherit.aes = FALSE,
+                     data = model_df %>%
+                         dplyr::filter(age_group %nin% age_filter),
+                     aes(x = day_2007,
+                         y = ..scaled..*100,
+                         fill = as.factor(age_group),),
+                     position = "dodge",
+                     geom = "area",
+                     alpha = 0.4) +
+
+
+        geom_ribbon(data = plot_data %>% filter(prediction_range == "within"),
+                    alpha = 0.5, color = "transparent") +
+        # geom_line(color = "black")  +
+
+        geom_smooth(aes(group = 1),
+                    formula = y ~ x,
+                    method = "lm", fill = "transparent",
+                    color = "gray50",
+                    data = plot_data %>% filter(prediction_range == "within")) +
+        # geom_ribbon(linetype = 1) +
+
+
+        # geom_line(linetype = 1)  +
+        geom_line(linetype = 3, color = "black", size = 0.35)  +
+        geom_line(data = plot_data %>% filter(prediction_range == "within")) +
+
+
+
+        facet_grid(age_group~species_corrected,
+                   scales = "free_y",
+                   labeller = label_wrap_gen(width = 10,
+                                             multi_line = FALSE)) +
+
+        scale_x_continuous(breaks = c(-4, 0, 5)) +
+
+        theme_minimal(base_size = base_size) +
+        theme(legend.position = 'top',
+              legend.direction = "horizontal",
+              panel.spacing = unit(0.1, "in"),
+              strip.text = element_text(size = 12)) +
+
+        scale_color_brewer(palette = 2, type = "qual", guide = NULL) +
+        scale_fill_brewer(palette = 2, type = "qual", guide = NULL) +
+
+        labs(color = "Age Group",
+             fill = "Age Group",
+             x = expression(UHI~Magnitude~(degree*C)),
+             y = expression(bar(DBH)~(cm)))
+
+
+    return(gplot)
+
+
+}
+
+#' Make single-temp var plot for individual species
+#'
+#' @param pred_list list, output from `pred_dbh_temp_single_var`
+#' @param model_df dframe used for predictions in pred_list
+#' @param age_filter character, age groups to exclude, using `%nin%`
+#' @param species_filter character, age groups to exclude, using `%in%`
+#' @param age_expression expression, used to define age groups
+#' @param prediction_range character, within or full?
+#' @param base_size numeric
+#' @param file
+#' @param height
+#' @param width
+#' @param dpi
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plot_dbh_temp_single_var_single_species_GG <- function(pred_list,
+                                                    model_df,
+                                                    age_filter,
+                                                    species_filter,
+                                                    age_expression,
+                                                    base_size = 18,
+                                                    prediction_range = "full"
+){
+
+    if(is.null(species_filter)){
+        species_filter <- shorten_species(unique(model_df$species_corrected))
+    }
+
+
+    `%nin%` <- Negate(`%in%`)
+
+    model_df <- model_df %>%
+        mutate(age_group = eval(age_expression),
+               species_corrected = shorten_species(species_corrected) ) %>%
+        dplyr::filter(
+            age_group %nin% age_filter,
+            species_corrected %in% species_filter) %>%
+        tidyr::drop_na(age_group)
+
+
+
+    plot_data <- pred_list$pred_groups %>%
+        # dplyr::select(-tempvar) %>%
+        tidyr::pivot_longer(cols = dplyr::all_of(names(pred_list$pred_var)),
+                            names_to = "uhi_tempvar",
+                            values_to = "temp_degc") %>%
+        dplyr::mutate(temp_degc_scaled = scales::rescale(temp_degc, to = c(0,1)),
+                      species_corrected = shorten_species(species_corrected)) %>%
+        dplyr::filter(prediction_range == prediction_range) %>%
+        dplyr::filter(age_group %nin% age_filter) %>%
+        dplyr::filter(species_corrected %in% shorten_species(species_filter)) %>%
+        dplyr::mutate(species_corrected = species_corrected %>%
+                          as.character(),
+                      species_corrected = ifelse(
+            species_corrected == "A. pseudo- platanus",
+            "A. pseudoplatanus",
+            species_corrected)) %>%
+        dplyr::arrange(uhi_tempvar) %>%
+        tidyr::drop_na(temp_degc) %>%
+        dplyr::group_by(species_corrected, age_group) %>%
+        mutate(
+            response.fit.mean = response.fit.mean - mean(response.fit.mean),
+            response.low.mean = response.low.mean - mean(response.low.mean),
+            response.high.mean = response.high.mean - mean(response.high.mean)
+            )
+
+
+
+    gplot <- ggplot(data = plot_data %>%
+                        ungroup(),
+                    aes(y = response.fit.mean,
+                        x = temp_degc,
+                        colour = as.factor(species_corrected),
+                        fill =  as.factor(species_corrected),
+                        ymin = response.low.mean,
+                        ymax = response.high.mean)) +
+
+
+        # stat_density(inherit.aes = FALSE,
+        #              data = model_df,
+        #              aes(x = day_2007,
+        #                  y = ..scaled..*100,
+        #                  fill = as.factor(species_corrected)),
+        #              position = "dodge",
+        #              geom = "area",
+        #              alpha = 0.2) +
+
+
+    # geom_ribbon(data = plot_data %>% filter(prediction_range == "within"),
+    #             alpha = 0.2, color = "transparent") +
+        # geom_line(color = "black")  +
+
+
+    geom_vline(xintercept = 0, linetype = 2) +
+
+        geom_smooth(aes(group = species_corrected),
+                    formula = y ~ x,
+                    method = "lm",
+                    # fill = "transparent",
+                    # color = "gray50",
+                    data = plot_data %>% filter(prediction_range == "within"),
+                    alpha = 0.15, size = 0) +
+        geom_line(stat = "smooth",
+                  aes(group = species_corrected),
+                  formula = y ~ x,
+                  method = "lm",
+                  # fill = "transparent",
+                  # color = "gray50",
+                  data = plot_data %>% filter(prediction_range == "within"),
+                  alpha = 0.75) +
+
+
+        # geom_ribbon(linetype = 1) +
+
+
+        # geom_line(linetype = 3, color = "black", size = 0.35, alpha = 0.2)  +
+        # geom_line(data = plot_data %>% filter(prediction_range == "within"),
+        #           alpha = 0.2) +
+
+
+        #
+        facet_wrap(~age_group, scales = "free_y", nrow = 1) +
+
+        theme_minimal(base_size = base_size) +
+        theme(legend.position = 'top',
+              legend.direction = "horizontal",
+              panel.spacing = unit(2, "lines"),
+              strip.text = element_text(size = 12)) +
+
+        # scale_color_brewer(palette = 2, type = "qual") +
+        # scale_fill_brewer(palette = 2, type = "qual") +
+
+        scale_fill_manual(
+            values = pals::tol(n = n_distinct(plot_data$species_corrected)),
+            aesthetics = c("fill", "color")) +
+
+
+        labs(color = "Species",
+             fill = "Species",
+             x = expression(UHI~Magnitude~(degree*C)),
+             y = expression(bar(DBH)[centered]~(cm)))
+
+
+
+    return(gplot)
+
+}
+
+
+plot_hicam_species_overview <- function(plot_ages,
+                                   plot_comparison,
+                                   path_out,
+                                   width,
+                                   height,
+                                   dpi){
+    gplot <- plot_ages / plot_comparison +
+        theme(legend.margin = margin(r = 5),
+              legend.title = element_blank()) +
+        plot_layout(heights = c(8,2)) +
+        plot_annotation(tag_levels = "A")
+
+
+    ggsave(filename = path_out,
+           plot = gplot,
+           width = width, height = height, units = "in", dpi = dpi)
+    # ggsave(path_out, width = 12, height = 15, units = "in", dpi = 300)
+
+}
+
+
+#' Plot UHI with Berlin districts
+#'
+#' @param uhi_stacks Rasterstack lists for UHI
+#' @param berlin_poly Berlin District Polygon
+#' @param dsf sf df, Berlin trees
+#' @param base_size Numeric, base char size for ggplot
+#' @param file Character, output file path
+#' @param height Numeric, for plot output (cm)
+#' @param width Numeric, for plot output (cm)
+#' @param dpi Numeric
+#' @import raster
+#'
+#' @return
+#' @export
+#'
+make_uhi_plot_hicam <- function(uhi_stacks,
+                          berlin_poly,
+                          dsf,
+                          base_size){
+
+    # extrafont::loadfonts(device = "win",quiet = TRUE)
+    extrafont::loadfonts(device = "pdf",quiet = TRUE)
+
+
+    berlin_poly <- sf::st_transform(berlin_poly,
+                                    crs = raster::crs(uhi_stacks$Summertime_gridded_UHI_data$day))
+
+    mid_rescaler <- function(mid = 0) {
+        function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
+            scales::rescale_mid(x, to, from, mid)
+        }
+    }
+
+
+    p <- ggplot2::ggplot() +
+
+
+        ggplot2::geom_sf(data = berlin_poly,
+                         color = "gray60",
+                         fill = "gray80",
+                         size = 1,
+                         show.legend = FALSE) +
+
+
+        stars::geom_stars(data = stars::st_as_stars(uhi_stacks$Summertime_gridded_UHI_data$day$day_2007),
+                          na.rm = TRUE) +
+
+
+        ggplot2::geom_sf(data = berlin_poly,
+                         color = "gray60",
+                         fill = "transparent",
+                         size = 1,
+                         show.legend = FALSE) +
+
+        ggplot2::geom_sf(data = dsf %>%
+                             dplyr::filter(provenance == "s_wfs_baumbestand") %>%
+                             dplyr::slice_sample(prop = 0.05),
+                         color = "black",
+                         size = 0.05,
+                         alpha = 0.1) +
+
+        # scale_fill_viridis_c(na.value = "transparent") +
+        ggplot2::scale_fill_distiller(palette = "RdBu",
+                                      rescaler = mid_rescaler(),
+                                      na.value = "transparent")   +
+
+        ggplot2::labs(fill = expression(atop(Summer~day-time,
+                                             UHI~(degree*C))),
+                      x = NULL,
+                      # title = "Estimate of Urban Heat Loading",
+                      y = NULL) +
+
+
+        ggplot2::theme_minimal(base_family = "Roboto Condensed",
+                               base_size = base_size) +
+        ggplot2::theme(legend.direction = "horizontal",
+                       legend.position = c(0.6, 0.95)) +
+        ggplot2::guides(fill = guide_colorbar(barwidth = unit(3.5, "cm"),
+                                              title.vjust = 1,
+                                              ticks.colour = "gray30"))
+
+
+
+    return(p)
+
+
+}
+
+
+
+
+#' Make single-temp var plot for individual species
+#'
+#' @param pred_list list, output from `pred_dbh_temp_single_var`
+#' @param model_df dframe used for predictions in pred_list
+#' @param age_filter character, age groups to exclude, using `%nin%`
+#' @param species_filter character, age groups to exclude, using `%in%`
+#' @param age_expression expression, used to define age groups
+#' @param prediction_range character, within or full?
+#' @param base_size numeric
+#' @param file
+#' @param height
+#' @param width
+#' @param dpi
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plot_dbh_temp_single_var_flex_hicam <- function(pred_list,
+                                          model_df,
+                                          var,
+                                          age_filter,
+                                          species_filter,
+                                          age_expression,
+                                          base_size = 18,
+                                          prediction_range = "full",
+                                          x_label
+){
+
+    `%nin%` <- Negate(`%in%`)
+    var <- rlang::sym(var)
+
+    if(is.null(species_filter)){
+        species_filter <- unique(model_df$species_corrected)
+    }
+
+
+    model_df <- model_df %>%
+        dplyr::filter(age_group %nin% age_filter,
+                      species_corrected %in% species_filter) %>%
+        mutate(age_group = eval(age_expression),
+               species_corrected = shorten_species(species_corrected)) %>%
+        tidyr::drop_na(age_group)
+
+
+    plot_data <- pred_list$pred_groups %>%
+        # dplyr::select(-tempvar) %>%
+        tidyr::pivot_longer(cols = dplyr::all_of(names(pred_list$pred_var)),
+                            names_to = "uhi_tempvar",
+                            values_to = "temp_degc") %>%
+        dplyr::filter(prediction_range == prediction_range) %>%
+        dplyr::filter(age_group %nin% age_filter) %>%
+        dplyr::filter(species_corrected %in% species_filter) %>%
+        dplyr::arrange(uhi_tempvar) %>%
+        tidyr::drop_na(temp_degc) %>%
+        dplyr::group_by(species_corrected, uhi_tempvar) %>%
+        dplyr::mutate(temp_degc_scaled = scales::rescale(temp_degc, to = c(0,1)),
+                      species_corrected = shorten_species(species_corrected))
+
+
+
+    #
+    gplot <- ggplot(data = plot_data %>%
+                        ungroup(),
+                    aes(y = response.fit.mean,
+                        x = !!var,
+                        # colour = as.factor(species_corrected),
+                        # fill =  as.factor(species_corrected),
+                        ymin = response.low.mean,
+                        ymax = response.high.mean)) +
+
+
+        # stat_density(inherit.aes = FALSE,
+        #              data = model_df,
+        #              aes(x = day_2007,
+        #                  y = ..scaled..*100,
+        #                  fill = as.factor(species_corrected)),
+        #              position = "dodge",
+        #              geom = "area",
+        #              alpha = 0.2) +
+
+
+    geom_ribbon( alpha = 0.5, color = "transparent") +
+        # geom_line(color = "black")  +
+
+        geom_smooth(aes(group = species_corrected),
+                    formula = y ~ x,
+                    method = "lm", fill = "transparent",
+                    color = "gray50") +
+        # geom_ribbon(linetype = 1) +
+
+
+        # geom_line(linetype = 1)  +
+        geom_line()  +
+
+        #
+        # facet_grid(~age_group) +
+
+        lims(y = c(20, 35)) +
+
+        theme_minimal(base_size = base_size) +
+        theme(legend.position = 'top',
+              legend.direction = "horizontal",
+              panel.spacing = unit(2, "lines"),
+              strip.text = element_text(size = 12)) +
+
+        # scale_color_brewer(palette = 2, type = "qual") +
+        # scale_fill_brewer(palette = 2, type = "qual") +
+
+        labs(color = "Species",
+             fill = "Species",
+             x = x_label,
+             y = expression(bar(DBH)~(cm)))
+
+    return(gplot)
+
+
+}
+
+
+
+plot_general_results <- function(uhi_map,
+                                 obs_pred,
+                                 env_pred,
+                                 width,
+                                 height,
+                                 dpi,
+                                 file
+){
+
+
+
+    p <- uhi_map + theme(panel.grid = element_blank(),
+                         axis.text = element_blank()) +
+        obs_pred +
+        env_pred +
+        annotate("text", x = 0.2, y = 34.6,label =  "[30 - 35]", size = 4) +
+        plot_annotation(tag_levels = "A") +
+        plot_layout(nrow = 1)
+
+
+    ggsave(file, plot = p, width = width, height = height, units = 'in')
+
+}
+
 
 # Tables ------------------------------------------------------------------
 
@@ -5087,7 +5623,13 @@ shorten_species <- function(species){
     #
 
     species <- spec_list %>%
-        purrr::map_chr(2)
+        purrr::map_chr(function(x){
+
+            spec <- paste(x[2:length(x)], collapse = " ")
+            spec <- ifelse(spec == "pseudoplatanus", "pseudo- platanus", spec)
+
+            return(spec)
+        })
 
     species_short <- paste(genus_short,
                            species)

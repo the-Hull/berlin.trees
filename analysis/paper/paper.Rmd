@@ -1,5 +1,5 @@
 ---
-title: "Species-specific effects of the Urban Heat Island on tree growth across Berlin"
+title: "Assessing the impact of urban heating on tree growth in Berlin with open inventory and environmental data"
 author:
   - Alexander G. Hurley$^{a *}$, Ingo Heinrich$^a$, ...
   - $^a$ *Geoforschungszentrum Potsdam, Section 4.3, Germany*

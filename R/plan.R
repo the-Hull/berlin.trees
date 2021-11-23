@@ -896,6 +896,77 @@ plan <- drake::drake_plan(
                    path_out = "./analysis/figures/"),
 
 
+
+
+
+    ### HICAM Report --------------------------------------------------------
+
+   # plot_modperformance_predictions <- make_plot_mod_res(
+   #     path_model = bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_lcz6_reBEZIRK_var-day_2007', 'model_file_path'],
+   #     file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_lcz6_obs_pred.png"),
+   #     height = 7,
+   #     width = 8,
+   #     dpi = 300
+   # ),
+
+
+   plot_gam_temp_prediction_genus_comparison_hicam = plot_dbh_temp_single_var_single_species_GG(
+       pred_list = pred_data_single_tempvar_fixed_lcz6,
+       model_df = model_df_stat_filtered,
+       age_filter = c('[45 - 50]', '[75 - 80]', '[90 - 95]'),
+       species_filter = NULL,
+       # species_filter = c("Tilia cordata", "Tilia platyphyllos"),
+       # species_filter = c("Tilia cordata","Platanus acerifolia"),
+       age_expression = age_expr,
+       prediction_range = "within",
+       base_size = 18),
+
+
+   plot_gam_temp_lcz6_prediction_hicam = plot_dbh_temp_single_var_GG(
+       pred_list = pred_data_single_tempvar_fixed_lcz6,
+       model_df = model_df_stat_filtered,
+       age_filter = NULL,
+       age_expression = age_expr,
+       prediction_range = "within",
+       base_size = 18),
+
+
+
+   plot_hicam_temp_effects = plot_hicam_species_overview(plot_ages = plot_gam_temp_lcz6_prediction_hicam,
+                          plot_comparison = plot_gam_temp_prediction_genus_comparison_hicam,
+                          path_out = drake::file_out("analysis/figures/hicam_report/temp_effects_species_overview.png"),
+                          width = 12,
+                          height = 15,
+                          dpi = 300),
+
+
+
+   plot_uhi_map_hicam = make_uhi_plot_hicam(uhi_stacks = uhi_stacks,
+                                berlin_poly = berlin_polygons,
+                                dsf = full_data_set_clean,
+                                base_size = 18),
+
+
+
+   plot_gam_temp_prediction_single_genus_lcz6_hicam = plot_dbh_temp_single_var_flex_hicam(pred_list = pred_data_single_tempvar_multi_lcz6,
+                                                                              model_df = model_df_stat_filtered,
+                                                                              var = "lcz_prop_6",
+                                                                              age_filter = c("[45 - 50]", "[60 - 65]", '[75 - 80]', '[90 - 95]'),
+                                                                              species_filter = c("Tilia cordata"),
+                                                                              # species_filter = c("Tilia cordata","Platanus acerifolia"),
+                                                                              age_expression = age_expr,
+                                                                              prediction_range = "within",
+                                                                              base_size = 18,
+                                                                              x_label = expression('Proportional Cover - LCZ6'[bar(150~m)])),
+   general_results_lcz_hicam = plot_general_results(uhi_map = plot_uhi_map_hicam,
+                                                    obs_pred = plot_obs_pred_single_temp_lcz6,
+                                                    env_pred = plot_gam_temp_prediction_single_genus_lcz6_hicam,
+                                                    width = 18,
+                                                    height = 6,
+                                                    dpi = 300,
+                                                    file = drake::file_out("analysis/figures/hicam_report/general_effects_overview.png")),
+
+
     # tables ------------------------------------------
 
     overview_table = make_overview_table(full_data_set_clean),
