@@ -286,16 +286,12 @@ Lastly, observations with unlikely diameter-age combinations were identified via
 The median absolute deviation (MAD) is comparable to the inter quartile range, yet more robust to outliers:
 
 $$MAD = median(|X_i - median(X)|) $$
-This approach is considered conservative (see supplementary information), yet all analyses were carried forward with the filtered and unfiltered data set.
-No considerable differences were found for the unfiltered and filtered data, yet all subsequent sections use the latter.
+This approach is considered conservative (see supplementary information), yet all analyses were carried forward with the unfiltered and filtered data - no considerable differences were found, thus subsequent sections are based on the filtered data.
 <!-- which were processed with the bespoke software datacleanr by Hurley et al., submitted), -->
 <!-- Characteristics of street trees and their respective environments were collated from the city's tree inventory, as well as various elements of the Berlin Environment Atlas, which are openly available via https://daten.berlin.de and curated by the city's government. -->
 <!-- The data used from the inventory includes species, location, age, and diameter at breast height (dbh). -->
-<!-- **quality control** - filtered dataset to remove drastic outliers --> fit poly model, used Median Absolute deviance with multiplier of X to exclude points.  -->
 Table$~$\@ref(tab:tab-age) shows the binned distribution of genera across age classes.
-Final sample sizes 
-
-
+Final samples applied in models were smaller, following the availability of ancillary data for a given observation, and limited to a maximum age of 125 years to increase confidence in model estimates.
 
 
 ```{r tab-age}
