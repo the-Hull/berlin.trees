@@ -522,7 +522,7 @@ To contextualize tree growth patterns between age groups derived from Berlin's i
 For our purposes, we grouped trees sampled in parks, green spaces and along streets into a single urban category, and focused analyses on these.
 Two to three cores were extracted at breast height from each tree.
 These were then prepared using standard dendro-ecological methods (i.e., mounting, sanding, measuring), and cross-dated with TSAP-Win\textsuperscript{TM} and COFECHA [@holmes1986], producing mean tree series of incremental growth.
-Additionally, cambial age of each increment was established by counting years from the inner most ($a = 0$) ring at the pith outward; on tangentially bored cores, missing rings to the pith were estimated.
+Additionally, cambial age of each increment was established by counting years from the inner most ring at the pith ($a = 0$) outward; on tangentially bored cores, missing rings to the pith were estimated.
 
 
 ```{r tab-dendro-sites}
@@ -550,7 +550,7 @@ sampling_site_overview <- sampling_site_overview %>%
 
 
 
-caption <- "Overview of urban sampling locations and respective tree species coverage. Individual trees were sampled up to to three times to obtain a mean-tree ring width series."
+caption <- "Overview of urban sampling locations and respective tree species coverage. Individual trees were sampled two or tree times to obtain a mean-tree ring width series."
 caption_ov_short <- caption
 
 
@@ -608,10 +608,8 @@ table_ds %>%
 
 ### GAMs
 
-
- (GAM, or GAMM for mixed models/hierarchical models).
 We applied hierarchical generalized additive models (GAM) to estimate the relationship of several covariates with stem diamater growth ($DBH$).
-GAMs, as an extension of generalized linear models [@wood2017], allow modeling response variables as parametric and non-parametric combinations of smoothed explanatory covariates, and can assume non-normal errors and response distributions.
+GAMs, as an extension of generalized linear models [@wood2017], allow modeling response variables as parametric and non-parametric combinations of smoothed explanatory covariates, and can assume non-normal response distributions.
 These smooths are constructed by summation of base functions of varying complexity and form, analogous to scatterplot smoothing [@hastie2017], which provides a high degree of flexibility, ideal for fitting ecosystem dynamics which are rarely linear [@pedersen2019], or correctly represented with deterministic functional forms (e.g. quadratic equations). 
 In general, a GAM can be written as:
 
@@ -628,14 +626,7 @@ y~=~E (Y) + \epsilon,
 \end{equation}
 
 where $Y$ is taken from an appropriate distribution and corresponding link function $g$, $\beta_0$ is the intercept and $f_i$ represents a smooth function of a predictor [@pedersen2019], and $\epsilon \sim \mathcal{N}(0, \sigma ^2)$. 
-Note, that $f_i$ consists of a smooth (e.g. spline) constructed via basis functions of different form and complexity, multiplied by a coefficient:
-
-\begin{equation}
-f_i(x_i)~=~\sum_{k = 1}^{K} \beta_{i, k} b_{i,k}(x_i).
-(\#eq:gam-smoothers)
-\end{equation}
-
-Nested data structures (e.g., city districts) can be accounted for by introducing random effects [@wood2017], while spatial dependence between observations can be accounted for constructing smoothing functions with, for instance, northings and eastings [cf. @wood2017], which is  applied here.
+Nested data structures (e.g., city districts) can be accounted for by introducing random effects, while spatial dependence between observations can be accounted for by constructing smoothing functions with, for instance, northings and eastings [cf. @wood2017].
 
 
 ### Dendrochronological analyses
@@ -643,7 +634,7 @@ Nested data structures (e.g., city districts) can be accounted for by introducin
 - 
 
 
-### Model development and selection
+### Stem diameter model development and selection
 
 **Table with model x species sample sizes or infer from figure?**
 
@@ -651,20 +642,25 @@ Model forms:
 
 \begin{align}
 
-g(E(Y)) &= f(utmx_i,utmy_i) + f_j(age_i) + f_j(temp_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i \\ 
+g(E(DBH_i)) &=  f_j(age_i) + f_j(temp_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i \\ 
 
-g(E(Y)) &= f_j(age_i) + f_j(temp_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
+g(E(DBH_i)) &= f_j(age_i) + f_j(temp_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
 
-g(E(Y)) &= f_j(age_i) + f_j(temp_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
+g(E(DBH_i)) &= f_j(age_i) + f_j(temp_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
 
-g(E(Y)) &= f_j(age_i) +  f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
+g(E(DBH_i)) &= f_j(age_i) +  f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
 
-g(E(Y)) &= f_j(age_i) +  c_{i,j} + \tau_{i,k} + \epsilon_i  \\
+g(E(DBH_i)) &= f_j(age_i) +  c_{i,j} + \tau_{i,k} + \epsilon_i  \\
 
 \end{align}
 
+where $g()$ is a log-link for $DBH \sim gamma$, and $i$, $j$ and $k$ are indices for observations, species and districts, respectively. 
+Above models were tested in combination with a global spatial smooth $f(utmx_i,utmy_i)$ to account for the spatial structure of observations, which reduced auto-correlation of model residuals to considerably (see supplemental information).
+**what's the impact of remaining auto correlation? inflated errors, larger coefficients?**
+As the spatial extent and coverage varies between temperature and ancillary data, more complex models typically also had fewer total observations, which prevents a direct comparison with information-based model selection criteria, such as Aikake's Information Criterion.
+We thus selected the model with the highest explanatory power, and comparatively larger sample size for final analyses.
+**further analyses with equal sample sizes (requires data collection / cutting down); but this is first look at potential of approach and initial insights**
 
-As the spatial extent and coverage varies between temperature and ancillary data, more complex models typically also had fewer total observations.
 
 
 
