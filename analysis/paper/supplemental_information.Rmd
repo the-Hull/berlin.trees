@@ -1,0 +1,121 @@
+---
+title: "Supplement to: Assessing the impact of urban heating on tree growth in Berlin with open inventory and environmental data"
+author:
+  - Alexander G. Hurley$^{a *}$, Ingo Heinrich$^a$, ...
+  - $^a$ *Geoforschungszentrum Potsdam, Section 4.3, Germany*
+  - "* Corresponding author: hurley@gfz-potsdam.de"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+always_allow_html: true
+output: 
+    bookdown::html_document2:
+      fig_caption: yes
+      toc: true
+    bookdown::word_document2:
+      fig_caption: yes
+      reference_docx: "../templates/template.docx" # Insert path for the DOCX file
+      pandoc_args:
+      - --lua-filter=../templates/scholarly-metadata.lua
+      - --lua-filter=../templates/author-info-blocks.lua
+      - --lua-filter=../templates/pagebreak.lua
+    bookdown::pdf_document2:
+      fig_caption: yes
+      toc: yes
+header-includes:
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage[normalem]{ulem}
+bibliography: 
+  - uhi_references.bib
+  - 04_gfz_UHI.bib
+  - 07_phenoTram.bib
+csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
+abstract: |
+  **This document outlines the rationale for an analysis of tree growth (potential) and its relationship with the Urban Heat Island (UHI) effect in Berlin using an extensive, publicly available data set. It introduces preliminary results and provides an outlook for up-coming and potential work.**
+keywords: |
+  Uferbaeume; Anlagenbaeume; Strassenbaeume; 
+highlights: |
+  We will see. 
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+<!-- This is the format for text comments that will be ignored during renderings. Do not put R code in these comments because it will not be ignored. -->
+
+```{r setup, echo = FALSE, cache = FALSE, include = FALSE}
+knitr::opts_knit$set(root.dir = here::here(),
+                     base.dir = here::here())
+
+knitr::opts_chunk$set(
+  fig.align = "center",
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  echo = FALSE,
+  comment = "#>",
+  # fig.path = "../figures/",
+  fig.path = paste0(file.path(here::here(), "analysis", "figures"), "/"),
+  dpi = 300
+)
+
+
+out_format <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+
+pgbreak <- function() {
+  if (grepl("docx", out_format)) {
+    return("##### pagebreak")
+  } else if (knitr::is_latex_output()) {
+    return("\\newpage")
+  }
+}
+
+
+library(drake)
+library(kableExtra)
+# library(ggplot2)
+# library(patchwork)
+```
+
+# Overview
+
+- Upload full code with DOI
+- datacleanr imgs
+- diagnostic lm imgs
+- spatial comparison (Moran's I)
+
+
+<!-- # Acknowledgements -->
+
+<!-- <!-- The following line inserts a page break  --> 
+<!-- `r pgbreak()` -->
+
+# References 
+<!-- The following line ensures the references appear here for the MS Word or HTML output files, rather than right at the end of the document (this will not work for PDF files):  -->
+<div id="refs"></div>
+
+`r pgbreak()`
+
+### Colophon
+
+This report was generated on `r Sys.time()` using the following computational environment and dependencies: 
+
+```{r colophon, cache = FALSE}
+# which R packages and versions?
+if ("devtools" %in% installed.packages()) devtools::session_info()
+```
+
+The current Git commit details are:
+
+```{r}
+# what commit is this file at? 
+if ("git2r" %in% installed.packages() & git2r::in_repository(path = ".")) git2r::repository(here::here())  
+```

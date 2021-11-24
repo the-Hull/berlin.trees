@@ -869,6 +869,10 @@ plan <- drake::drake_plan(
 
    ### BIWI: cambial age vs. annual growth -------------------
 
+   species_lookup = read.csv(drake::file_in("analysis/data/tables/species_lookup.csv"), header = TRUE),
+
+
+
    series_long = prep_rwl_data(path_meta_cores = drake::file_in("./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx"),
                                 path_meta_trees = drake::file_in("./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx"),
                                 path_meta_sites = drake::file_in("./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx"),
@@ -994,7 +998,7 @@ plan <- drake::drake_plan(
         output_file = file_out("paper_knit.html"),
         output_format = bookdown::html_document2(),
         quiet = TRUE
-    )
+    ),
     # paper_word = rmarkdown::render(
     #     knitr_in("./analysis/paper/paper.Rmd"),
     #     output_dir = "./analysis/paper/",
@@ -1010,6 +1014,15 @@ plan <- drake::drake_plan(
     #     output_format = bookdown::pdf_document2(),
     #     quiet = TRUE
     # )
+
+
+   si_html = rmarkdown::render(
+       knitr_in("./analysis/paper/supplemental_information.Rmd"),
+       output_dir = "./analysis/paper/",
+       output_file = file_out("supplemental_information.html"),
+       output_format = bookdown::html_document2(),
+       quiet = TRUE
+   )
 
 )
 

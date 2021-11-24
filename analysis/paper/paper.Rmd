@@ -21,6 +21,7 @@ output:
       fig_caption: yes
       toc: yes
 header-includes:
+- \usepackage{amsmath}
 - \usepackage{booktabs}
 - \usepackage{longtable}
 - \usepackage{array}
@@ -263,141 +264,39 @@ Berlin features low relief (approximately 30$~m$ to 60$~m$ with 120$~m$ at solit
 The city provides extensive public green space covering around 30$~\%$ of its area [@suvkberlin2019], with an extensive urban forest of nearly 700000 publicly-managed trees along streets, in parks and in riparian areas.
 <!-- It has a pronounced urban heat island, owing to its high degree of built-up and sealed surfaces, with air temperatures up to 12$^\circ C$ higher in urban compared to adjacent rural areas [@fenner2014]. -->
 
+
+
+
+(ref:study-area) Berlin's generalized land-use derived from @suvkberlin2019 and location within the European context (inset).
+
+```{r fig-study-area, fig.cap="(ref:study-area)",fig.width = 12, fig.height = 14, out.width="50%"}
+
+
+
+
+knitr::include_graphics(here::here("analysis/figures/map_00_studyarea.png"))
+
+  
+
+# plot_count_map
+
+# plot(1:10)
+```
+
+
 ## General approach: space-for-time analyses
 
-Species-specifc growth responses in relation across Berlin were assessed in relat
-
+<!-- Species-specifc growth responses in relation across Berlin were assessed in relat -->
 We modeled the stem diameter ($DBH$) of Berlin’s ten most abundant species (contingent to ancillary data availability) in relationship to their location, age, a measure of excess heat [UrbClim by @deridder2015; Berlin Environmental Atlas models; LandSat-derived surface urban heat island by @chakraborty2019], and additional environmental covariates with generalized additive models (GAMs, see Section$~$\@ref(stat-gam) for details).
 Covariates were extracted at 150 and 300$~m$ to infer the impact of reference scale of the urban fabric on tree growth. 
 From all tested models the most suitable (i.e., parsimonious with highest explanatory) was employed for further analyses.
-An overview of data used for models, including sources, types, and application, is provided in Section$~$\@ref(dsources) and in Table$~$\@ref(tab:tab-dsources).
+
 
 ## Data sources {#dsources}
 
 <!-- Berlin’s open data provided tree inventories (species, age, location, diameter which were processed with a bespoke software datacleanr by Hurley et al., submitted), planting bed area, estimates of soil nutrient availability, and adjacent building height. With WUDAPT local climate zones (Demuzere et al., 2019), these were used to determine trees’ growing conditions (locally, or within a radius of 150 m / 300 m).  -->
 
-### Street trees  
-
-Berlin’s open data provided tree inventories including species, age, location, and circumference which was transformed into diameter.
-Implausible observations, likely from erroneous data entry, were removed.
-Additional manual data processing for quality control was done with a bespoke software  `datacleanr` by Hurley *et al*. (submitted), where obvious outliers or clearly interpolated data were removed; the latter was deemed necessary, as several observations in multiple city districts were derived by linear relationships, which does not capture the ontogenic growth dynamics of trees, and leaves no variation related to variables other than age.
-All of these operations were recorded, and can be viewed and reproduced via the supplementary code.
-Lastly, observations with unlikely diameter-age combinations were identified via the residuals of a generalized linear model between diameter and age with a Gamma log-link distribution: if individual residuals exceeded seven times the median absolute deviation of all residuals, they were removed.
-The median absolute deviation (MAD) is comparable to the inter quartile range, yet more robust to outliers:
-
-$$MAD = median(|X_i - median(X)|) $$
-This approach is considered conservative (see supplementary information), yet all analyses were carried forward with the unfiltered and filtered data - no considerable differences were found, thus subsequent sections are based on the filtered data.
-<!-- which were processed with the bespoke software datacleanr by Hurley et al., submitted), -->
-<!-- Characteristics of street trees and their respective environments were collated from the city's tree inventory, as well as various elements of the Berlin Environment Atlas, which are openly available via https://daten.berlin.de and curated by the city's government. -->
-<!-- The data used from the inventory includes species, location, age, and diameter at breast height (dbh). -->
-Table$~$\@ref(tab:tab-age) shows the binned distribution of genera across age classes.
-Final samples applied in models were smaller, following the availability of ancillary data for a given observation, and limited to a maximum age of 125 years to increase confidence in model estimates.
-
-
-```{r tab-age}
-
-drake::loadd(age_tables)
-
-age_tables <- age_tables %>% 
-  dplyr::arrange(desc(n_total))
-colnames(age_tables)[c(1,7,8, 9)] <- c("Genera", "150+", "Total (n)", "Missing (n)") 
-
-age_tables <- dplyr::bind_rows(age_tables[age_tables$Genera!="Other",],
-                        age_tables[age_tables$Genera=="Other",])
-
-  
-add_row <- as.data.frame(matrix(c(NA, colSums(age_tables[,-1])), nrow = 1))
-add_row[1,1] <- "Marg. Totals"
-colnames(add_row) <- colnames(age_tables)
-
-age_tables <- dplyr::bind_rows(age_tables,
-                    add_row)
-
-
-caption_trees <- "Binned age-distribution for trees in Berlin data set, and entries missing age information. "
-caption_trees_short <- "Binned age-distribution for trees in Berlin data set."
-
-
-if (grepl("docx", out_format) ||
-    knitr::is_latex_output() ) {
-  table_dat_req_kable <- age_tables %>% 
-  knitr::kable(booktabs = TRUE,
-               format = "latex",
-             caption = caption_trees,
-             caption.short = caption_trees_short
-             # col.names = c("Subject/Relevance",
-             #              "Desc.",
-             #              "Type",
-             #              "Obsv. (n)",
-             #              "Resolution (m)",
-             #              "Source")
-             ) %>% 
-  kableExtra::row_spec(13, hline_after = TRUE) 
-  
-} else {
-table_dat_req_kable <- age_tables %>% 
-  knitr::kable(booktabs = TRUE,
-               format = "html",
-              caption = caption_trees,
-             caption.short = caption_trees_short
-             # col.names = c("Subject/Relevance",
-             #              "Desc.",
-             #              "Type",
-             #              "Obsv. (n)",
-             #              "Resolution (m)",
-             #              "Source")
-             ) %>% 
-  kableExtra::row_spec(13, extra_css = "border-bottom: 1px solid")
-
-# %>% 
-#   kableExtra::kable_styling(full_width = TRUE, 
-#                             font_size = 10) %>% 
-#   kableExtra::column_spec(1, italic = TRUE) %>%
-#   kableExtra::row_spec(0, bold = TRUE) %>% 
-#     kableExtra::row_spec(13, hline_after = TRUE) 
-
-}
-
-
-   table_dat_req_kable %>% 
-  kableExtra::kable_styling(full_width = TRUE, 
-                            font_size = 11) %>% 
-  kableExtra::column_spec(1, italic = TRUE) %>%  
-  kableExtra::row_spec(0, italic = FALSE, bold = TRUE, font_size = 12) 
-
-```
-
-
-### Temperature/UHI data sets
-Temperature and UHI data were summarized temporally either by the provider or manually to provide a characteristic representation of heat loading during summer at different times (morning, afternoon/day, night), from which tree averages (radius of 150$~m$) were calculated.
-Two data sets of urban air and one surface temperature were tested as explanatory variables in GAM models.
-The air temperatures from the Berlin environmental atlas (EnvAt) are model outputs that are representations of typical summer conditions at 0400, 1400 and 2200 hours; these data are provided at city block basis (spatial polygons), from which weighted averages were extracted.
-UrbClim air temperatures are hourly model outputs [100$~m$ resolution; @deridder2015]) based on ERA5 re-analyses data (ECMWF) for which observations from the hottest month  available (June, 2011) were averaged to hours equivalent to EnvAt data by using a window of $\pm~1~$hour (i.e., 0300 to 0500, etc.).
-Subsequently, a land-use and land-cover mask (CORINE; European Union, Copernicus Land Monitoring Service 2018, European Environment Agency) was used to define urban and rural/forested areas.
-This was deemed reasonable as Berlin's built-up area has not changed markedly over the past 50 years, i.e., about 52 to 61$\%$ [@mohamed2017]. 
-The urban heat loading was then calculated as $UHI_{x,y} = T_{Air_{2m}~x,y} - \overline{T_{Air_{2m}~Rural}}$, where $x$ and $y$ define an urban grid cell.
-The surface UHI data set by @chakraborty2019 derives its measure in a similar fashion and the reader is referred to the detailed description therein; note this data set provides day and night-time averaged UHI estimates at 500$~m$ resolution, which were extracted for the hottest summer in this record (2007).
-
-
-
-### Ancillary data sets
-Following the general approach described above, four ancillary covariates next to a temperature measure were employed in models; these were chosen due to their availability at high spatial resolution and coverage, and because their influence on growth was previously identified in literature or their likely impact could be deduced using ecophysiological principles.
-We included planting bed area and the sum of exchangeable basic cation as a proxy for soil nutrient availability (point extractions), as well as the proportional coverage of local climate zone 6 (LCZ6; open mid-rise, see @demuzere2019 and @stewart2012 for details) and adjacent building height (spatial averages).
-The latter was chosen as an increase reflects a transition away from densely urbanized areas and had the highest coverage for the processed tree inventory. 
-Note that only street trees in urban, not rural areas or within green spaces, were considered here, but individual trees may grow along streets adjacent to green spaces and parks of varying sizes.
-
-
-
-<!-- surface area of tree planting beds ("Baumscheibe"), as well as general characteristics of the urban environment like building height. -->
-<!-- It also includes spatially-explicit model outputs for local climate simulations representative of typical conditions, such as air temperature (2 m) on a 2015 summer's day at different hours (0400, 1400, 2200).  -->
-<!-- These model outputs were preferred over *in situ* measurements as **more representative based on averaged conditions, physiologically more relevant than surface urban heat island products**. -->
-<!-- These outputs are available at city block or planning unit level, and were used as a proxy for the general temperature distribution influenced by urbanization across the investigated growth period across the previous 80 years (see section X for details). -->
-<!-- This was deemed reasonable as Berlin's built-up area has not changed markedly over the past 50 years, i.e., about 52 to 61$\%$ [@mohamed2017].  -->
-<!-- Further insight into the role of the urban environment was assessed by including local climate zone classes derived by WUDAPT. -->
-<!-- These describe the proportion of urban area with a specific cover, such as dense high rises, sealed surfaces, etc.  -->
-<!-- For this study, the LCZ 6, representing dense mid-rise built up cover was used as a proxy for the degree of urbanization, and is the most frequent LCZ for Berlin [@fenner2017] (found ref in . -->
-<!-- Use percent sealed surface instead? -->
-
+An overview of data used for models, including sources, types, and application, is provided in Table$~$\@ref(tab:tab-dsources), with detailed descriptions in the following subsections.
 
 
 ```{r dsources-prep, include=FALSE}
@@ -487,15 +386,255 @@ table_ds %>%
 ```
 
 
+### Street trees  
 
-## Dendrochronological sampling and analyses
+Berlin’s open data provided tree inventories including species, age, location, and circumference which was transformed into diameter.
+Note that only street trees in urban, not rural areas or within green spaces, were considered here, but individual trees may grow along streets adjacent to green spaces and parks of varying sizes.
+Implausible observations, likely from erroneous data entry, were removed.
+Additional manual data processing for quality control was done with a bespoke software  `datacleanr` by Hurley *et al*. (submitted), where obvious outliers or clearly interpolated data were removed; the latter was deemed necessary, as several observations in multiple city districts were derived by linear relationships (i.e., straight-line), which do not capture the ontogenic growth dynamics of trees, and leave no variation related to variables other than age.
+All of these operations were recorded, and can be viewed and reproduced via the supplementary code.
+Lastly, observations with unlikely diameter-age combinations were identified via the residuals of a generalized linear model between diameter and age with a Gamma log-link distribution: if individual residuals exceeded seven times the median absolute deviation of all residuals, they were removed.
+The median absolute deviation (MAD) is comparable to the inter-quartile range, yet more robust to outliers:
+
+$$MAD = median(|X_i - median(X)|) $$
+This approach is considered conservative (see supplementary information), yet all analyses were carried forward with the unfiltered and filtered data - no considerable differences were found, thus subsequent sections are based on the filtered data.
+<!-- which were processed with the bespoke software datacleanr by Hurley et al., submitted), -->
+<!-- Characteristics of street trees and their respective environments were collated from the city's tree inventory, as well as various elements of the Berlin Environment Atlas, which are openly available via https://daten.berlin.de and curated by the city's government. -->
+<!-- The data used from the inventory includes species, location, age, and diameter at breast height (dbh). -->
+Table$~$\@ref(tab:tab-age) shows the binned distribution of genera across age classes.
+Final samples applied in models were smaller, following the availability of ancillary data for a given observation, and limited to a maximum age of 125 years to increase confidence in reported values, and ultimately model estimates.
+
+
+```{r tab-age}
+
+drake::loadd(age_tables)
+
+age_tables <- age_tables %>% 
+  dplyr::arrange(desc(n_total))
+colnames(age_tables)[c(1,7,8, 9)] <- c("Genera", "150+", "Total (n)", "Missing (n)") 
+
+age_tables <- dplyr::bind_rows(age_tables[age_tables$Genera!="Other",],
+                        age_tables[age_tables$Genera=="Other",])
+
+  
+add_row <- as.data.frame(matrix(c(NA, colSums(age_tables[,-1])), nrow = 1))
+add_row[1,1] <- "Marg. Totals"
+colnames(add_row) <- colnames(age_tables)
+
+age_tables <- dplyr::bind_rows(age_tables,
+                    add_row)
+
+
+caption_trees <- "Binned age-distribution for trees in Berlin data set, and entries missing age information. "
+caption_trees_short <- "Binned age-distribution for trees in Berlin data set."
+
+
+if (grepl("docx", out_format) ||
+    knitr::is_latex_output() ) {
+  table_dat_req_kable <- age_tables %>% 
+  knitr::kable(booktabs = TRUE,
+               format = "latex",
+             caption = caption_trees,
+             caption.short = caption_trees_short
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             ) %>% 
+  kableExtra::row_spec(13, hline_after = TRUE) 
+  
+} else {
+table_dat_req_kable <- age_tables %>% 
+  knitr::kable(booktabs = TRUE,
+               format = "html",
+              caption = caption_trees,
+             caption.short = caption_trees_short
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             ) %>% 
+  kableExtra::row_spec(13, extra_css = "border-bottom: 1px solid")
+
+# %>% 
+#   kableExtra::kable_styling(full_width = TRUE, 
+#                             font_size = 10) %>% 
+#   kableExtra::column_spec(1, italic = TRUE) %>%
+#   kableExtra::row_spec(0, bold = TRUE) %>% 
+#     kableExtra::row_spec(13, hline_after = TRUE) 
+
+}
+
+
+   table_dat_req_kable %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 11) %>% 
+  kableExtra::column_spec(1, italic = TRUE) %>%  
+  kableExtra::row_spec(0, italic = FALSE, bold = TRUE, font_size = 12) 
+
+```
+
+
+### Temperature/UHI data sets
+Temperature and UHI data were summarized temporally either by the provider or manually to provide a characteristic representation of heat loading during summer at different times (morning, afternoon/day, night), from which tree averages (radius of 150$~m$) were calculated.
+Two data sets of urban air and one surface temperature were tested as explanatory variables in GAM models.
+The air temperatures from the Berlin environmental atlas (EnvAt) are model outputs that are representations of typical summer conditions at 0400, 1400 and 2200 hours; these data are provided at city block basis (spatial polygons), from which weighted averages were extracted.
+UrbClim air temperatures are hourly model outputs [100$~m$ resolution, @deridder2015] based on ERA5 re-analyses data (ECMWF) for which observations from the hottest month  available (June, 2011) were averaged to hours equivalent to EnvAt data by using a window of $\pm~1~$hour (i.e., 0300 to 0500, etc.).
+Subsequently, a land-use and land-cover mask (CORINE; European Union, Copernicus Land Monitoring Service 2018, European Environment Agency) was used to define urban and rural/forested areas.
+Using this mask was deemed reasonable as Berlin's built-up area has not changed markedly over the past 50 years, i.e., about 52 to 61$\%$ [@mohamed2017]. 
+The urban heat loading was then calculated as $UHI_{x,y} = T_{Air_{2m}~x,y} - \overline{T_{Air_{2m}~Rural}}$, where $x$ and $y$ define an urban grid cell.
+The surface UHI data set by @chakraborty2019 derives its measure in a similar fashion and the reader is referred to the detailed description therein; note this data set provides day and night-time averaged UHI estimates at 500$~m$ resolution, which were extracted for the hottest summer in this record (2007).
+
+
+
+### Ancillary environmental data sets
+
+Following the general approach described above, four ancillary covariates next to a temperature measure were employed in models; these were chosen due to their availability at high spatial resolution and coverage, and/or because their influence on growth was previously identified in literature or their likely impact could be deduced using ecophysiological principles.
+We included planting bed area and the sum of exchangeable basic cation as a proxy for soil nutrient availability (point extractions), as well as the proportional coverage of local climate zone 6 (LCZ6; open mid-rise, see @demuzere2019 and @stewart2012 for details) and adjacent building height (spatial averages).
+The latter was chosen as an increase reflects a transition away from densely urbanized areas and had the highest coverage for the processed tree inventory.  
+
+
+
+
+<!-- surface area of tree planting beds ("Baumscheibe"), as well as general characteristics of the urban environment like building height. -->
+<!-- It also includes spatially-explicit model outputs for local climate simulations representative of typical conditions, such as air temperature (2 m) on a 2015 summer's day at different hours (0400, 1400, 2200).  -->
+<!-- These model outputs were preferred over *in situ* measurements as **more representative based on averaged conditions, physiologically more relevant than surface urban heat island products**. -->
+<!-- These outputs are available at city block or planning unit level, and were used as a proxy for the general temperature distribution influenced by urbanization across the investigated growth period across the previous 80 years (see section X for details). -->
+<!-- This was deemed reasonable as Berlin's built-up area has not changed markedly over the past 50 years, i.e., about 52 to 61$\%$ [@mohamed2017].  -->
+<!-- Further insight into the role of the urban environment was assessed by including local climate zone classes derived by WUDAPT. -->
+<!-- These describe the proportion of urban area with a specific cover, such as dense high rises, sealed surfaces, etc.  -->
+<!-- For this study, the LCZ 6, representing dense mid-rise built up cover was used as a proxy for the degree of urbanization, and is the most frequent LCZ for Berlin [@fenner2017] (found ref in . -->
+<!-- Use percent sealed surface instead? -->
+
+
+
+
+## Dendrochronological sampling 
+
+- external data from Schneider et al., in review
+
+
+Kolonie Heimaterde Alpenrose, Gutschmidtstraße britz sued, Hasenheide park,  "urban-smallpark_weigandufer (weigandufer, werra strase)
+
+
+```{r tab-dendro-sites}
+
+drake::loadd(series_long)
+drake::loadd(species_lookup)
+
+sampling_site_overview <-     series_long %>% 
+        dplyr::filter(grepl("urban", x = site_type)) %>% 
+        dplyr::select(sample_location, species, tree_id) %>% 
+        dplyr::group_by(sample_location, species) %>%
+        dplyr::summarize(tree_id = unique(tree_id)) %>% 
+        # mutate(site_type = gsub("[-].*$", "", site_type)) %>% 
+        dplyr::tally() %>% 
+    dplyr::mutate(sample_location = stringr::str_replace(sample_location, "[-][a-zA-Zä]+$", "") %>% 
+               stringr::str_replace(pattern = "-StEi", ""))
+
+
+spec_matched <- species_lookup$Species[match(sampling_site_overview$species, species_lookup$Code)]
+
+sampling_site_overview$species_long <- spec_matched
+
+sampling_site_overview <- sampling_site_overview %>% 
+    dplyr::select(Location = sample_location, Species = species_long, n)
+
+
+
+caption <- "Tree sampling locations"
+caption_ov_short <- caption
+
+
+
+
+if (grepl("docx", out_format) ||
+    knitr::is_latex_output() ) {
+  table_ds <- sampling_site_overview %>% 
+  knitr::kable(booktabs = TRUE,
+              
+             caption = caption,
+             caption.short = caption,
+             format = "latex",
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             escape = FALSE) 
+  
+} else {
+table_ds <- sampling_site_overview %>% 
+  knitr::kable(booktabs = TRUE,
+               format = "html",
+               
+             caption = caption,
+             caption.short = caption_ov_short,
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             escape = FALSE) 
+}
+
+
+table_ds %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 11,
+                            latex_options = c("hold_position")) %>% 
+  kableExtra::row_spec(0, bold = TRUE, font_size = 12) 
+
+
+
+
+    
+
+```
+
+
+- Sampling locations
+- standard dendroecological processing (sample preparation, cross dating, estimation of missing years to pith, mean tree series)
+
+
 
 ## Statistical Analyses {#stat-gam}
 
-### General approach: space-for-time analyses
+### GAMs
 
-#### Model development and selection
+### Dendrochronological analyses
+- GAM for cambial age of urban trees, split like @pretzsch2017 (<=1960, >1960)
+- 
 
+
+### Model development and selection
+
+**Table with model x species sample sizes or infer from figure?**
+
+Model forms:
+
+\begin{align}
+
+g(E(Y)) &= f(utmx_i,utmy_i) + f_j(age_i) + f_j(temp_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i \\ 
+
+g(E(Y)) &= f_j(age_i) + f_j(temp_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
+
+g(E(Y)) &= f_j(age_i) + f_j(temp_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
+
+g(E(Y)) &= f_j(age_i) +  f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
+
+g(E(Y)) &= f_j(age_i) +  c_{i,j} + \tau_{i,k} + \epsilon_i  \\
+
+\end{align}
+
+
+As the spatial extent and coverage varies between temperature and ancillary data, more complex models typically also had fewer total observations.
 
 ## General analyses
 
