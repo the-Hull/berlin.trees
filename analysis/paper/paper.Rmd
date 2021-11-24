@@ -149,7 +149,7 @@ Berlin, as one of the greenest cities in Europe, provides an openly accessible t
 It features a total of 650000 individuals covering 94 genera and at least 600 species and/or cultivars, listing information on location, stem diameter (at breast height; $DBH$), and stem height, amongst other variables, for the majority of street and park trees.
 For this study, our objective was to assess the impact of excess urban heat, i.e. the UHI effect, on tree growth ($DBH$) using this openly available inventory data set, complemented by additional open data sources as well as incremental growth data from tree cores. 
 The assessment relied on flexible statistical models that could capture species and location-specific responses to heat and other urban factors.
-Specifically, we aimed to (1) assess heat exposure of most abundant species; (2) determine the impact of (excess) heat on stem growth with space-for-time substitution to increase coverage; (3) highlight the role of location-specific environmental factors in mediating temperature responses.
+Specifically, we aimed to (1) assess heat exposure of the most abundant species; (2) determine the impact of (excess) heat on stem growth across tree age classes with a space-for-time substitution; (3) highlight the role of location-specific environmental factors in mediating temperature responses.
 <!-- This work constitutes a case study for Berlin, the results are a valuable contribution toward Berlin's current and future management of its tree stock.  -->
 Our results are a contribution toward Berlin's current and future management of its tree stock and may help drive adaptation to climate change.
 Despite being a case study for a single city, we believe our work may provide a flexible approach for other cities with available or growing inventories, as well as ancillary environmental data, and may also inform the use of other planning tools, such as species-climate matrices [@roloff2009] regarding temperature sensitivity. 
@@ -479,19 +479,22 @@ table_dat_req_kable <- age_tables %>%
 ```
 
 
-### Temperature/UHI data sets
+### Temperature/UHI data
+
 Temperature and UHI data were summarized temporally either by the provider or manually to provide a characteristic representation of heat loading during summer at different times (morning, afternoon/day, night), from which tree averages (radius of 150$~m$) were calculated.
 Two data sets of urban air and one surface temperature were tested as explanatory variables in GAM models.
 The air temperatures from the Berlin environmental atlas (EnvAt) are model outputs that are representations of typical summer conditions at 0400, 1400 and 2200 hours; these data are provided at city block basis (spatial polygons), from which weighted averages were extracted.
 UrbClim air temperatures are hourly model outputs [100$~m$ resolution, @deridder2015] based on ERA5 re-analyses data (ECMWF) for which observations from the hottest month  available (June, 2011) were averaged to hours equivalent to EnvAt data by using a window of $\pm~1~$hour (i.e., 0300 to 0500, etc.).
 Subsequently, a land-use and land-cover mask (CORINE; European Union, Copernicus Land Monitoring Service 2018, European Environment Agency) was used to define urban and rural/forested areas.
 Using this mask was deemed reasonable as Berlin's built-up area has not changed markedly over the past 50 years, i.e., about 52 to 61$\%$ [@mohamed2017]. 
-The urban heat loading was then calculated as $UHI_{x,y} = T_{Air_{2m}~x,y} - \overline{T_{Air_{2m}~Rural}}$, where $x$ and $y$ define an urban grid cell.
+The urban heat loading was then calculated as 
+$$UHI_{x,y} = T_{Air_{2m}~x,y} - \overline{T_{Air_{2m}~Rural}},$$
+where $T$ is temperature ($^\circ C$) $x$ and $y$ define an urban grid cell.
 The surface UHI data set by @chakraborty2019 derives its measure in a similar fashion and the reader is referred to the detailed description therein; note this data set provides day and night-time averaged UHI estimates at 500$~m$ resolution, which were extracted for the hottest summer in this record (2007).
 
 
 
-### Ancillary environmental data sets
+### Ancillary environmental
 
 Following the general approach described above, four ancillary covariates next to a temperature measure were employed in models; these were chosen due to their availability at high spatial resolution and coverage, and/or because their influence on growth was previously identified in literature or their likely impact could be deduced using ecophysiological principles.
 We included planting bed area and the sum of exchangeable basic cation as a proxy for soil nutrient availability (point extractions), as well as the proportional coverage of local climate zone 6 (LCZ6; open mid-rise, see @demuzere2019 and @stewart2012 for details) and adjacent building height (spatial averages).
@@ -513,12 +516,13 @@ The latter was chosen as an increase reflects a transition away from densely urb
 
 
 
-## Dendrochronological sampling 
+## Dendrochronological sampling
 
-- external data from Schneider et al., in review
-
-
-Kolonie Heimaterde Alpenrose, Gutschmidtstraße britz sued, Hasenheide park,  "urban-smallpark_weigandufer (weigandufer, werra strase)
+To contextualize tree growth patterns between age groups derived from Berlin's inventory data, we drew upon a recently established data set from Schneider *et al.* (in review), who sampled several common tree species across a rural-urban gradient. 
+For our purposes, we grouped trees sampled in parks, green spaces and along streets into a single urban category, and focused analyses on these.
+Two to three cores were extracted at breast height from each tree.
+These were then prepared using standard dendro-ecological methods (i.e., mounting, sanding, measuring), and cross-dated with TSAP-Win\textsuperscript{TM} and COFECHA [@holmes1986], producing mean tree series of incremental growth.
+Additionally, cambial age of each increment was established by counting years from the inner most ($a = 0$) ring at the pith outward; on tangentially bored cores, missing rings to the pith were estimated.
 
 
 ```{r tab-dendro-sites}
@@ -546,7 +550,7 @@ sampling_site_overview <- sampling_site_overview %>%
 
 
 
-caption <- "Tree sampling locations"
+caption <- "Overview of urban sampling locations and respective tree species coverage. Individual trees were sampled up to to three times to obtain a mean-tree ring width series."
 caption_ov_short <- caption
 
 
@@ -599,14 +603,40 @@ table_ds %>%
 ```
 
 
-- Sampling locations
-- standard dendroecological processing (sample preparation, cross dating, estimation of missing years to pith, mean tree series)
-
-
 
 ## Statistical Analyses {#stat-gam}
 
 ### GAMs
+
+
+ (GAM, or GAMM for mixed models/hierarchical models).
+We applied hierarchical generalized additive models (GAM) to estimate the relationship of several covariates with stem diamater growth ($DBH$).
+GAMs, as an extension of generalized linear models [@wood2017], allow modeling response variables as parametric and non-parametric combinations of smoothed explanatory covariates, and can assume non-normal errors and response distributions.
+These smooths are constructed by summation of base functions of varying complexity and form, analogous to scatterplot smoothing [@hastie2017], which provides a high degree of flexibility, ideal for fitting ecosystem dynamics which are rarely linear [@pedersen2019], or correctly represented with deterministic functional forms (e.g. quadratic equations). 
+In general, a GAM can be written as:
+
+\begin{equation}
+E (Y)~=~g^{-1}\left( \beta_0 + \sum_{i = 1}^{n} f_i (x_i) \right),
+(\#eq:gam-general)
+\end{equation}
+
+and
+
+\begin{equation}
+y~=~E (Y) + \epsilon,
+(\#eq:gam-expectation)
+\end{equation}
+
+where $Y$ is taken from an appropriate distribution and corresponding link function $g$, $\beta_0$ is the intercept and $f_i$ represents a smooth function of a predictor [@pedersen2019], and $\epsilon \sim \mathcal{N}(0, \sigma ^2)$. 
+Note, that $f_i$ consists of a smooth (e.g. spline) constructed via basis functions of different form and complexity, multiplied by a coefficient:
+
+\begin{equation}
+f_i(x_i)~=~\sum_{k = 1}^{K} \beta_{i, k} b_{i,k}(x_i).
+(\#eq:gam-smoothers)
+\end{equation}
+
+Nested data structures (e.g., city districts) can be accounted for by introducing random effects [@wood2017], while spatial dependence between observations can be accounted for constructing smoothing functions with, for instance, northings and eastings [cf. @wood2017], which is  applied here.
+
 
 ### Dendrochronological analyses
 - GAM for cambial age of urban trees, split like @pretzsch2017 (<=1960, >1960)
@@ -636,48 +666,8 @@ g(E(Y)) &= f_j(age_i) +  c_{i,j} + \tau_{i,k} + \epsilon_i  \\
 
 As the spatial extent and coverage varies between temperature and ancillary data, more complex models typically also had fewer total observations.
 
-## General analyses
 
-The proposed statistical method is from the class of hierarchical, generalized additive models (GAM, or GAMM for mixed models/hierarchical models).
-In these models combinations of continuous and categorical predictor variables can be summed to estimate a response. 
-In particular, continuous variables that are linearly, as well as non-linearly related to the response can be represented by applying a transfer function, typically termed "smoothing function" [@wood2017]; these are constructed using a number of base functions of varying complexity and form, which provides a high degree of flexibility, ideal for fitting ecosystem dynamics which are rarely linear [@pedersen2019], or correctly represented with deterministic functional forms (e.g. quadratic equations). 
-In general, a GAM can be written as:
 
-\begin{equation}
-E (Y)~=~g^{-1}\left( \beta_0 + \sum_{i = 1}^{n} f_i (x_i) \right),
-(\#eq:gam-general)
-\end{equation}
-
-and
-
-\begin{equation}
-y~=~E (Y) + \epsilon,
-(\#eq:gam-expectation)
-\end{equation}
-
-where $Y$ is taken from an appropriate distribution and corresponding link function $g$, $\beta_0$ is the intercept and $f_i$ represents a smooth function of a predictor [@pedersen2019], and $\epsilon \sim \mathcal{N}(0, \sigma ^2)$. 
-Note, that $f_i$ consists of a smooth (e.g. spline) constructed via basis functions of different form and complexity, multiplied by a coefficient:
-
-\begin{equation}
-f_i(x_i)~=~\sum_{k = 1}^{K} \beta_{i, k} b_{i,k}(x_i).
-(\#eq:gam-smoothers)
-\end{equation}
-
-Nested data structures (e.g. due to similar road [type]) can be accounted for by introducing random effects [@wood2017], while spatial dependence between observations can be included by constructing smoothing functions with e.g. northings and eastings, as for example done in [@augustin2009].
-Ultimately, the implementation of a such a GAMM will allow for establishing continuous prediction surfaces of growth potential (approximated via $DBH$) for individual species across urban areas (including parks) of Berlin.
-
-Currently, $DBH$ has been modeled using a hierarchical linear model (linear mixed effects model) with `lme4` [@bates2015] in @rcoreteam2020 (see Section$~$\@ref(sec:results)).
-The general form of this model is:
-
-\begin{equation}
-Y_{i,j} = (\beta_0 + b_{0,i,j}) + (\beta_1 + b_{1,i,j}) \cdot x_i  + \epsilon_{i,j},
-(\#eq:lme)
-\end{equation}
-where $\beta_0$ is the intercept with its random component $b_0$, and $\beta_1$ the slope with its random component $b_1$.
-The random errors are assumed i.i.d. and distributed as $b \sim \mathcal{N}(0, \tau ^2)$. 
-The model for which results are presented in Figure$~$\@ref(fig:fig-lmestat) estimates $DBH$ from tree age and the local UHI intensity as continuous covariates with random slopes and intercepts for each species;
-note, that for computational efficiency each genera was modeled separately.
-Further, models were established for the three most abundant species per genera with at least 1000 individuals.
 
 
 <!-- We caution, that 1) the presented model results are preliminary, 2) initial diagnostics indicate that modification of the current model structure (e.g. by accounting for individual-level variability) may be required and 3) that further, time-intensive data cleaning is necessary.  -->
