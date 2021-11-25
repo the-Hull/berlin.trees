@@ -143,8 +143,8 @@ It is thus likely that the varying and even contrasting growth responses observe
 
 
 
-These limitations could be overcome by relying on dendroecological surveys (i.e., incremental growth) or inventories (single or repeat) combined with pertinent environmental data with adequate spatio-temporal coverage and resolution. 
-Such data are increasingly more available due to open data policies and because their value is recognized across several domains [e.g. @ossola2020].
+These limitations could be overcome by developing extensive dendroecological surveys (i.e., incremental growth) and/or inventories (single or repeat) combined with pertinent environmental data with adequate spatio-temporal coverage and resolution. 
+Inventories are logistically and financially more feasible, and - together with environmental data - are increasingly more available [e.g. @ossola2020] due to open data policies and their value being recognized across domains for urban greenspace planning and adaptation [@hansen2019; @monteiro2020].
 Berlin, as one of the greenest cities in Europe, provides an openly accessible tree inventory, with spatio-temporal environmental data sets relevant to tree growth. 
 It features a total of 650000 individuals covering 94 genera and at least 600 species and/or cultivars, listing information on location, stem diameter (at breast height; $DBH$), and stem height, amongst other variables, for the majority of street and park trees.
 For this study, our objective was to assess the impact of excess urban heat, i.e. the UHI effect, on tree growth ($DBH$) using this openly available inventory data set, complemented by additional open data sources as well as incremental growth data from tree cores. 
@@ -632,18 +632,22 @@ All models were implemented in `R` [@rcoreteam2021] using functions available in
 
 ### Dendrochronological analyses
 
-- GAM for cambial age of urban trees, split like @pretzsch2017 (<=1960, >1960)
-- Models were implemented with `mgcv::gamm()` to leverage correlation structures made available through package `nlme` [@pinheiro2021].
-A $3^{rd}$-order autocorrelation-moving average (ARMA) correlation structure was assumed applied to account for the dependency of observations across years for each tree, as is frequently the case for tree growth dynamics [e.g., see @Fritts1989].
-- calculated model averages for all years within year groups
+We assessed trends in annual growth dynamics of urban trees across the 20$^{th}$ century for 1920-1960 and 1961-2001 [similar grouping as  @pretzsch2017 and @dahlhausen2018] with a hierarchical GAM implemented in `mgcv::gamm()` to leverage auto-correlation structures made available through the package `nlme` [@pinheiro2021].
+Annual growth was modeled as:
 
-$e_i = \phi e_{i−1} + \epsilon_i$
+
+$$ g(\Delta r_i) =  f(year_i) + f_j(cambial~age_i)  + c_{i,j} + \tau_{i,k} + e_i $$
+where $g()$ is a log-link for $\Delta r \sim Gamma$, $\Delta r$ is the annual radial increment for observation $i$. 
+A global temporal (by year) and time-dependent ($j$, $\leq 1960$ or $>1960$) trend in cambial age were implemented with thin plate regression splines (default smoothing function in `mgcv`); $c_j$ is a time-group dependent intercept, while $tau$ represents a matrix of random effect coefficients for $k$ species to account for differences in growth patterns, and $e_i = \phi e_{i−1} + \epsilon_i$.
+A $3^{rd}$-order autocorrelation-moving average (ARMA) correlation structure was applied (i.e., $\phi(3,1)$) to account for the dependency of $\Delta r$ across years for each tree, as is frequently the case for tree growth [e.g., see @Fritts1989]; the detailed implementation for this model is given in the supplemental material code.
+$\Delta r$ was then derived for a range of cambial ages, and averaged for both time groups, allowing a comparison of recent to earlier growth.
+We acknowledge that tree cores obtained at breast height do not represent absolute tree age.
+However, here they serve as a proxy for growth between young ($>1960$) and older individuals to contextualize growth patterns inferred from the larger-scale tree inventory.
+
 
 ### Stem diameter model development and selection
 
-**Table with model x species sample sizes or infer from figure?**
-
-Model forms:
+The diameter ($DBH$) of the ten most abundant species were modeled using GAMs as follows:
 
 \begin{align}
 
@@ -659,20 +663,21 @@ g(DBH_i) &= f_j(age_i) +  c_{i,j} + \tau_{i,k} + \epsilon_i \\
 
 \end{align}
 
-where $g()$ is a log-link for $DBH \sim gamma$, and $i$, $j$ and $k$ are indices for observations, species and districts, respectively, and $t$ refers to an (excess) heat measure from UrbClim, Berlin EnvAt or LandSat at different times (morning, afternoon/day, night; cf. Section$~$\@ref(sec:dsources)). 
+where $g()$ is a log-link for $DBH \sim Gamma$, and $i$, $j$ are indices for observations and species, respectively, and $t$ refers to an (excess) heat measure from UrbClim, Berlin EnvAt or LandSat at different times (morning, afternoon/day, night; cf. Section$~$\@ref(sec:dsources)); $c$ is a species-dependent intercept, while $tau$ represents a matrix of random effect coefficients for $k$ districts to account for differing management regimes across the city.
 Models were implemented with `mgcv::bam()` [@wood2017a;@li2020a] for a dramatic increase computational efficiency, allowing for rapid model development/comparison.
 All models above were also tested with a global spatial smooth $f(utmx_i,utmy_i)$ using Gaussian process smooth [cf. p. 242 in @wood2017] to account for the spatial structure of observations, which reduced auto-correlation of model residuals considerably (see supplemental information).
 **what's the impact of remaining auto correlation? inflated errors, larger coefficients?**
 The functions $f_j$ are for species-specific smooths [i.e., with individual smoothness penalties and functional shapes as detailed by @pedersen2019]; the interaction between temperature interaction and age were implemented as tensor smooths [@wood2006] to account for the different variable scales (i.e., units).
 Readers are referred to the detailed implementation in the supplemental material code.
 The covariates for planting bed area and soil nutrient availability were log transformed to account for their skewed distribution, improving the estimation of coefficients for their respective basis functions.
-
-
 We selected the model with the highest explanatory power, based on residual deviance and observed vs. predicted fit, with comparatively largest sample size for final analyses.
-As the spatial extent and coverage varied between temperature and ancillary data, more complex models (and specifically those including planting bed area and LandSat temperatures) typically also had fewer total observations, which prevents a direct comparison with information-based model selection criteria, such as Aikake's.
-For this reason, model structures were generally kept relatively simple (i.e., few terms, interactions and restricted number of basis functions) reducing the potential for choosing overly complex or over-fitted models.
-Future research may focus on collecting additional data (e.g., increasing the coverage on planting bed area).
-We chose to carry out the analysis in its current form rather than on considerably smaller, but comparable sample sizes to identify the strongest relationships in the existing data and thus to highlight the utility of the approach *per se* and for Berlin in particular.
+From this model we derived age and species dependent $DBH$ averages across a temperature measure from predicted values in 5-year age groups starting at 30, 45, 60, 75, 90.
+
+As the spatial extent and coverage varied between temperature and ancillary data, more complex models (and specifically those including planting bed area and LandSat temperatures) typically also had fewer total observations, which prevented a direct comparison with information-based model selection criteria, such as Aikake's.
+For this reason, simpler model structures were preferred (i.e., few terms, interactions and restricted number of basis functions), reducing the potential for choosing over-fitted models.
+Future research may focus on collecting additional data (e.g., increasing the coverage on planting bed area) and subsequently deriving species-specific smooths for ancillary environmental covariates.
+We chose to carry out the analysis in its current form rather than on considerably smaller but comparable sample sizes across models, to identify the strongest relationships in the existing data.
+This allowed us to highlight the utility of the approach *per se* and for Berlin in particular.
 
 
 
