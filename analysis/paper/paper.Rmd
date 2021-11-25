@@ -287,12 +287,12 @@ knitr::include_graphics(here::here("analysis/figures/map_00_studyarea.png"))
 ## General approach: space-for-time analyses
 
 <!-- Species-specifc growth responses in relation across Berlin were assessed in relat -->
-We modeled the stem diameter ($DBH$) of Berlin’s ten most abundant species (contingent to ancillary data availability) in relationship to their location, age, a measure of excess heat [UrbClim by @deridder2015; Berlin Environmental Atlas models; LandSat-derived surface urban heat island by @chakraborty2019], and additional environmental covariates with generalized additive models (GAMs, see Section$~$\@ref(stat-gam) for details).
+We modeled the stem diameter ($DBH$) of Berlin’s ten most abundant species (contingent to ancillary data availability) in relationship to their location, age, a measure of excess heat [UrbClim by @deridder2015; Berlin Environmental Atlas models; LandSat-derived surface urban heat island by @chakraborty2019], and additional environmental covariates with generalized additive models (GAMs, see Section$~$\@ref(sec:stat-gam) for details).
 Covariates were extracted at 150 and 300$~m$ to infer the impact of reference scale of the urban fabric on tree growth. 
 From all tested models the most suitable (i.e., parsimonious with highest explanatory) was employed for further analyses.
 
 
-## Data sources {#dsources}
+## Data sources {#sec:dsources}
 
 <!-- Berlin’s open data provided tree inventories (species, age, location, diameter which were processed with a bespoke software datacleanr by Hurley et al., submitted), planting bed area, estimates of soil nutrient availability, and adjacent building height. With WUDAPT local climate zones (Demuzere et al., 2019), these were used to determine trees’ growing conditions (locally, or within a radius of 150 m / 300 m).  -->
 
@@ -312,7 +312,7 @@ dsources$Accessed <- format(dsources$Accessed, "%b '%y")
 
 ```{r tab-dsources, eval = TRUE}
 
-caption <- "Data description used for maps/visualizations and analyses. Resolution and radius are provided in $m$, the latter is the buffer in which data was averaged around each trees. A zero-radius refers to a point extraction from categorical and location specific data.**"
+caption <- "Data description used for maps/visualizations and analyses. Resolution and radius are provided in $m$, the latter is the buffer in which data was averaged around each trees. A zero-radius refers to a point extraction from categorical and location specific data."
 caption_ov_short <- "Data descriptions"
 
 dsource <- dsources[-which(dsources$File == 'Wintertime_gridded_UHI_data.zip'), ]
@@ -425,8 +425,8 @@ age_tables <- dplyr::bind_rows(age_tables,
                     add_row)
 
 
-caption_trees <- "Binned age-distribution for trees in Berlin data set, and entries missing age information. "
-caption_trees_short <- "Binned age-distribution for trees in Berlin data set."
+caption_trees <- "Binned age-distribution for genera in Berlin data set, and entries missing age information. "
+caption_trees_short <- "Binned age-distribution for genera in Berlin data set."
 
 
 if (grepl("docx", out_format) ||
@@ -484,17 +484,17 @@ table_dat_req_kable <- age_tables %>%
 Temperature and UHI data were summarized temporally either by the provider or manually to provide a characteristic representation of heat loading during summer at different times (morning, afternoon/day, night), from which tree averages (radius of 150$~m$) were calculated.
 Two data sets of urban air and one surface temperature were tested as explanatory variables in GAM models.
 The air temperatures from the Berlin environmental atlas (EnvAt) are model outputs that are representations of typical summer conditions at 0400, 1400 and 2200 hours; these data are provided at city block basis (spatial polygons), from which weighted averages were extracted.
-UrbClim air temperatures are hourly model outputs [100$~m$ resolution, @deridder2015] based on ERA5 re-analyses data (ECMWF) for which observations from the hottest month  available (June, 2011) were averaged to hours equivalent to EnvAt data by using a window of $\pm~1~$hour (i.e., 0300 to 0500, etc.).
+UrbClim air temperatures are hourly model outputs [100$~m$ resolution, @deridder2015] based on ERA5 re-analyses data (ECMWF) for which observations from the hottest month  available (June, 2011) were averaged to hours equivalent to Berlin Environmental Atlas (referred to as Berlin EnvAt) data by using a window of $\pm~1~$hour (i.e., 0300 to 0500, etc.).
 Subsequently, a land-use and land-cover mask (CORINE; European Union, Copernicus Land Monitoring Service 2018, European Environment Agency) was used to define urban and rural/forested areas.
 Using this mask was deemed reasonable as Berlin's built-up area has not changed markedly over the past 50 years, i.e., about 52 to 61$\%$ [@mohamed2017]. 
 The urban heat loading was then calculated as 
 $$UHI_{x,y} = T_{Air_{2m}~x,y} - \overline{T_{Air_{2m}~Rural}},$$
 where $T$ is temperature ($^\circ C$) $x$ and $y$ define an urban grid cell.
-The surface UHI data set by @chakraborty2019 derives its measure in a similar fashion and the reader is referred to the detailed description therein; note this data set provides day and night-time averaged UHI estimates at 500$~m$ resolution, which were extracted for the hottest summer in this record (2007).
+The LandSat-derived surface UHI data set by @chakraborty2019 (referred to as LandSat) estimates its measure in a similar fashion and the reader is referred to the detailed description therein; note this data set provides day and night-time averaged UHI estimates at 500$~m$ resolution, which were extracted for the hottest summer in this record (2007).
 
 
 
-### Ancillary environmental
+### Ancillary environmental data
 
 Following the general approach described above, four ancillary covariates next to a temperature measure were employed in models; these were chosen due to their availability at high spatial resolution and coverage, and/or because their influence on growth was previously identified in literature or their likely impact could be deduced using ecophysiological principles.
 We included planting bed area and the sum of exchangeable basic cation as a proxy for soil nutrient availability (point extractions), as well as the proportional coverage of local climate zone 6 (LCZ6; open mid-rise, see @demuzere2019 and @stewart2012 for details) and adjacent building height (spatial averages).
@@ -604,7 +604,7 @@ table_ds %>%
 
 
 
-## Statistical Analyses {#stat-gam}
+## Statistical Analyses {#sec:stat-gam}
 
 ### GAMs
 
@@ -627,17 +627,17 @@ y~=~E (Y) + \epsilon,
 
 where $Y$ is taken from an appropriate distribution and corresponding link function $g$, $\beta_0$ is the intercept and $f_i$ represents a smooth function of a predictor [@pedersen2019], and $\epsilon \sim \mathcal{N}(0, \sigma ^2)$. 
 Nested data structures (e.g., city districts) can be accounted for by introducing random effects, while spatial dependence between observations can be accounted for by constructing smoothing functions with, for instance, northings and eastings [cf. @wood2017].
-
-
-- models fit using mgcv **citation** in R **citation**
+All models were implemented in `R` [@rcoreteam2021] using functions available in the package `mgcv` [@wood2017].
 
 
 ### Dendrochronological analyses
 
 - GAM for cambial age of urban trees, split like @pretzsch2017 (<=1960, >1960)
-- lme4, used AR process to account for autocorrelation between observations
-- calculataed model averages for all years within year groups
+- Models were implemented with `mgcv::gamm()` to leverage correlation structures made available through package `nlme` [@pinheiro2021].
+A $3^{rd}$-order autocorrelation-moving average (ARMA) correlation structure was assumed applied to account for the dependency of observations across years for each tree, as is frequently the case for tree growth dynamics [e.g., see @Fritts1989].
+- calculated model averages for all years within year groups
 
+$e_i = \phi e_{i−1} + \epsilon_i$
 
 ### Stem diameter model development and selection
 
@@ -647,105 +647,36 @@ Model forms:
 
 \begin{align}
 
-g(E(DBH_i)) &=  f_j(age_i) + f_j(temp_i, age_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i \\ 
+g(DBH_i) &=  f_j(age_i) + f_j(temp_{t,i}, age_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i \\ 
 
-g(E(DBH_i)) &= f_j(age_i) + f_j(temp_i, age_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
+g(DBH_i) &= f_j(age_i) + f_j(temp_{t,i}, age_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
 
-g(E(DBH_i)) &= f_j(age_i) + f_j(temp_i, age_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
+g(DBH_i) &= f_j(age_i) + f_j(temp_{t,i}, age_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
 
-g(E(DBH_i)) &= f_j(age_i) +  f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
+g(DBH_i) &= f_j(age_i) +  f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
 
-g(E(DBH_i)) &= f_j(age_i) +  c_{i,j} + \tau_{i,k} + \epsilon_i  \\
+g(DBH_i) &= f_j(age_i) +  c_{i,j} + \tau_{i,k} + \epsilon_i \\
 
 \end{align}
 
-where $g()$ is a log-link for $DBH \sim gamma$, and $i$, $j$ and $k$ are indices for observations, species and districts, respectively. 
-Models were implemented in `R` [@rcoreteam2021] with `mgcv::bam()` [@wood2017a;@li2020a] for a dramatic increase computational efficiency, allowing for rapid model development/comparison
-All models above were also tested with a global spatial smooth $f(utmx_i,utmy_i)$ using Gaussian process smooth [cf. p. 242 in @wood2017] to account for the spatial structure of observations, which reduced auto-correlation of model residuals to considerably (see supplemental information).
+where $g()$ is a log-link for $DBH \sim gamma$, and $i$, $j$ and $k$ are indices for observations, species and districts, respectively, and $t$ refers to an (excess) heat measure from UrbClim, Berlin EnvAt or LandSat at different times (morning, afternoon/day, night; cf. Section$~$\@ref(sec:dsources)). 
+Models were implemented with `mgcv::bam()` [@wood2017a;@li2020a] for a dramatic increase computational efficiency, allowing for rapid model development/comparison.
+All models above were also tested with a global spatial smooth $f(utmx_i,utmy_i)$ using Gaussian process smooth [cf. p. 242 in @wood2017] to account for the spatial structure of observations, which reduced auto-correlation of model residuals considerably (see supplemental information).
 **what's the impact of remaining auto correlation? inflated errors, larger coefficients?**
+The functions $f_j$ are for species-specific smooths [i.e., with individual smoothness penalties and functional shapes as detailed by @pedersen2019]; the interaction between temperature interaction and age were implemented as tensor smooths [@wood2006] to account for the different variable scales (i.e., units).
+Readers are referred to the detailed implementation in the supplemental material code.
+The covariates for planting bed area and soil nutrient availability were log transformed to account for their skewed distribution, improving the estimation of coefficients for their respective basis functions.
 
 
-- $f_j$ for temperature interaction with age, implemented as tensor smooth [@wood2006], assuming that temperature impacts vary across trees' lives.
-- Reader is referred to detailed implementation in the supplemental material code
-
-As the spatial extent and coverage varies between temperature and ancillary data, more complex models typically also had fewer total observations, which prevents a direct comparison with information-based model selection criteria, such as Aikake's Information Criterion.
-We thus selected the model with the highest explanatory power, and comparatively larger sample size for final analyses.
-**further analyses with equal sample sizes (requires data collection / cutting down); but this is first look at potential of approach and initial insights**
-
-
-
-<!-- We caution, that 1) the presented model results are preliminary, 2) initial diagnostics indicate that modification of the current model structure (e.g. by accounting for individual-level variability) may be required and 3) that further, time-intensive data cleaning is necessary.  -->
-<!-- First tests, however, showed that while the magnitude of effects changes with different model structures, their direction appears stable. -->
-
-<!-- ## Available and required data -->
-
-
-<!-- Additional remote sensing data for local context, higher resolution UHI data, and most important, temporally-resolved tree growth data are still required and/or would greatly improve the confidence in effect size estimates (see Section$~$\@ref(sec:intro)). -->
-<!-- See Tab.$~$\@ref(tab:tab-data-req) for details on data sets. -->
+We selected the model with the highest explanatory power, based on residual deviance and observed vs. predicted fit, with comparatively largest sample size for final analyses.
+As the spatial extent and coverage varied between temperature and ancillary data, more complex models (and specifically those including planting bed area and LandSat temperatures) typically also had fewer total observations, which prevents a direct comparison with information-based model selection criteria, such as Aikake's.
+For this reason, model structures were generally kept relatively simple (i.e., few terms, interactions and restricted number of basis functions) reducing the potential for choosing overly complex or over-fitted models.
+Future research may focus on collecting additional data (e.g., increasing the coverage on planting bed area).
+We chose to carry out the analysis in its current form rather than on considerably smaller, but comparable sample sizes to identify the strongest relationships in the existing data and thus to highlight the utility of the approach *per se* and for Berlin in particular.
 
 
 
-
-```{r tab-data-req,echo=FALSE, eval = FALSE}
-
-dat_req <- read.csv(here::here("analysis", "data", "tables", "01_data_requirements.csv"), header = TRUE)
-
-
-
-caption_data_req <- "Data requirements for analysis, including currently available/accessed and required/desired data."
-caption_data_req_short <- "Data requirements for analysis."
-
-if (grepl("docx", out_format) ||
-    knitr::is_latex_output() ) {
-  table_dat_req <- dat_req %>% 
-  dplyr::select(-owned) %>% 
-  knitr::kable(booktabs = TRUE,
-              
-             caption = caption_data_req,
-             caption.short = caption_data_req_short,
-             format = "latex",
-             col.names = c("Subject / Relevance",
-                          "Desc.",
-                          "Type",
-                          "Obsv. (n)",
-                          "Resolution (m)",
-                          "Source")) %>% 
-  kableExtra::kable_styling(full_width = TRUE, 
-                            font_size = 11) %>% 
-  kableExtra::row_spec(0, bold = TRUE, font_size = 12) %>% 
-  kableExtra::row_spec(9,italic =  TRUE) %>% 
-  kableExtra::pack_rows("available or accessed", 1, 4) %>%
-  kableExtra::pack_rows("required and/or desired", 5, 9) %>% kableExtra::landscape()
-  
-} else {
-  table_dat_req <- dat_req %>% 
-  dplyr::select(-owned) %>% 
-  knitr::kable(booktabs = TRUE,
-               format = "html",
-               caption = "Data requirements for analysis, including currently available/accessed and required/desired data.",
-             caption.short = "Data requirements for analysis",
-             col.names = c("Subject/Relevance",
-                          "Desc.",
-                          "Type",
-                          "Obsv. (n)",
-                          "Resolution (m)",
-                          "Source")) %>% 
-  kableExtra::kable_styling(full_width = TRUE, 
-                            font_size = 10) %>% 
-  kableExtra::row_spec(0, bold = TRUE) %>% 
-  kableExtra::pack_rows("available or accessed", 1, 4) %>%
-  kableExtra::pack_rows("required and/or desired", 5, 9)
-  
-}
-
- table_dat_req
-
-
-```
-
-
-
-# Preliminary results {#sec:results}
+# Results {#sec:results}
 
 
 <!-- Tree locations are clustered and structured based on their category, i.e. riparian, street and park trees (Fig.$~$\@ref(fig:fig-tree-overview-map)). -->
