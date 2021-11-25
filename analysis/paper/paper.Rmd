@@ -629,9 +629,14 @@ where $Y$ is taken from an appropriate distribution and corresponding link funct
 Nested data structures (e.g., city districts) can be accounted for by introducing random effects, while spatial dependence between observations can be accounted for by constructing smoothing functions with, for instance, northings and eastings [cf. @wood2017].
 
 
+- models fit using mgcv **citation** in R **citation**
+
+
 ### Dendrochronological analyses
+
 - GAM for cambial age of urban trees, split like @pretzsch2017 (<=1960, >1960)
-- 
+- lme4, used AR process to account for autocorrelation between observations
+- calculataed model averages for all years within year groups
 
 
 ### Stem diameter model development and selection
@@ -642,11 +647,11 @@ Model forms:
 
 \begin{align}
 
-g(E(DBH_i)) &=  f_j(age_i) + f_j(temp_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i \\ 
+g(E(DBH_i)) &=  f_j(age_i) + f_j(temp_i, age_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i \\ 
 
-g(E(DBH_i)) &= f_j(age_i) + f_j(temp_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
+g(E(DBH_i)) &= f_j(age_i) + f_j(temp_i, age_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
 
-g(E(DBH_i)) &= f_j(age_i) + f_j(temp_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
+g(E(DBH_i)) &= f_j(age_i) + f_j(temp_i, age_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
 
 g(E(DBH_i)) &= f_j(age_i) +  f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
 
@@ -655,14 +660,17 @@ g(E(DBH_i)) &= f_j(age_i) +  c_{i,j} + \tau_{i,k} + \epsilon_i  \\
 \end{align}
 
 where $g()$ is a log-link for $DBH \sim gamma$, and $i$, $j$ and $k$ are indices for observations, species and districts, respectively. 
-Above models were tested in combination with a global spatial smooth $f(utmx_i,utmy_i)$ to account for the spatial structure of observations, which reduced auto-correlation of model residuals to considerably (see supplemental information).
+Models were implemented in `R` [@rcoreteam2021] with `mgcv::bam()` [@wood2017a;@li2020a] for a dramatic increase computational efficiency, allowing for rapid model development/comparison
+All models above were also tested with a global spatial smooth $f(utmx_i,utmy_i)$ using Gaussian process smooth [cf. p. 242 in @wood2017] to account for the spatial structure of observations, which reduced auto-correlation of model residuals to considerably (see supplemental information).
 **what's the impact of remaining auto correlation? inflated errors, larger coefficients?**
+
+
+- $f_j$ for temperature interaction with age, implemented as tensor smooth [@wood2006], assuming that temperature impacts vary across trees' lives.
+- Reader is referred to detailed implementation in the supplemental material code
+
 As the spatial extent and coverage varies between temperature and ancillary data, more complex models typically also had fewer total observations, which prevents a direct comparison with information-based model selection criteria, such as Aikake's Information Criterion.
 We thus selected the model with the highest explanatory power, and comparatively larger sample size for final analyses.
 **further analyses with equal sample sizes (requires data collection / cutting down); but this is first look at potential of approach and initial insights**
-
-
-
 
 
 
