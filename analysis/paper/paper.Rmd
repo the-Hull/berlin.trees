@@ -670,6 +670,8 @@ All models above were also tested with a global spatial smooth $f(utmx_i,utmy_i)
 The functions $f_j$ are for species-specific smooths [i.e., with individual smoothness penalties and functional shapes as detailed by @pedersen2019]; the interaction between temperature interaction and age were implemented as tensor smooths [@wood2006] to account for the different variable scales (i.e., units).
 Readers are referred to the detailed implementation in the supplemental material code.
 The covariates for planting bed area and soil nutrient availability were log transformed to account for their skewed distribution, improving the estimation of coefficients for their respective basis functions.
+
+Considering all combinations of (excess) heat measures and covariates (with point, as well as 150/300$~m$ extractions), a total of `r nrow(drake::readd(bam_dbh_filtered))` models were applied.
 We selected the model with the highest explanatory power, based on residual deviance and observed vs. predicted fit, with comparatively largest sample size for final analyses.
 From this model we derived age and species dependent $DBH$ averages across a temperature measure from predicted values in 5-year age groups starting at 30, 45, 60, 75, 90.
 
