@@ -1736,6 +1736,24 @@
   file = {C\:\\Users\\ahurl\\Zotero\\storage\\NAXEQR3R\\Lasch-Born et al. - 2015 - Forests under climate change potential risks and .pdf}
 }
 
+@article{li2020a,
+  title = {Faster Model Matrix Crossproducts for Large Generalized Linear Models with Discretized Covariates},
+  author = {Li, Zheyuan and Wood, Simon N.},
+  date = {2020-02-01},
+  journaltitle = {Statistics and Computing},
+  shortjournal = {Stat Comput},
+  volume = {30},
+  number = {1},
+  pages = {19--25},
+  issn = {1573-1375},
+  doi = {10.1007/s11222-019-09864-2},
+  url = {https://doi.org/10.1007/s11222-019-09864-2},
+  urldate = {2021-11-25},
+  abstract = {Wood et al. (J Am Stat Assoc 112(519):1199–1210, 2017) developed methods for fitting penalized regression spline based generalized additive models, with of the order of \$\$10\^4\$\$ coefficients, to up to \$\$10\^8\$\$ data. The methods offered two to three orders of magnitude reduction in computational cost relative to the most efficient previous methods. Part of the gain resulted from the development of a set of methods for efficiently computing model matrix products when model covariates each take only a discrete set of values substantially smaller than the sample size [generalizing an idea first appearing in Lang et al. (Stat Comput 24(2):223–238, 2014)]. Covariates can always be rounded to achieve such discretization, and it should be noted that the covariate discretization is marginal. That is we do not rely on discretizing covariates jointly, which would typically require the use of very coarse discretization. The most expensive computation in model estimation is the formation of the matrix cross product \$\$\textbackslash mathbf\{X\}\^\{\textbackslash mathsf\{T\}\}\{\textbackslash mathbf\{WX\}\}\$\$ where \$\$\textbackslash mathbf\{X\}\$\$ is a model matrix and \$\$\{\textbackslash mathbf\{W\}\}\$\$ a diagonal or tri-diagonal matrix. The purpose of this paper is to present a simple, novel and substantially more efficient approach to the computation of this cross product. The new method offers, for example, a 30 fold reduction in cross product computation time for the Black Smoke model dataset motivating Wood et~al. (2017). Given this reduction in computational cost, the subsequent Cholesky decomposition of \$\$\textbackslash mathbf\{X\}\^\{\textbackslash mathsf\{T\}\}\{\textbackslash mathbf\{WX\}\}\$\$ and follow on computation of \$\$(\textbackslash mathbf\{X\}\^\{\textbackslash mathsf\{T\}\}\{\textbackslash mathbf\{WX\}\})\^\{-1\}\$\$ become a more significant part of the computational burden, and we also discuss the choice of methods for improving their speed.},
+  langid = {english},
+  file = {C\:\\Users\\ahurl\\transfer\\OneDrive\\_literature\\li_wood_2020_faster_model_matrix_crossproducts_for_large_generalized_linear_models_with.pdf}
+}
+
 @article{liu2020,
   title = {Drought Can Offset Potential Water Use Efficiency of Forest Ecosystems from Rising Atmospheric {{CO2}}},
   author = {Liu, Ning and Kala, Jatin and Liu, Shirong and Haverd, Vanessa and Dell, Bernard and Smettem, Keith R. J. and Harper, Richard J.},
@@ -2954,6 +2972,16 @@
   organization = {{R Foundation for Statistical Computing}}
 }
 
+@manual{rcoreteam2021,
+  type = {manual},
+  title = {R: A Language and Environment for Statistical Computing},
+  author = {{R Core Team}},
+  date = {2021},
+  location = {{Vienna, Austria}},
+  url = {https://www.R-project.org/},
+  organization = {{R Foundation for Statistical Computing}}
+}
+
 @article{rhoades1999,
   title = {Growth of Trees on the {{Virgina Tech Campus}} in Response to Various Factors},
   author = {Rhoades, Richard W and Stipes, R Jay},
@@ -3814,11 +3842,68 @@
   file = {C\:\\Users\\ahurl\\Zotero\\storage\\MFRDGSU5\\Wohlfahrt et al_2019_The urban imprint on plant phenology.pdf;C\:\\Users\\ahurl\\Zotero\\storage\\HSXWN8NZ\\s41559-019-1017-9.html}
 }
 
+@article{wood2006,
+  title = {Low-{{Rank Scale}}-{{Invariant Tensor Product Smooths}} for {{Generalized Additive Mixed Models}}},
+  author = {Wood, Simon N.},
+  date = {2006},
+  journaltitle = {Biometrics},
+  volume = {62},
+  number = {4},
+  pages = {1025--1036},
+  issn = {1541-0420},
+  doi = {10.1111/j.1541-0420.2006.00574.x},
+  url = {https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1541-0420.2006.00574.x},
+  urldate = {2021-11-25},
+  abstract = {A general method for constructing low-rank tensor product smooths for use as components of generalized additive models or generalized additive mixed models is presented. A penalized regression approach is adopted in which tensor product smooths of several variables are constructed from smooths of each variable separately, these “marginal” smooths being represented using a low-rank basis with an associated quadratic wiggliness penalty. The smooths offer several advantages: (i) they have one wiggliness penalty per covariate and are hence invariant to linear rescaling of covariates, making them useful when there is no “natural” way to scale covariates relative to each other; (ii) they have a useful tuneable range of smoothness, unlike single-penalty tensor product smooths that are scale invariant; (iii) the relatively low rank of the smooths means that they are computationally efficient; (iv) the penalties on the smooths are easily interpretable in terms of function shape; (v) the smooths can be generated completely automatically from any marginal smoothing bases and associated quadratic penalties, giving the modeler considerable flexibility to choose the basis penalty combination most appropriate to each modeling task; and (vi) the smooths can easily be written as components of a standard linear or generalized linear mixed model, allowing them to be used as components of the rich family of such models implemented in standard software, and to take advantage of the efficient and stable computational methods that have been developed for such models. A small simulation study shows that the methods can compare favorably with recently developed smoothing spline ANOVA methods.},
+  langid = {english},
+  keywords = {(GAMM),Computationally efficient,Generalized additive mixed model,Mixed effect variable coefficient model,Multiple penalties,Penalized regression,Scale invariant,Smooth interaction,Smoothing penalty,Spline,SS-ANOVA,Tensor product smooth},
+  annotation = {\_eprint: https://onlinelibrary.wiley.com/doi/pdf/10.1111/j.1541-0420.2006.00574.x},
+  file = {C\:\\Users\\ahurl\\transfer\\OneDrive\\_literature\\wood_2006_low-rank_scale-invariant_tensor_product_smooths_for_generalized_additive_mixed.pdf;C\:\\Users\\ahurl\\Zotero\\storage\\RLI76YHK\\j.1541-0420.2006.00574.html}
+}
+
+@article{wood2015,
+  title = {Generalized Additive Models for Large Data Sets},
+  author = {Wood, Simon N. and Goude, Yannig and Shaw, Simon},
+  date = {2015-01-01},
+  journaltitle = {Journal of the Royal Statistical Society: Series C (Applied Statistics)},
+  volume = {64},
+  number = {1},
+  pages = {139--155},
+  publisher = {{John Wiley \& Sons, Ltd}},
+  issn = {0035-9254},
+  doi = {10.1111/rssc.12068},
+  url = {https://rss.onlinelibrary.wiley.com/doi/full/10.1111/rssc.12068},
+  urldate = {2021-11-25},
+  abstract = {Summary We consider an application in electricity grid load prediction, where generalized additive models are appropriate, but where the data set's size can make their use practically intractable with existing methods. We therefore develop practical generalized additive model fitting methods for large data sets in the case in which the smooth terms in the model are represented by using penalized regression splines. The methods use iterative update schemes to obtain factors of the model matrix while requiring only subblocks of the model matrix to be computed at any one time. We show that efficient smoothing parameter estimation can be carried out in a well-justified manner. The grid load prediction problem requires updates of the model fit, as new data become available, and some means for dealing with residual auto-correlation in grid load. Methods are provided for these problems and parallel implementation is covered. The methods allow estimation of generalized additive models for large data sets by using modest computer hardware, and the grid load prediction problem illustrates the utility of reduced rank spline smoothing methods for dealing with complex modelling problems.},
+  keywords = {Correlated additive model,Electricity load prediction,Generalized additive model estimation},
+  file = {C\:\\Users\\ahurl\\transfer\\OneDrive\\_literature\\wood_et_al_2015_generalized_additive_models_for_large_data_sets.pdf}
+}
+
 @book{wood2017,
   title = {Generalized Additive Models: An Introduction with {{R}}},
   author = {Wood, Simon N},
   date = {2017},
   publisher = {{CRC press}}
+}
+
+@article{wood2017a,
+  title = {Generalized {{Additive Models}} for {{Gigadata}}: Modeling the {{U}}.{{K}}. {{Black Smoke Network Daily Data}}},
+  shorttitle = {Generalized {{Additive Models}} for {{Gigadata}}},
+  author = {Wood, Simon N. and Li, Zheyuan and Shaddick, Gavin and Augustin, Nicole H.},
+  date = {2017-07-03},
+  journaltitle = {Journal of the American Statistical Association},
+  volume = {112},
+  number = {519},
+  pages = {1199--1210},
+  publisher = {{Taylor \& Francis}},
+  issn = {0162-1459},
+  doi = {10.1080/01621459.2016.1195744},
+  url = {https://doi.org/10.1080/01621459.2016.1195744},
+  urldate = {2021-11-25},
+  abstract = {We develop scalable methods for fitting penalized regression spline based generalized additive models with of the order of 104 coefficients to up to 108 data. Computational feasibility rests on: (i) a new iteration scheme for estimation of model coefficients and smoothing parameters, avoiding poorly scaling matrix operations; (ii) parallelization of the iteration’s pivoted block Cholesky and basic matrix operations; (iii) the marginal discretization of model covariates to reduce memory footprint, with efficient scalable methods for computing required crossproducts directly from the discrete representation. Marginal discretization enables much finer discretization than joint discretization would permit. We were motivated by the need to model four decades worth of daily particulate data from the U.K. Black Smoke and Sulphur Dioxide Monitoring Network. Although reduced in size recently, over 2000 stations have at some time been part of the network, resulting in some 10 million measurements. Modeling at a daily scale is desirable for accurate trend estimation and mapping, and to provide daily exposure estimates for epidemiological cohort studies. Because of the dataset size, previous work has focused on modeling time or space averaged pollution levels, but this is unsatisfactory from a health perspective, since it is often acute exposure locally and on the time scale of days that is of most importance in driving adverse health outcomes. If computed by conventional means our black smoke model would require a half terabyte of storage just for the model matrix, whereas we are able to compute with it on a desktop workstation. The best previously available reduced memory footprint method would have required three orders of magnitude more computing time than our new method. Supplementary materials for this article are available online.},
+  keywords = {Air pollution,Big data,Parallel computing,Regression,Smoothing},
+  annotation = {\_eprint: https://doi.org/10.1080/01621459.2016.1195744},
+  file = {C\:\\Users\\ahurl\\transfer\\OneDrive\\_literature\\wood_et_al_2017_generalized_additive_models_for_gigadata.pdf;C\:\\Users\\ahurl\\Zotero\\storage\\PC536QKW\\01621459.2016.html}
 }
 
 @article{wu2019,
