@@ -345,7 +345,7 @@ download_building_height <- function(fpath = "./analysis/data/raw_data/spatial_a
 
     rm(building_height1, building_height2)
 
-    building_full_raster <- raster::raster(building_full, resolution=10)
+    building_full_raster <- raster::raster(building_full, resolution=5)
 
     building_rasterized <- raster::rasterize(building_full,
                                              building_full_raster,
