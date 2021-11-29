@@ -642,7 +642,7 @@ A global temporal (by year) and time-dependent ($j$, $\leq 1960$ or $>1960$) tre
 A $3^{rd}$-order autocorrelation-moving average (ARMA) correlation structure was applied (i.e., $\phi(3,1)$) to account for the dependency of $\Delta r$ across years for each tree, as is frequently the case for tree growth [e.g., see @Fritts1989]; the detailed implementation for this model is given in the supplemental material code.
 $\Delta r$ was then derived for a range of cambial ages, and averaged for both time groups, allowing a comparison of recent to earlier growth.
 We acknowledge that tree cores obtained at breast height do not represent absolute tree age.
-However, here they serve as a proxy for growth between young ($>1960$) and older individuals to contextualize growth patterns inferred from the larger-scale tree inventory.
+However, here they serve as a proxy for growth between young ($\gtrapprox 1960$) and older individuals to contextualize growth patterns inferred from the larger-scale tree inventory.
 
 
 ### Stem diameter model development and selection
@@ -667,7 +667,8 @@ where $g()$ is a log-link for $DBH \sim Gamma$, and $i$, $j$ are indices for obs
 Models were implemented with `mgcv::bam()` [@wood2017a;@li2020a] for a dramatic increase computational efficiency, allowing for rapid model development/comparison.
 All models above were also tested with a global spatial smooth $f(utmx_i,utmy_i)$ using Gaussian process smooth [cf. p. 242 in @wood2017] to account for the spatial structure of observations, which reduced auto-correlation of model residuals considerably (see supplemental information).
 **what's the impact of remaining auto correlation? inflated errors, larger coefficients?**
-The functions $f_j$ are for species-specific smooths [i.e., with individual smoothness penalties and functional shapes as detailed by @pedersen2019]; the interaction between temperature interaction and age were implemented as tensor smooths [@wood2006] to account for the different variable scales (i.e., units).
+Further, we implemented the interaction between temperature and age (i.e., $f_j(temp, age)$ as tensor smooths [@wood2006] to account for the different variable scales (i.e., units); all models were also tested without this interaction using a thin plate regression spline smooth for temperature (not shown in equations above).
+The functions $f_j$ are for species-specific smooths [i.e., with individual smoothness penalties and functional shapes as detailed by @pedersen2019].
 Readers are referred to the detailed implementation in the supplemental material code.
 The covariates for planting bed area and soil nutrient availability were log transformed to account for their skewed distribution, improving the estimation of coefficients for their respective basis functions.
 
@@ -684,6 +685,66 @@ This allowed us to highlight the utility of the approach *per se* and for Berlin
 
 
 # Results {#sec:results}
+
+
+
+(ref:cambial-effect) Contrasting growth trends for recent and earlier radial increments (i.e. stem growth)
+
+```{r fig-cambial-effect, fig.cap="(ref:cambial-effect)", out.width="50%", include=TRUE, eval=TRUE}
+
+
+knitr::include_graphics(here::here("analysis/figures/fig-biwi-growth.png"))
+
+```
+
+
+
+(ref:model-deviance) Fig caption
+
+```{r fig-model-deviance, fig.cap="(ref:model-dev)", out.width="100%", include=TRUE, eval=TRUE}
+
+
+knitr::include_graphics(here::here("analysis/figures/fig_model_deviance.png"))
+
+```
+
+
+(ref:model-performance) Predicted vs. observed best model day2007 and LCZ6
+
+```{r fig-model-performance, fig.cap="(ref:model-performance)", out.width="50%", include=TRUE, eval=TRUE}
+
+
+knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_lcz6_obs_pred.png"))
+
+```
+
+
+
+
+
+(ref:heat-effect) Age group-dependent temperature effect
+
+```{r fig-heat-effect, fig.cap="(ref:heat-effect)", out.width="100%", include=TRUE, eval=TRUE}
+
+
+knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_lcz6.png"))
+
+```
+
+
+
+
+
+
+(ref:lcz6-effect) Global effect of LCZ6 on growth
+
+```{r fig-lcz6-effect, fig.cap="(ref:lcz6-effect)", out.width="50%", include=TRUE, eval=TRUE}
+
+
+knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_xvar-lcz6_tilia.png"))
+
+```
+
 
 
 <!-- Tree locations are clustered and structured based on their category, i.e. riparian, street and park trees (Fig.$~$\@ref(fig:fig-tree-overview-map)). -->
