@@ -275,13 +275,9 @@ The city provides extensive public green space covering around 30$~\%$ of its ar
 
 
 knitr::include_graphics(here::here("analysis/figures/map_00_studyarea.png"))
-
-  
-
-# plot_count_map
-
-# plot(1:10)
 ```
+
+
 
 
 ## General approach: space-for-time analyses
@@ -481,7 +477,7 @@ table_dat_req_kable <- age_tables %>%
 
 ### Temperature/UHI data
 
-Temperature and UHI data were summarized temporally either by the provider or manually to provide a characteristic representation of heat loading during summer at different times (morning, afternoon/day, night), from which tree averages (radius of 150$~m$) were calculated.
+Temperature and UHI data were summarized temporally either by the provider or manually to provide a characteristic representation of heat loading during summer at different times (morning, afternoon/day, night), from which tree averages (radius of 150$~m$) were calculated (Figure$~$\@ref(fig:fig-temp-overview).
 Two data sets of urban air and one surface temperature were tested as explanatory variables in GAM models.
 The air temperatures from the Berlin environmental atlas (EnvAt) are model outputs that are representations of typical summer conditions at 0400, 1400 and 2200 hours; these data are provided at city block basis (spatial polygons), from which weighted averages were extracted.
 UrbClim air temperatures are hourly model outputs [100$~m$ resolution, @deridder2015] based on ERA5 re-analyses data (ECMWF) for which observations from the hottest month  available (June, 2011) were averaged to hours equivalent to Berlin Environmental Atlas (referred to as Berlin EnvAt) data by using a window of $\pm~1~$hour (i.e., 0300 to 0500, etc.).
@@ -492,6 +488,15 @@ $$UHI_{x,y} = T_{Air_{2m}~x,y} - \overline{T_{Air_{2m}~Rural}},$$
 where $T$ is temperature ($^\circ C$) $x$ and $y$ define an urban grid cell.
 The LandSat-derived surface UHI data set by @chakraborty2019 (referred to as LandSat) estimates its measure in a similar fashion and the reader is referred to the detailed description therein; note this data set provides day and night-time averaged UHI estimates at 500$~m$ resolution, which were extracted for the hottest summer in this record (2007).
 
+(ref:temp-overview) Temp overviews; rows are landsat, berlin environmental atlas, and UrbClim, columns are morning, day/afternoon, night.
+
+```{r fig-temp-overview, fig.cap="(ref:study-temp)",fig.width = 12, fig.height = 12, out.width="100%"}
+
+
+
+
+knitr::include_graphics(here::here("./analysis/figures/fig_temp_maps.png"))
+```
 
 
 ### Ancillary environmental data
