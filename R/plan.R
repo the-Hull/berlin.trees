@@ -600,6 +600,19 @@ plan <- drake::drake_plan(
                                                                                UHI~(degree*C)))),
 
 
+   ### map: temp/UHI overview
+
+   plot_uhi_overview_maps = plot_temp_maps(landsat = uhi_stacks,
+                          envat = berlin_heat_model_2015,
+                          urbclim = raster::stack(uhi_urbclim),
+                          berlin_poly = berlin_polygons,
+                          base_size = 18,
+                          file = "./analysis/figures/fig_temp_maps.png",
+                          dpi = 300,
+                          height = 12,
+                          width = 12),
+
+
    ### bar: Tree counts ------------
 
     plot_tree_sums_bar = tree_sums_bar_plot(full_data_set_clean,

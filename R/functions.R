@@ -3301,6 +3301,560 @@ make_uhi_urbclim_plot <- function(uhi_rast,
 
 }
 
+#' Make temp overview plot
+#'
+#' @param landsat list, uhi stacks
+#' @param envat rasterstack, berlin heat model
+#' @param urbclim list, urbclim rasters
+#' @param berlin_poly sf, outlines
+#' @param ylim numeric, UTM coordinates
+#' @param xlim numeric, UTM coordinates
+#' @param base_size
+#' @param file
+#' @param height
+#' @param width
+#' @param dpi
+plot_temp_maps <- function(landsat,
+                           envat,
+                           urbclim,
+                           berlin_poly,
+                           ylim = c(5789783, 5853683),
+                           xlim = c(360062, 424844),
+                           # ylim = c(52.275, 52.85),
+                           base_size = 18,
+                           file,
+                           height,
+                           width,
+                           dpi){
+
+    # extrafont::loadfonts(device = "win",quiet = TRUE)
+    extrafont::loadfonts(device = "pdf",quiet = TRUE)
+
+    mid_rescaler <- function(mid = 0) {
+        function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
+            scales::rescale_mid(x, to, from, mid)
+        }
+    }
+
+    # main_crs <-  raster::crs(landsat$Summertime_gridded_UHI_data$day)
+    main_crs <- berlin_poly %>% sf::st_crs()
+
+
+    landsat$Summertime_gridded_UHI_data$day <-
+        raster::projectRaster(
+            landsat$Summertime_gridded_UHI_data$day,
+            crs = main_crs$wkt
+        )
+    landsat$Summertime_gridded_UHI_data$night <-
+        raster::projectRaster(
+            landsat$Summertime_gridded_UHI_data$night,
+            crs = main_crs$wkt
+        )
+
+
+
+    # ensure all assets have same proj
+    berlin_poly <- sf::st_transform(berlin_poly,
+                                    crs = main_crs)
+    urbclim <- raster::projectRaster(from = urbclim,
+                                     crs = main_crs$wkt)  %>%
+        stars::st_as_stars(proxy = FALSE)
+    urbclim <- urbclim[berlin_poly]
+    envat <- raster::projectRaster(from = envat,
+                                   crs = main_crs$wkt) %>%
+        stars::st_as_stars(proxy = FALSE)
+    #
+
+
+    # plotting parameters
+    labs_uhi <- expression(UHI~(degree*C))
+    labs_temp <- expression(Temp.~(degree*C))
+
+
+    # LANDSAT DAY -------------------------------------------------------------
+
+
+    p_landsat_day <- ggplot2::ggplot() +
+
+
+        ggplot2::geom_sf(data = berlin_poly,
+                         color = "gray60",
+                         fill = "gray80",
+                         size = 1,
+                         show.legend = FALSE) +
+
+
+        stars::geom_stars(data = stars::st_as_stars(landsat$Summertime_gridded_UHI_data$day$day_2007),
+                          na.rm = TRUE,
+                          downsample = 2) +
+
+
+        # ggplot2::geom_sf(data = berlin_poly,
+        #                  color = "gray60",
+        #                  fill = "transparent",
+        #                  size = 1,
+        #                  show.legend = FALSE) +
+
+        ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
+
+        ggplot2::scale_fill_distiller(palette = "RdBu",
+                                      rescaler = mid_rescaler(),
+                                      na.value = "transparent")   +
+
+        ggplot2::labs(
+            # fill = expression(atop(Summer~day-time,
+            # UHI~(degree*C))),
+            fill = labs_uhi,
+            x = NULL,
+            # title = "Estimate of Urban Heat Loading",
+            y = NULL) +
+
+
+        ggplot2::theme_void(base_family = "Roboto Condensed",
+                            base_size = base_size) +
+        ggplot2::theme(legend.direction = "horizontal",
+                       legend.position = c(0.6, 0.95)) +
+        ggplot2::guides(fill = ggplot2::guide_colorbar(barwidth = unit(3.5, "cm"),
+                                                       title.vjust = 1,
+                                                       ticks.colour = "gray30"))
+
+    # LANDSAT NIGHT -----------------------------------------------------------
+
+    p_landsat_night <- ggplot2::ggplot() +
+
+        ggplot2::geom_sf(data = berlin_poly,
+                         color = "gray60",
+                         fill = "gray80",
+                         size = 1,
+                         show.legend = FALSE) +
+
+
+        stars::geom_stars(data = stars::st_as_stars(landsat$Summertime_gridded_UHI_data$night$night_2007),
+                          na.rm = TRUE,
+                          downsample = 2) +
+
+
+        # ggplot2::geom_sf(data = berlin_poly,
+        #                  color = "gray60",
+        #                  fill = "transparent",
+        #                  size = 1,
+        #                  show.legend = FALSE) +
+
+        ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
+
+        ggplot2::scale_fill_distiller(palette = "RdBu",
+                                      rescaler = mid_rescaler(),
+                                      na.value = "transparent")   +
+
+        ggplot2::labs(
+            # fill = expression(atop(Summer~day-time,
+            #                                  UHI~(degree*C))),
+            fill = labs_uhi,
+            x = NULL,
+            # title = "Estimate of Urban Heat Loading",
+            y = NULL) +
+
+
+        ggplot2::theme_void(base_family = "Roboto Condensed",
+                            base_size = base_size) +
+        ggplot2::theme(legend.direction = "horizontal",
+                       legend.position = c(0.6, 0.95)) +
+        ggplot2::guides(fill = ggplot2::guide_colorbar(barwidth = unit(3.5, "cm"),
+                                                       title.vjust = 1,
+                                                       ticks.colour = "gray30"))
+
+
+
+    # ENVAT Morning -----------------------------------------------------------
+
+
+    rn <- envat %>% slice(band, 1) %>% as.data.frame() %>% select(3) %>% range(na.rm = TRUE)
+
+    rn[1] <- floor(rn[1])
+    rn[2] <- ceiling(rn[2])
+
+    p_envat_morning  <- ggplot2::ggplot() +
+
+        #
+        # ggplot2::geom_sf(data = berlin_poly,
+        #                  color = "gray60",
+        #                  fill = "gray80",
+        #                  size = 1,
+        #                  show.legend = FALSE) +
+
+
+        stars::geom_stars(data = envat %>% slice(band, 1),
+                          na.rm = TRUE,
+                          downsample = 5) +
+
+
+        # ggplot2::geom_sf(data = berlin_poly,
+        #                  color = "gray60",
+        #                  fill = "transparent",
+        #                  size = 1,
+        #                  show.legend = FALSE) +
+
+        ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
+
+        # ggplot2::scale_fill_distiller(palette = "RdBu",
+        #                               # rescaler = mid_rescaler(),
+        #                               na.value = "transparent")   +
+
+
+        ggplot2::scale_fill_viridis_c(option = "plasma", na.value = "transparent",
+                                      limits = c(10,22), breaks = c(10,22)) +
+        # limits = rn, breaks = rn) +
+
+        ggplot2::labs(
+            # fill = expression(atop(Summer~day-time,
+            # UHI~(degree*C))),
+            fill = labs_temp,
+            x = NULL,
+            # title = "Estimate of Urban Heat Loading",
+            y = NULL) +
+
+
+        ggplot2::theme_void(base_family = "Roboto Condensed",
+                            base_size = base_size) +
+        ggplot2::theme(legend.direction = "horizontal",
+                       legend.position = c(0.6, 0.95)) +
+        ggplot2::guides(fill = ggplot2::guide_colorbar(barwidth = unit(3.5, "cm"),
+                                                       title.vjust = 1,
+                                                       ticks.colour = "gray30"))
+
+
+
+
+    # ENVAT AFTERNOON -----------------------------------------------------------
+    rn <- envat %>% slice(band, 2) %>% as.data.frame() %>% select(3) %>% range(na.rm = TRUE)
+    rn[1] <- floor(rn[1])
+    rn[2] <- ceiling(rn[2])
+
+    p_envat_afternoon  <- ggplot2::ggplot() +
+
+        #
+        # ggplot2::geom_sf(data = berlin_poly,
+        #                  color = "gray60",
+        #                  fill = "gray80",
+        #                  size = 1,
+        #                  show.legend = FALSE) +
+
+
+        stars::geom_stars(data = envat %>% slice(band, 2),
+                          na.rm = TRUE,
+                          downsample = 5) +
+
+
+        # ggplot2::geom_sf(data = berlin_poly,
+        #                  color = "gray60",
+        #                  fill = "transparent",
+        #                  size = 1,
+        #                  show.legend = FALSE) +
+
+        ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
+
+        # ggplot2::scale_fill_distiller(palette = "RdBu",
+        #                              # rescaler = mid_rescaler(),
+        #                               na.value = "transparent")   +
+
+        ggplot2::scale_fill_viridis_c(option = "plasma", na.value = "transparent",
+                                      limits = rn, breaks = rn) +
+
+        ggplot2::labs(
+            # fill = expression(atop(Summer~day-time,
+            # UHI~(degree*C))),
+            fill = labs_temp,
+            x = NULL,
+            # title = "Estimate of Urban Heat Loading",
+            y = NULL) +
+
+
+        ggplot2::theme_void(base_family = "Roboto Condensed",
+                            base_size = base_size) +
+        ggplot2::theme(legend.direction = "horizontal",
+                       legend.position = c(0.6, 0.95)) +
+        ggplot2::guides(fill = ggplot2::guide_colorbar(barwidth = unit(3.5, "cm"),
+                                                       title.vjust = 1,
+                                                       ticks.colour = "gray30"))
+
+
+
+    # ENVAT NIGHT -----------------------------------------------------------
+    rn <- envat %>% slice(band, 3) %>% as.data.frame() %>% select(3) %>% range(na.rm = TRUE)
+    rn[1] <- floor(rn[1])
+    rn[2] <- ceiling(rn[2])
+
+    p_envat_night  <- ggplot2::ggplot() +
+
+
+        # ggplot2::geom_sf(data = berlin_poly,
+        #                  color = "gray60",
+        #                  fill = "gray80",
+        #                  size = 1,
+        #                  show.legend = FALSE) +
+
+
+        stars::geom_stars(data = envat %>% slice(band, 3),
+                          na.rm = TRUE,
+                          downsample = 5) +
+
+
+        # ggplot2::geom_sf(data = berlin_poly,
+        #                  color = "gray60",
+        #                  fill = "transparent",
+        #                  size = 1,
+        #                  show.legend = FALSE) +
+
+        ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
+
+        # ggplot2::scale_fill_distiller(palette = "RdBu",
+        #                              # rescaler = mid_rescaler(),
+        #                               na.value = "transparent")   +
+
+        ggplot2::scale_fill_viridis_c(option = "plasma", na.value = "transparent",
+                                      limits = rn, breaks = rn) +
+
+        ggplot2::labs(
+            # fill = expression(atop(Summer~day-time,
+            # UHI~(degree*C))),
+            fill = labs_temp,
+            x = NULL,
+            # title = "Estimate of Urban Heat Loading",
+            y = NULL) +
+
+
+        ggplot2::theme_void(base_family = "Roboto Condensed",
+                            base_size = base_size) +
+        ggplot2::theme(legend.direction = "horizontal",
+                       legend.position = c(0.6, 0.95)) +
+        ggplot2::guides(fill = ggplot2::guide_colorbar(barwidth = unit(3.5, "cm"),
+                                                       title.vjust = 1,
+                                                       ticks.colour = "gray30"))
+
+
+
+
+    # DUP ---------------------------------------------------------------------
+
+
+    # urbclim Morning -----------------------------------------------------------
+
+
+    rn <- urbclim %>% slice(band, 1) %>% as.data.frame() %>% select(3) %>% range(na.rm = TRUE)
+
+    rn[1] <- floor(rn[1])
+    rn[2] <- ceiling(rn[2])
+
+    p_urbclim_morning  <- ggplot2::ggplot() +
+
+        #
+        # ggplot2::geom_sf(data = berlin_poly,
+        #                  color = "gray60",
+        #                  fill = "gray80",
+        #                  size = 1,
+        #                  show.legend = FALSE) +
+
+
+        stars::geom_stars(data = urbclim %>% slice(band, 1),
+                          na.rm = TRUE,
+                          downsample = 2) +
+
+
+        # ggplot2::geom_sf(data = berlin_poly,
+        #                  color = "gray60",
+        #                  fill = "transparent",
+        #                  size = 1,
+        #                  show.legend = FALSE) +
+
+        ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
+
+        ggplot2::scale_fill_distiller(palette = "RdBu",
+                                      # rescaler = mid_rescaler(),
+                                      na.value = "transparent")   +
+
+
+        # ggplot2::scale_fill_viridis_c(option = "plasma", na.value = "transparent",
+        #                               limits = c(10,22), breaks = c(10,22)) +
+        # limits = rn, breaks = rn) +
+
+        ggplot2::labs(
+            # fill = expression(atop(Summer~day-time,
+            # UHI~(degree*C))),
+            fill = labs_uhi,
+            x = NULL,
+            # title = "Estimate of Urban Heat Loading",
+            y = NULL) +
+
+
+        ggplot2::theme_void(base_family = "Roboto Condensed",
+                            base_size = base_size) +
+        ggplot2::theme(legend.direction = "horizontal",
+                       legend.position = c(0.6, 0.95)) +
+        ggplot2::guides(fill = ggplot2::guide_colorbar(barwidth = unit(3.5, "cm"),
+                                                       title.vjust = 1,
+                                                       ticks.colour = "gray30"))
+
+
+
+
+    # urbclim AFTERNOON -----------------------------------------------------------
+    rn <- urbclim %>% slice(band, 2) %>% as.data.frame() %>% select(3) %>% range(na.rm = TRUE)
+    rn[1] <- floor(rn[1])
+    rn[2] <- ceiling(rn[2])
+
+    p_urbclim_afternoon  <- ggplot2::ggplot() +
+
+        #
+        # ggplot2::geom_sf(data = berlin_poly,
+        #                  color = "gray60",
+        #                  fill = "gray80",
+        #                  size = 1,
+        #                  show.legend = FALSE) +
+
+
+        stars::geom_stars(data = urbclim %>% slice(band, 2),
+                          na.rm = TRUE,
+                          downsample = 2) +
+
+
+        # ggplot2::geom_sf(data = berlin_poly,
+        #                  color = "gray60",
+        #                  fill = "transparent",
+        #                  size = 1,
+        #                  show.legend = FALSE) +
+
+        ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
+
+        ggplot2::scale_fill_distiller(palette = "RdBu",
+                                      # rescaler = mid_rescaler(),
+                                      na.value = "transparent")   +
+
+        # ggplot2::scale_fill_viridis_c(option = "plasma", na.value = "transparent",
+        #                               limits = rn, breaks = rn) +
+
+        ggplot2::labs(
+            # fill = expression(atop(Summer~day-time,
+            # UHI~(degree*C))),
+            fill = labs_uhi,
+            x = NULL,
+            # title = "Estimate of Urban Heat Loading",
+            y = NULL) +
+
+
+        ggplot2::theme_void(base_family = "Roboto Condensed",
+                            base_size = base_size) +
+        ggplot2::theme(legend.direction = "horizontal",
+                       legend.position = c(0.6, 0.95)) +
+        ggplot2::guides(fill = ggplot2::guide_colorbar(barwidth = unit(3.5, "cm"),
+                                                       title.vjust = 1,
+                                                       ticks.colour = "gray30"))
+
+
+
+    # urbclim NIGHT -----------------------------------------------------------
+    rn <- urbclim %>% slice(band, 3) %>% as.data.frame() %>% select(3) %>% range(na.rm = TRUE)
+    rn[1] <- floor(rn[1])
+    rn[2] <- ceiling(rn[2])
+
+    p_urbclim_night  <- ggplot2::ggplot() +
+
+
+        # ggplot2::geom_sf(data = berlin_poly,
+        #                  color = "gray60",
+        #                  fill = "gray80",
+        #                  size = 1,
+        #                  show.legend = FALSE) +
+
+
+        stars::geom_stars(data = urbclim %>% slice(band, 3),
+                          na.rm = TRUE,
+                          downsample = 2) +
+
+
+        # ggplot2::geom_sf(data = berlin_poly,
+        #                  color = "gray60",
+        #                  fill = "transparent",
+        #                  size = 1,
+        #                  show.legend = FALSE) +
+
+        ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
+
+        ggplot2::scale_fill_distiller(palette = "RdBu",
+                                      # rescaler = mid_rescaler(),
+                                      na.value = "transparent")   +
+
+        # ggplot2::scale_fill_viridis_c(option = "plasma", na.value = "transparent",
+        #                               limits = rn, breaks = rn) +
+
+        ggplot2::labs(
+            # fill = expression(atop(Summer~day-time,
+            # UHI~(degree*C))),
+            fill = labs_uhi,
+            x = NULL,
+            # title = "Estimate of Urban Heat Loading",
+            y = NULL) +
+
+
+        ggplot2::theme_void(base_family = "Roboto Condensed",
+                            base_size = base_size) +
+        ggplot2::theme(legend.direction = "horizontal",
+                       legend.position = c(0.6, 0.95)) +
+        ggplot2::guides(fill = ggplot2::guide_colorbar(barwidth = unit(3.5, "cm"),
+                                                       title.vjust = 1,
+                                                       ticks.colour = "gray30"))
+
+
+
+
+    p_list <- list(p_landsat_day = p_landsat_day,
+                   p_landsat_night = p_landsat_night,
+                   p_envat_morning = p_envat_morning,
+                   p_envat_afternoon = p_envat_afternoon,
+                   p_envat_night = p_envat_night,
+                   p_urbclim_morning = p_urbclim_morning,
+                   p_urbclim_afternoon = p_urbclim_afternoon,
+                   p_urbclim_night = p_urbclim_night
+    )
+
+
+
+
+    library(patchwork)
+
+    layout <- "
+##AABB
+CCDDEE
+FFGGHH
+"
+    p_map <-
+        p_list$p_landsat_day +
+        p_list$p_landsat_night +
+
+        p_list$p_envat_morning +
+        p_list$p_envat_afternoon +
+        p_list$p_envat_night +
+
+        p_list$p_urbclim_morning +
+        p_list$p_urbclim_afternoon +
+        p_list$p_urbclim_night +
+
+
+        plot_layout(design = layout, heights = 1/3)
+
+
+    ggplot2::ggsave(filename = file,
+                    plot = p_map,
+                    dpi = dpi,
+                    height = height,
+                    width = width)
+
+    return(p_map)
+
+
+}
+
+
+
 
 #' Density plot overview
 #'

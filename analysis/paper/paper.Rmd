@@ -312,7 +312,7 @@ dsources$Accessed <- format(dsources$Accessed, "%b '%y")
 
 ```{r tab-dsources, eval = TRUE}
 
-caption <- "Data description used for maps/visualizations and analyses. Resolution and radius are provided in $m$, the latter is the buffer in which data was averaged around each trees. A zero-radius refers to a point extraction from categorical and location specific data."
+caption <- "Data description used for maps/visualizations and analyses. Resolution and radius are provided in $m$, the latter is the buffer in which data was averaged around each trees. A zero-radius refers to a point extraction from categorical and location specific data. Polygons with radius data were rasterized to a resolution of $5~m$"
 caption_ov_short <- "Data descriptions"
 
 dsource <- dsources[-which(dsources$File == 'Wintertime_gridded_UHI_data.zip'), ]
