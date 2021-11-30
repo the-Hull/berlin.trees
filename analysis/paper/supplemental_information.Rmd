@@ -91,7 +91,7 @@ library(kableExtra)
 - datacleanr imgs
 - diagnostic lm imgs
 - spatial comparison (Moran's I)
-
+- AIC figure
 
 <!-- # Acknowledgements -->
 

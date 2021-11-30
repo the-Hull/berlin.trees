@@ -600,7 +600,7 @@ plan <- drake::drake_plan(
                                                                                UHI~(degree*C)))),
 
 
-   ### map: temp/UHI overview
+   ### map: temp/UHI overview ----------------
 
    plot_uhi_overview_maps = plot_temp_maps(landsat = uhi_stacks,
                           envat = berlin_heat_model_2015,
@@ -1012,14 +1012,14 @@ plan <- drake::drake_plan(
         output_format = bookdown::html_document2(),
         quiet = TRUE
     ),
-    # paper_word = rmarkdown::render(
-    #     knitr_in("./analysis/paper/paper.Rmd"),
-    #     output_dir = "./analysis/paper/",
-    #     output_file = file_out("paper_knit.docx"),
-    #     # output_file = "./paper_knit.html",
-    #     output_format = bookdown::word_document2(),
-    #     quiet = TRUE
-    # ),
+    paper_word = rmarkdown::render(
+        knitr_in("./analysis/paper/paper.Rmd"),
+        output_dir = "./analysis/paper/",
+        output_file = file_out("paper_knit.docx"),
+        # output_file = "./paper_knit.html",
+        output_format = bookdown::word_document2(),
+        quiet = TRUE
+    ),
     # paper_pdf = rmarkdown::render(
     #     knitr_in("./analysis/paper/paper.Rmd"),
     #     output_dir = "./analysis/paper/",

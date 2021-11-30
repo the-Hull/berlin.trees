@@ -2711,7 +2711,7 @@ model_summarize <- function(mgroups, bam_df, path_model_dir, path_model_files,pa
 
 
 
-    future::plan(future::multisession(workers = 12))
+    future::plan(future::multisession(workers = 4))
     mod_summary_list <-
         furrr::future_map(
             levels(mgroups),
@@ -3468,7 +3468,7 @@ plot_temp_maps <- function(landsat,
     # ENVAT Morning -----------------------------------------------------------
 
 
-    rn <- envat %>% slice(band, 1) %>% as.data.frame() %>% select(3) %>% range(na.rm = TRUE)
+    rn <- envat %>% dplyr::slice(band, 1) %>% as.data.frame() %>% dplyr::select(3) %>% range(na.rm = TRUE)
 
     rn[1] <- floor(rn[1])
     rn[2] <- ceiling(rn[2])
@@ -3526,7 +3526,7 @@ plot_temp_maps <- function(landsat,
 
 
     # ENVAT AFTERNOON -----------------------------------------------------------
-    rn <- envat %>% slice(band, 2) %>% as.data.frame() %>% select(3) %>% range(na.rm = TRUE)
+    rn <- envat %>% dplyr::slice(band, 2) %>% as.data.frame() %>% dplyr::select(3) %>% range(na.rm = TRUE)
     rn[1] <- floor(rn[1])
     rn[2] <- ceiling(rn[2])
 
@@ -3580,7 +3580,7 @@ plot_temp_maps <- function(landsat,
 
 
     # ENVAT NIGHT -----------------------------------------------------------
-    rn <- envat %>% slice(band, 3) %>% as.data.frame() %>% select(3) %>% range(na.rm = TRUE)
+    rn <- envat %>% dplyr::slice(band, 3) %>% as.data.frame() %>% dplyr::select(3) %>% range(na.rm = TRUE)
     rn[1] <- floor(rn[1])
     rn[2] <- ceiling(rn[2])
 
@@ -3640,7 +3640,7 @@ plot_temp_maps <- function(landsat,
     # urbclim Morning -----------------------------------------------------------
 
 
-    rn <- urbclim %>% slice(band, 1) %>% as.data.frame() %>% select(3) %>% range(na.rm = TRUE)
+    rn <- urbclim %>% dplyr::slice(band, 1) %>% as.data.frame() %>% dplyr::select(3) %>% range(na.rm = TRUE)
 
     rn[1] <- floor(rn[1])
     rn[2] <- ceiling(rn[2])
@@ -3698,7 +3698,7 @@ plot_temp_maps <- function(landsat,
 
 
     # urbclim AFTERNOON -----------------------------------------------------------
-    rn <- urbclim %>% slice(band, 2) %>% as.data.frame() %>% select(3) %>% range(na.rm = TRUE)
+    rn <- urbclim %>% dplyr::slice(band, 2) %>% as.data.frame() %>% dplyr::select(3) %>% range(na.rm = TRUE)
     rn[1] <- floor(rn[1])
     rn[2] <- ceiling(rn[2])
 
@@ -3752,7 +3752,7 @@ plot_temp_maps <- function(landsat,
 
 
     # urbclim NIGHT -----------------------------------------------------------
-    rn <- urbclim %>% slice(band, 3) %>% as.data.frame() %>% select(3) %>% range(na.rm = TRUE)
+    rn <- urbclim %>% dplyr::slice(band, 3) %>% as.data.frame() %>% dplyr::select(3) %>% range(na.rm = TRUE)
     rn[1] <- floor(rn[1])
     rn[2] <- ceiling(rn[2])
 
@@ -4674,12 +4674,16 @@ make_aic_plot <- function(aic_list,
         annotate(geom = "rect", xmin = 12.5, xmax = 15.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "seagreen4") +
 
         geom_boxplot() +
-        geom_jitter(width = .25,
-                    aes(size = nobs,
+        geom_jitter(aes(size = nobs,
                         shape = is_tensor,
                         # fill = mod_group),
                         fill = mod_class),
-                    alpha = 0.8) +
+                    position = position_jitter(width = .25, seed = 1),
+                    alpha = 0.6) +
+        geom_jitter(aes(color = mod_class),
+                    size = 0.3,
+                    position = position_jitter(width = .25, seed = 1),
+                    alpha = 1) +
         # geom_linerange(data = mod_means, aes(x = y, xmin = ymin, xmax = ymax), color = "black") +
         # geom_point(data = mod_means, aes(y = y), size = 3, shape = 21, color = "white", fill = "black") +
 
@@ -4702,7 +4706,7 @@ make_aic_plot <- function(aic_list,
         scale_shape_manual(values = c("TRUE" = 23, "FALSE" = 21), labels = c("Interaction", "Additive")) +
         scale_fill_manual(values = pals::kelly(n = n_distinct(sub("(.*[_]species[_])(.*)", replacement = "\\2", aic_list$AIC$mod_group))),
                           # scale_fill_manual(values = pals::kelly(n = n_distinct(deviance_list$deviances$mod_group)),
-                          aesthetics = c("fill")) +
+                          aesthetics = c("fill", 'color')) +
         scale_x_discrete(guide = guide_axis(n.dodge = 3) ) +
         facet_wrap(~is_spatial, ncol = 1, labeller = labeller(is_spatial = c('TRUE' = "spatial - f(x,y)", 'FALSE' = 'non-spatial')))  +
         labs(x = NULL, y = "AIC", shape = "Temperature structure")
@@ -6085,6 +6089,9 @@ make_wudapt_landcover_table <- function(wudapt_path, wudapt_desc_path, berlin_po
 #' @export
 extract_mod_deviance <- function(mod_summary_list){
     # grab sample size per model
+
+    message('extracting deviance \n')
+
     mod_n <- mod_summary_list %>%
         purrr::map_depth(2, "summary") %>%
         purrr::map_depth(2, "n") %>%

@@ -392,7 +392,11 @@ All of these operations were recorded, and can be viewed and reproduced via the 
 Lastly, observations with unlikely diameter-age combinations were identified via the residuals of a generalized linear model between diameter and age with a Gamma log-link distribution: if individual residuals exceeded seven times the median absolute deviation of all residuals, they were removed.
 The median absolute deviation (MAD) is comparable to the inter-quartile range, yet more robust to outliers:
 
-$$MAD = median(|X_i - median(X)|) $$
+\begin{equation}
+  MAD = median(\|X_i - median(X)\|) 
+  (\#eq:mad)
+\end{equation}
+
 This approach is considered conservative (see supplementary information), yet all analyses were carried forward with the unfiltered and filtered data - no considerable differences were found, thus subsequent sections are based on the filtered data.
 <!-- which were processed with the bespoke software datacleanr by Hurley et al., submitted), -->
 <!-- Characteristics of street trees and their respective environments were collated from the city's tree inventory, as well as various elements of the Berlin Environment Atlas, which are openly available via https://daten.berlin.de and curated by the city's government. -->
@@ -477,20 +481,25 @@ table_dat_req_kable <- age_tables %>%
 
 ### Temperature/UHI data
 
-Temperature and UHI data were summarized temporally either by the provider or manually to provide a characteristic representation of heat loading during summer at different times (morning, afternoon/day, night), from which tree averages (radius of 150$~m$) were calculated (Figure$~$\@ref(fig:fig-temp-overview).
+Temperature and UHI data were summarized temporally either by the provider or manually to provide a characteristic representation of heat loading during summer at different times (morning, afternoon/day, night), from which tree averages (radius of 150$~m$) were calculated (Figure$~$\@ref(fig:fig-temp-overview)).
 Two data sets of urban air and one surface temperature were tested as explanatory variables in GAM models.
 The air temperatures from the Berlin environmental atlas (EnvAt) are model outputs that are representations of typical summer conditions at 0400, 1400 and 2200 hours; these data are provided at city block basis (spatial polygons), from which weighted averages were extracted.
 UrbClim air temperatures are hourly model outputs [100$~m$ resolution, @deridder2015] based on ERA5 re-analyses data (ECMWF) for which observations from the hottest month  available (June, 2011) were averaged to hours equivalent to Berlin Environmental Atlas (referred to as Berlin EnvAt) data by using a window of $\pm~1~$hour (i.e., 0300 to 0500, etc.).
 Subsequently, a land-use and land-cover mask (CORINE; European Union, Copernicus Land Monitoring Service 2018, European Environment Agency) was used to define urban and rural/forested areas.
 Using this mask was deemed reasonable as Berlin's built-up area has not changed markedly over the past 50 years, i.e., about 52 to 61$\%$ [@mohamed2017]. 
 The urban heat loading was then calculated as 
-$$UHI_{x,y} = T_{Air_{2m}~x,y} - \overline{T_{Air_{2m}~Rural}},$$
+
+\begin{equation}
+ UHI_{x,y} = T_{Air_{2m}~x,y} - \overline{T_{Air_{2m}~Rural}},
+  (\#eq:uhi)
+\end{equation}
+
 where $T$ is temperature ($^\circ C$) $x$ and $y$ define an urban grid cell.
 The LandSat-derived surface UHI data set by @chakraborty2019 (referred to as LandSat) estimates its measure in a similar fashion and the reader is referred to the detailed description therein; note this data set provides day and night-time averaged UHI estimates at 500$~m$ resolution, which were extracted for the hottest summer in this record (2007).
 
-(ref:temp-overview) Temp overviews; rows are landsat, berlin environmental atlas, and UrbClim, columns are morning, day/afternoon, night.
+(ref:temp-overview) Temp overviews; rows are landsat, berlin environmental atlas, and UrbClim, columns are morning, day/afternoon, night. **ADD Labels for Data source and time of day at left and bottom**
 
-```{r fig-temp-overview, fig.cap="(ref:study-temp)",fig.width = 12, fig.height = 12, out.width="100%"}
+```{r fig-temp-overview, fig.cap="(ref:temp-overview)",fig.width = 12, fig.height = 12, out.width="100%"}
 
 
 
@@ -521,7 +530,7 @@ The latter was chosen as an increase reflects a transition away from densely urb
 
 
 
-## Dendrochronological sampling
+## Dendrochronological sampling {#sec:methods-dendro}
 
 To contextualize tree growth patterns between age groups derived from Berlin's inventory data, we drew upon a recently established data set from Schneider *et al.* (in review), who sampled several common tree species across a rural-urban gradient. 
 For our purposes, we grouped trees sampled in parks, green spaces and along streets into a single urban category, and focused analyses on these.
@@ -641,7 +650,11 @@ We assessed trends in annual growth dynamics of urban trees across the 20$^{th}$
 Annual growth was modeled as:
 
 
-$$ g(\Delta r_i) =  f(year_i) + f_j(cambial~age_i)  + c_{i,j} + \tau_{i,k} + e_i $$
+\begin{equation}
+g(\Delta r_i) =  f(year_i) + f_j(cambial~age_i)  + c_{i,j} + \tau_{i,k} + e_i 
+(\#eq:gam-cambial)
+\end{equation}
+
 where $g()$ is a log-link for $\Delta r \sim Gamma$, $\Delta r$ is the annual radial increment for observation $i$. 
 A global temporal (by year) and time-dependent ($j$, $\leq 1960$ or $>1960$) trend in cambial age were implemented with thin plate regression splines (default smoothing function in `mgcv`); $c_j$ is a time-group dependent intercept, while $tau$ represents a matrix of random effect coefficients for $k$ species to account for differences in growth patterns, and $e_i = \phi e_{i−1} + \epsilon_i$.
 A $3^{rd}$-order autocorrelation-moving average (ARMA) correlation structure was applied (i.e., $\phi(3,1)$) to account for the dependency of $\Delta r$ across years for each tree, as is frequently the case for tree growth [e.g., see @Fritts1989]; the detailed implementation for this model is given in the supplemental material code.
@@ -654,46 +667,70 @@ However, here they serve as a proxy for growth between young ($\gtrapprox 1960$)
 
 The diameter ($DBH$) of the ten most abundant species were modeled using GAMs as follows:
 
+
+
 \begin{align}
-
-g(DBH_i) &=  f_j(age_i) + f_j(temp_{t,i}, age_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i \\ 
-
-g(DBH_i) &= f_j(age_i) + f_j(temp_{t,i}, age_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
-
-g(DBH_i) &= f_j(age_i) + f_j(temp_{t,i}, age_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
-
-g(DBH_i) &= f_j(age_i) +  f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i  \\
-
-g(DBH_i) &= f_j(age_i) +  c_{i,j} + \tau_{i,k} + \epsilon_i \\
-
+ UHI_{x,y} = T_{Air_{2m}~x,y} - \overline{T_{Air_{2m}~Rural}},
+  (\#eq:uhi)
 \end{align}
 
+test
+
+
+$$ g(DBH_i) = f(x_i,y_i) + f_j(age_i) + f_j(temp_{t,i}, age_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i$$
+
+
+$$g(DBH_i) = f(x_i,y_i) + f_j(age_i) + f_j(temp_{t,i}, age_i) + c_{i,j} + \tau_{i,k} + \epsilon_i$$
+
+$$g(DBH_i) = f(x_i,y_i) + f_j(age_i) +  f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i$$
+
+$$g(DBH_i) = f(x_i,y_i) + f_j(age_i) +  c_{i,j} + \tau_{i,k} + \epsilon_i $$
+
 where $g()$ is a log-link for $DBH \sim Gamma$, and $i$, $j$ are indices for observations and species, respectively, and $t$ refers to an (excess) heat measure from UrbClim, Berlin EnvAt or LandSat at different times (morning, afternoon/day, night; cf. Section$~$\@ref(sec:dsources)); $c$ is a species-dependent intercept, while $tau$ represents a matrix of random effect coefficients for $k$ districts to account for differing management regimes across the city.
-Models were implemented with `mgcv::bam()` [@wood2017a;@li2020a] for a dramatic increase computational efficiency, allowing for rapid model development/comparison.
-All models above were also tested with a global spatial smooth $f(utmx_i,utmy_i)$ using Gaussian process smooth [cf. p. 242 in @wood2017] to account for the spatial structure of observations, which reduced auto-correlation of model residuals considerably (see supplemental information).
+A global spatial smooth $f(x_i,y_i)$ (representing projected coordinates in UTM) via a Gaussian process [cf. p. 242 in @wood2017] was included to account for the spatial structure of observations, which reduced auto-correlation of model residuals considerably (see supplemental information).
+These were compared to a sub-set of models without a spatial component (cf. Equation$~$\@ref(eq:gams-nocovariate), and Figure$~$\@ref(fig:fig-model-deviance) but not further discussed there).
+We also tested a suite of models without the spatial smooth for comparison
 **what's the impact of remaining auto correlation? inflated errors, larger coefficients?**
+
 Further, we implemented the interaction between temperature and age (i.e., $f_j(temp, age)$ as tensor smooths [@wood2006] to account for the different variable scales (i.e., units); all models were also tested without this interaction using a thin plate regression spline smooth for temperature (not shown in equations above).
 The functions $f_j$ are for species-specific smooths [i.e., with individual smoothness penalties and functional shapes as detailed by @pedersen2019].
-Readers are referred to the detailed implementation in the supplemental material code.
 The covariates for planting bed area and soil nutrient availability were log transformed to account for their skewed distribution, improving the estimation of coefficients for their respective basis functions.
+Note, that Equation$~$\@ref(eq:gams-age) was considered as the appropriate null model for interpretations.
+Models were implemented with `mgcv::bam()` [@wood2017a;@li2020a] and readers are referred to the detailed implementation in the supplemental material code.
 
 Considering all combinations of (excess) heat measures and covariates (with point, as well as 150/300$~m$ extractions), a total of `r nrow(drake::readd(bam_dbh_filtered))` models were applied.
 We selected the model with the highest explanatory power, based on residual deviance and observed vs. predicted fit, with comparatively largest sample size for final analyses.
 From this model we derived age and species dependent $DBH$ averages across a temperature measure from predicted values in 5-year age groups starting at 30, 45, 60, 75, 90.
 
-As the spatial extent and coverage varied between temperature and ancillary data, more complex models (and specifically those including planting bed area and LandSat temperatures) typically also had fewer total observations, which prevented a direct comparison with information-based model selection criteria, such as Aikake's.
-For this reason, simpler model structures were preferred (i.e., few terms, interactions and restricted number of basis functions), reducing the potential for choosing over-fitted models.
+As the spatial extent and coverage varied between temperature and ancillary data, more complex models (and specifically those including planting bed area and LandSat temperatures) typically also had fewer total observations.
+While this prevented a full comparison with information-based model selection criteria, such as Aikake's (AIC), the appropriateness of models that differed only in their implementation of the temperature-age interaction (i.e., $f_j(temp_i)$ $vs.$ $f_j(temp_i, age_i)$) could be assessed.
+For this reason, the suite of developed models presented above were limited to comparatively simple structures (i.e., few terms, interactions and restricted number of basis functions), reducing the potential for choosing over-fitted models without formal comparison.
+AIC is calculated as:
+
+$$AIC= −2log(L) \cdot 2k$$
+
+where $L$ is the maximum likelihood estimate, and $k$ is the number of parameters.
+Where any two comparable models had a $| \Delta AIC| > 10$, we considered the model with the lower score more suitable. 
 Future research may focus on collecting additional data (e.g., increasing the coverage on planting bed area) and subsequently deriving species-specific smooths for ancillary environmental covariates.
 We chose to carry out the analysis in its current form rather than on considerably smaller but comparable sample sizes across models, to identify the strongest relationships in the existing data.
 This allowed us to highlight the utility of the approach *per se* and for Berlin in particular.
+**Measures used to asses goodness-of-fit were residual deviance, RSME and MAE (add formuals)**
 
 
 
 # Results {#sec:results}
 
+## Growth trend dynamics
+
+Recently established annual, incremental growth is on average greater as compared to earlier times (i.e., prior 1960; Figure$~$\@ref(fig:fig-cambial-effect)).
+The contrast is strongest in the first 30 years of cambial development, with clear indication that averages are statistically different up to approximately 22 years (cf. overlap of 95$~\%$confidence intervals).
+The predicted trajectories for both periods follow typical ontogenetic patterns, yet differ in shape.
+This may be due to inaccurately estimated cambial ages, explaining the largely monotonic decrease for recent growth due to missing the typical (but not always present) initial rise and fall in pith-near stages.
+This would inadvertently create a left-shift in Figure$~$\@ref(fig:fig-cambial-effect) for recent growth.
+Assuming that to be the case, the actual difference in average rates would be greater than presented here.
 
 
-(ref:cambial-effect) Contrasting growth trends for recent and earlier radial increments (i.e. stem growth)
+(ref:cambial-effect) Rates for annual incremental growth differ between recent and earlier times, as predicted by a hierarchical GAM (see Section$~$\@ref(sec:methods-dendro)). Thick lines and bands are for mean and 95$~\%$ confidence interval of all annual predictions across a time group (fine lines). On average, early stages of recent growth (up to approximately 22 years) exceed that of earlier periods discernibly. 
 
 ```{r fig-cambial-effect, fig.cap="(ref:cambial-effect)", out.width="50%", include=TRUE, eval=TRUE}
 
@@ -702,16 +739,25 @@ knitr::include_graphics(here::here("analysis/figures/fig-biwi-growth.png"))
 
 ```
 
+## Model selection
+
+* Null-model high, but for predictive purposes more is better
+* Temperature-based models on average better than without, but planting bed area and lcz6 individually outperform - indication that these variables are indeed important; choice of best performing model, which includes lcz6, coroborated. 
+*Landsat temp best on average - easily accessible/maintainable as compared to model outputs
+* $lcz6_{150}$ vs. $lcz6_{300}$ - scale of impact (further investigation, note in discussion) 
+* building height, as a proxy for urban fabric and incoming radiation had minimal effect (regardless of 150/300)
 
 
-(ref:model-deviance) Fig caption
+(ref:model-deviance) Overview of model fit, expressed as explained deviance, for all tested models. The Panels distinguish between models without (top) and with (bottom) spatial smooths to account for autocorrelation of residuals. Colored sub-sections define models without and with the applied (excess) heat measures. Symbols identify models with an interaction between temperature and age (diamond), and without (circle), while colors highlight included covariates and their reference radius (i.e. 150/300$~m$, but also note x-axis labels), and size indicates the model's observations. Generally, including temperature (interactions) improve model fits above the null-model (age only), and excluding planting bed area and LCZ6 cover, also above other non-temperature models. The LandSat-derived UHI measures provide the best fit on average, with the model including a temperature-age interaction and LCZ6 cover scoring highest. 
 
-```{r fig-model-deviance, fig.cap="(ref:model-dev)", out.width="100%", include=TRUE, eval=TRUE}
+```{r fig-model-deviance, fig.cap="(ref:model-deviance)", out.width="100%", include=TRUE, eval=TRUE}
 
 
 knitr::include_graphics(here::here("analysis/figures/fig_model_deviance.png"))
 
 ```
+
+**Add table with ANOVA for interaction, non-interaction and MAE/RSME**
 
 
 (ref:model-performance) Predicted vs. observed best model day2007 and LCZ6
@@ -724,10 +770,10 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_lc
 ```
 
 
+## Urban heat and urban fabric effects on stem growth
 
 
-
-(ref:heat-effect) Age group-dependent temperature effect
+(ref:heat-effect) Age group-dependent temperature effect; only within range
 
 ```{r fig-heat-effect, fig.cap="(ref:heat-effect)", out.width="100%", include=TRUE, eval=TRUE}
 
@@ -751,6 +797,10 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_xv
 ```
 
 
+
+## Exposed trees
+
+**Add figure with tree locations where growth is below the average - color = UHI?**
 
 <!-- Tree locations are clustered and structured based on their category, i.e. riparian, street and park trees (Fig.$~$\@ref(fig:fig-tree-overview-map)). -->
 <!-- Planting in space and time shows species-specific patterns (by districts), often related to major events, such as the start and end of armed and/or political conflict. -->
