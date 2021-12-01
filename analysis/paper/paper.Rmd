@@ -323,37 +323,51 @@ dsources <- dsources %>%
                 Name != "Riparian Trees") 
 
 
-if (grepl("docx", out_format) ||
-    knitr::is_latex_output() ) {
-  table_ds <- dsources %>% 
-  knitr::kable(booktabs = TRUE,
-              
-             caption = caption,
-             caption.short = caption,
-             format = "latex",
-             # col.names = c("Subject/Relevance",
-             #              "Desc.",
-             #              "Type",
-             #              "Obsv. (n)",
-             #              "Resolution (m)",
-             #              "Source")
-             escape = FALSE) %>% 
-      kableExtra::landscape()
-  
+if (grepl("docx", out_format)) {
+    table_ds <- dsources %>% 
+        knitr::kable(booktabs = TRUE,
+                     
+                     caption = caption,
+                     caption.short = caption,
+                     format = "pipe",
+                     # col.names = c("Subject/Relevance",
+                     #              "Desc.",
+                     #              "Type",
+                     #              "Obsv. (n)",
+                     #              "Resolution (m)",
+                     #              "Source")
+                     escape = FALSE) %>% 
+        kableExtra::landscape()
+} else if(knitr::is_latex_output() ){
+    table_ds <- dsources %>% 
+        knitr::kable(booktabs = TRUE,
+                     
+                     caption = caption,
+                     caption.short = caption,
+                     format = "latex",
+                     # col.names = c("Subject/Relevance",
+                     #              "Desc.",
+                     #              "Type",
+                     #              "Obsv. (n)",
+                     #              "Resolution (m)",
+                     #              "Source")
+                     escape = FALSE) %>% 
+        kableExtra::landscape()
+    
 } else {
-table_ds <- dsources %>% 
-  knitr::kable(booktabs = TRUE,
-               format = "html",
-               
-             caption = caption,
-             caption.short = caption_ov_short,
-             # col.names = c("Subject/Relevance",
-             #              "Desc.",
-             #              "Type",
-             #              "Obsv. (n)",
-             #              "Resolution (m)",
-             #              "Source")
-             escape = FALSE) 
+    table_ds <- dsources %>% 
+        knitr::kable(booktabs = TRUE,
+                     format = "html",
+                     
+                     caption = caption,
+                     caption.short = caption_ov_short,
+                     # col.names = c("Subject/Relevance",
+                     #              "Desc.",
+                     #              "Type",
+                     #              "Obsv. (n)",
+                     #              "Resolution (m)",
+                     #              "Source")
+                     escape = FALSE) 
 }
 
 
@@ -425,42 +439,36 @@ age_tables <- dplyr::bind_rows(age_tables,
                     add_row)
 
 
-caption_trees <- "Binned age-distribution for genera in Berlin data set, and entries missing age information. "
+caption_trees <- "Binned age-distribution for street tree genera in Berlin data set, and entries missing age information. "
 caption_trees_short <- "Binned age-distribution for genera in Berlin data set."
 
-
-if (grepl("docx", out_format) ||
-    knitr::is_latex_output() ) {
-  table_dat_req_kable <- age_tables %>% 
-  knitr::kable(booktabs = TRUE,
-               format = "latex",
-             caption = caption_trees,
-             caption.short = caption_trees_short
-             # col.names = c("Subject/Relevance",
-             #              "Desc.",
-             #              "Type",
-             #              "Obsv. (n)",
-             #              "Resolution (m)",
-             #              "Source")
-             ) %>% 
-  kableExtra::row_spec(13, hline_after = TRUE) 
-  
+if (grepl("docx", out_format)) {
+    table_dat_req_kable <- age_tables %>% 
+        knitr::kable(booktabs = TRUE,
+                     format = "pipe",
+                     caption = caption_trees,
+                     caption.short = caption_trees_short
+        ) %>% 
+        kableExtra::row_spec(13, hline_after = TRUE) 
+} else if(knitr::is_latex_output() ){
+    table_dat_req_kable <- age_tables %>% 
+        knitr::kable(booktabs = TRUE,
+                     format = "latex",
+                     caption = caption_trees,
+                     caption.short = caption_trees_short
+        ) %>% 
+        kableExtra::row_spec(13, hline_after = TRUE) 
+    
 } else {
-table_dat_req_kable <- age_tables %>% 
-  knitr::kable(booktabs = TRUE,
-               format = "html",
-              caption = caption_trees,
-             caption.short = caption_trees_short
-             # col.names = c("Subject/Relevance",
-             #              "Desc.",
-             #              "Type",
-             #              "Obsv. (n)",
-             #              "Resolution (m)",
-             #              "Source")
-             ) %>% 
-  kableExtra::row_spec(13, extra_css = "border-bottom: 1px solid")
-
-# %>% 
+    table_dat_req_kable <- age_tables %>% 
+        knitr::kable(booktabs = TRUE,
+                     format = "html",
+                     caption = caption_trees,
+                     caption.short = caption_trees_short
+        ) %>% 
+        kableExtra::row_spec(13, extra_css = "border-bottom: 1px solid")
+    
+    # %>% 
 #   kableExtra::kable_styling(full_width = TRUE, 
 #                             font_size = 10) %>% 
 #   kableExtra::column_spec(1, italic = TRUE) %>%
@@ -568,10 +576,15 @@ caption <- "Overview of urban sampling locations and respective tree species cov
 caption_ov_short <- caption
 
 
-
-
-if (grepl("docx", out_format) ||
-    knitr::is_latex_output() ) {
+if (grepl("docx", out_format) ){
+  table_ds <- sampling_site_overview %>% 
+  knitr::kable(booktabs = TRUE,
+              
+             caption = caption,
+             caption.short = caption,
+             format = "pipe",
+             escape = FALSE) 
+} else if (knitr::is_latex_output() ) {
   table_ds <- sampling_site_overview %>% 
   knitr::kable(booktabs = TRUE,
               
@@ -668,34 +681,40 @@ However, here they serve as a proxy for growth between young ($\gtrapprox 1960$)
 The diameter ($DBH$) of the ten most abundant species were modeled using GAMs as follows:
 
 
-
-\begin{align}
- UHI_{x,y} = T_{Air_{2m}~x,y} - \overline{T_{Air_{2m}~Rural}},
-  (\#eq:uhi)
-\end{align}
-
-test
+\begin{equation}
+g(DBH_i) = f(x_i,y_i) + f_j(age_i) + f_j(temp_{t,i}, age_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i 
+(\#eq:gam-full)
+\end{equation}
 
 
-$$ g(DBH_i) = f(x_i,y_i) + f_j(age_i) + f_j(temp_{t,i}, age_i) + f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i$$
+\begin{equation}
+g(DBH_i) = f(x_i,y_i) + f_j(age_i) + f_j(temp_{t,i}, age_i) + c_{i,j} + \tau_{i,k} + \epsilon_i
+(\#eq:gam-nocovariate)
+\end{equation}
 
 
-$$g(DBH_i) = f(x_i,y_i) + f_j(age_i) + f_j(temp_{t,i}, age_i) + c_{i,j} + \tau_{i,k} + \epsilon_i$$
+\begin{equation}
+g(DBH_i) = f(x_i,y_i) + f_j(age_i) +  f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i 
+(\#eq:gam-notemp)
+\end{equation}
 
-$$g(DBH_i) = f(x_i,y_i) + f_j(age_i) +  f(covariate_i) + c_{i,j} + \tau_{i,k} + \epsilon_i$$
 
-$$g(DBH_i) = f(x_i,y_i) + f_j(age_i) +  c_{i,j} + \tau_{i,k} + \epsilon_i $$
+\begin{equation}
+g(DBH_i) = f(x_i,y_i) + f_j(age_i) +  c_{i,j} + \tau_{i,k} + \epsilon_i
+(\#eq:gam-age)
+\end{equation}
+
 
 where $g()$ is a log-link for $DBH \sim Gamma$, and $i$, $j$ are indices for observations and species, respectively, and $t$ refers to an (excess) heat measure from UrbClim, Berlin EnvAt or LandSat at different times (morning, afternoon/day, night; cf. Section$~$\@ref(sec:dsources)); $c$ is a species-dependent intercept, while $tau$ represents a matrix of random effect coefficients for $k$ districts to account for differing management regimes across the city.
 A global spatial smooth $f(x_i,y_i)$ (representing projected coordinates in UTM) via a Gaussian process [cf. p. 242 in @wood2017] was included to account for the spatial structure of observations, which reduced auto-correlation of model residuals considerably (see supplemental information).
-These were compared to a sub-set of models without a spatial component (cf. Equation$~$\@ref(eq:gams-nocovariate), and Figure$~$\@ref(fig:fig-model-deviance) but not further discussed there).
+These were compared to a sub-set of models without a spatial component (cf. Equation$~$\@ref(eq:gam-nocovariate), and Figure$~$\@ref(fig:fig-model-deviance) but not further discussed there).
 We also tested a suite of models without the spatial smooth for comparison
 **what's the impact of remaining auto correlation? inflated errors, larger coefficients?**
 
 Further, we implemented the interaction between temperature and age (i.e., $f_j(temp, age)$ as tensor smooths [@wood2006] to account for the different variable scales (i.e., units); all models were also tested without this interaction using a thin plate regression spline smooth for temperature (not shown in equations above).
 The functions $f_j$ are for species-specific smooths [i.e., with individual smoothness penalties and functional shapes as detailed by @pedersen2019].
 The covariates for planting bed area and soil nutrient availability were log transformed to account for their skewed distribution, improving the estimation of coefficients for their respective basis functions.
-Note, that Equation$~$\@ref(eq:gams-age) was considered as the appropriate null model for interpretations.
+Note, that Equation$~$\@ref(eq:gam-age) was considered as the appropriate null model for interpretations, and a model including all covariates and the temperature-age interaction was tested as a saturated model.
 Models were implemented with `mgcv::bam()` [@wood2017a;@li2020a] and readers are referred to the detailed implementation in the supplemental material code.
 
 Considering all combinations of (excess) heat measures and covariates (with point, as well as 150/300$~m$ extractions), a total of `r nrow(drake::readd(bam_dbh_filtered))` models were applied.
@@ -706,6 +725,8 @@ As the spatial extent and coverage varied between temperature and ancillary data
 While this prevented a full comparison with information-based model selection criteria, such as Aikake's (AIC), the appropriateness of models that differed only in their implementation of the temperature-age interaction (i.e., $f_j(temp_i)$ $vs.$ $f_j(temp_i, age_i)$) could be assessed.
 For this reason, the suite of developed models presented above were limited to comparatively simple structures (i.e., few terms, interactions and restricted number of basis functions), reducing the potential for choosing over-fitted models without formal comparison.
 AIC is calculated as:
+
+
 
 $$AIC= −2log(L) \cdot 2k$$
 
@@ -760,7 +781,7 @@ knitr::include_graphics(here::here("analysis/figures/fig_model_deviance.png"))
 **Add table with ANOVA for interaction, non-interaction and MAE/RSME**
 
 
-(ref:model-performance) Predicted vs. observed best model day2007 and LCZ6
+(ref:model-performance) Predicted $vs.$ observed data for the best model according to explained deviance and 'local' AIC comparison, based on the LandSat-derived UHI measure [@chakraborty2019] for average summer conditions (2007) and LCZ6 [open to mid-rise; @stewart2012]. Hexagons and colors represent x-y bins (i.e., in the observed-predicted space) and their counts, and the red line is a least-squares fit.  The model captures the mean response well, as indicated by lighters colors along dashed 1:1 line, and its close approximation by the least squares fit, as well as model metrics (see text label in plot). However, the generally large scatter around this mean response indicates that predictions on individual-level would be inappropriate.
 
 ```{r fig-model-performance, fig.cap="(ref:model-performance)", out.width="50%", include=TRUE, eval=TRUE}
 
@@ -772,8 +793,24 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_lc
 
 ## Urban heat and urban fabric effects on stem growth
 
+Relationships derived via the GAM in Equation$~$\@ref(eq:gam-full) with LCZ6 as covariate show fairly consistent responses across age groups considering trajectories, yet they differ somewhat in shape (Figure$~$\@ref(fig:fig-heat-effect)).
+Generally, younger age groups (30-35) showed increased growth, or little to no impact (*Acer platanoides*, *Acer pseudoplatanus*), with greater excess heat.
+At older ages, this trajectory gradually shifted toward decreasing stem diameter at higher temperatures.
+Notably, *Platanus acerifolia* showed an earlier reversal of it at age group 45-50 as compared to other species. 
+This may be due to the stronger upward curvature towards the estimates' lower temperature limit (see respective panel in Figure$~$\@ref(fig:fig-heat-effect)).
+Although the uncertainty around this edge is comparatively well-constrained, the low number of observations at the end of the continuum does call for caution for further interpretation.
+The distribution of individual street trees along the excess heat continuum, evident in the density estimates in Figure$~$\@ref(fig:fig-heat-effect), show that the majority of species investigated here are subjected to intermediate to high levels of excess heat.
+Trees in younger age groups are typically further toward the upper end of this continuum.
+Several species - including *A. platanoides*, *A. pseudoplatanus*, *Acer hippocastanum*, *Quercus robur*,  and *Tilia euchlora* - have good coverage across the entire excess heat continuum (although skewed toward positive values), which increases the confidence in the observed trajectory shift from young to old.
+Contrastingly, the cultivar *Tilia intermedia* 'Palllida' is predominantly distributed along the upper end of the continuum, resulting in greater uncertainty in the estimated relationship across age groups and excess heat.
 
-(ref:heat-effect) Age group-dependent temperature effect; only within range
+
+
+The assessed tree species showed fairly consistent responses to exchess urban heating 
+
+
+
+(ref:heat-effect) Age-group averaged relationships between the LandSat-derived excess heat measure and stem diameter for the ten most abundant species from the best model (i.e., Equation$~$\@ref(eq:gam-full) with LCZ6 as covariate). Note the differing y-axis scales between panel rows. The colored lines and bands are the averaged GAM fit, and gray lines are least-squares estimates fitted to these averages. Estimates were only generated within temperature ranges that a given species experienced. Density plots (scaled to match 100$~cm$ on the y-axis) show the distribution of individual trees along the urban heat continuum, aiding both with interpreting uncertainties (band width, "wiggliness") and assessing species' exposure to urban heat. A general shift from increased or stable growth with temperature at younger ages to a decrease for older trees is apparent.
 
 ```{r fig-heat-effect, fig.cap="(ref:heat-effect)", out.width="100%", include=TRUE, eval=TRUE}
 
@@ -801,102 +838,6 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_xv
 ## Exposed trees
 
 **Add figure with tree locations where growth is below the average - color = UHI?**
-
-<!-- Tree locations are clustered and structured based on their category, i.e. riparian, street and park trees (Fig.$~$\@ref(fig:fig-tree-overview-map)). -->
-<!-- Planting in space and time shows species-specific patterns (by districts), often related to major events, such as the start and end of armed and/or political conflict. -->
-
-
-
-
-<!-- ```{r fig-bar-tree, fig.cap="A plot of random numbers",fig.width = 15, fig.height = 8, out.width="100%", include=FALSE, eval=FALSE} -->
-
-<!-- readd(plot_tree_sums_bar) -->
-
-<!-- ``` -->
-
-
-```{r fig-tree-overview-map, fig.cap="Individual tree locations for three categories available in Berlin Senate urban tree data set. Note, that for each category 7000 observations were subsampled from the available pool to facilitate visualization.",fig.width = 15, fig.height = 8, out.width="100%", include=TRUE, eval=TRUE}
-
-# loadd(full_data_set_clean)
-# loadd(plot_overview_map)
-# print(class(full_data_set_clean))
-
-
-knitr::include_graphics(here::here("analysis/figures/map_01_overview.png"))
-
-# readd(plot_overview_map) + 
-#      +
-#     labs(caption = NULL)
-
-# plot_overview_map
-
-```
-
-
-```{r fig-tree-count-map, fig.cap="Gridded counts for the 11 most frequent genera, as well as *Pinus* and remaining genera. Note, that counts are standardized to unity for individual genera.",fig.width = 12, fig.height = 14, out.width="100%"}
-
-
-
-
-knitr::include_graphics(here::here("analysis/figures/map_02_tree_sums_standardized.png"))
-
-  
-
-# plot_count_map
-
-# plot(1:10)
-```
-
-The distribution of the UHI effect is highly irregular and clustered in space (Fig.$~$\@ref(fig:fig-uhi-map)), and also shows variability through time (data not shown, refer to the [urban heat island explorer](https://yceo.users.earthengine.app/view/uhimap)).
-
-(ref:chakraborty2019) [@chakraborty2019]
-
-
-```{r fig-uhi-map, fig.cap="Estimate of UHI intensity based on the algorithm in (ref:chakraborty2019), comparing urban with rural pixels within the greater metropolitan cluster. Presented values are averaged over the summer of 2007.",fig.width = 12, fig.height = 14, out.width="50%"}
-
-
-
-
-knitr::include_graphics(here::here("analysis/figures/map_03_uhi.png"))
-
-  
-
-# plot_count_map
-
-# plot(1:10)
-```
-
-
-The exposure to increased heat-loading of individual genera (and consequently species) is highly uneven throughout the city (Fig.$~$\@ref(fig:fig-density)).
-Street and park trees of most genera are clustered in urban areas with intermediate to high UHI loading, while riparian trees, and some street and park trees of other genera tend to be spread more evenly across Berlin's UHI range.
-
-
-```{r fig-density, fig.cap="Empirical density distribution of all individuals within the presented genera along the UHI continuum. UHI intensities were extracted for each tree location, and the distribution hence represents the first detailed overview of the exposure of Berlin's trees to urban heat loading. The black line is the density across all three categories. Insets show corresponding tree totals.",fig.width = 12, fig.height = 12, out.width="100%"}
-knitr::include_graphics(here::here("analysis/figures/plot_02_genus_UHI_dens.png"))
-
-
-
-# plot_count_map
-
-# plot(1:10)
-```
-
-**Note, that results below are preliminary and should be considered as a template for future outputs, rather than used for inference.**
-The effect of UHI loading on absolute growth potential varies between genera and species (Fig.$~$\@ref(fig:fig-lmestat)).
-Most notably, *Quercus*, the 3rd-most frequent genera, shows decreased absolute growth with increasing UHI loading,
-while the most frequent genera, *Tilia*, features contrasting relationships between species.
-The estimated effect sizes presented here are linear.
-However, temperature may exert a non-linear control on absolute growth and, hence, applying a  method able to capture such dynamics may result in somewhat different effect sizes / behavior.
-Additionally, if temperatures increase in the future under climate warming, any non-linear effects may become more enhanced, stressing the need for a more flexible model fit and structure (i.e. using GAMM over linear models-).
-
-
-```{r fig-lmestat, fig.cap="Impact of UHI loading on tree diameter (\\(DBH\\)), accounting for age and inter-specific differences from the linear mixed model (via random slopes and intercepts). Line-ranges are standard errors of predicted effect sizes (i.e. slopes). Differences between street and park trees are considerable for some species, and may be due to local clustering and/or spatial under-representation across the UHI continuum. Further investigations need to address the degree of spatial autocorrelation and account for it where required in linear mixed models, and with smoothing interactions in a GAMM implementation.",fig.width = 20, fig.height = 12, out.width="100%"}
-knitr::include_graphics(here::here("analysis/figures/plot_03_ranef_species_dbh_uhi.png"))
-# plot_count_map
-
-# plot(1:10)
-```
-
 
 # Discussion
 
@@ -926,22 +867,10 @@ knitr::include_graphics(here::here("analysis/figures/plot_03_ranef_species_dbh_u
 		- Supplement species matrix etc. with these analyses  
   + Open data important --> drives innovation
 
-# Outlook
 
-We seek to build upon and improve the current analysis by: 
+## Conclusions
 
-- validating the database with independent observations
-- incorporating more pertinent covariates as dependent variables in the linear mixed model  
-- testing multiple model structures with formal model selection procedures
-- checking model residuals for spatial auto-correlation and accounting for it where necessary to ensure unbiased estimates of effect sizes
-- repeating the above with a hierarchical GAM (i.e. GAMM) to allow for:  
-  * estimating continuous prediction surfaces for UHI impacts on individual species' growth (similar to results in Figure$~$\@ref(fig:fig-lmestat)) under recent conditions
-  * estimating absolute, species-specific growth potential under increased temperatures and UHI loading under climate change, ideally based on climate simulations (otherwise step-wise increases based on RCP scenarios) for the key species. Note, that  complications presented by 'out-of-sample' predictions will be addressed.
-  * assess potential age-dependent UHI impacts on individual species.  
-  * repeating the above (GAMM) with total and incremental basal area as responses  
-  
-
-<!-- # Acknowledgements -->
+# Acknowledgements
 
 <!-- <!-- The following line inserts a page break  --> 
 <!-- `r pgbreak()` -->

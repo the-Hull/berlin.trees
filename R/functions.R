@@ -3380,7 +3380,7 @@ plot_temp_maps <- function(landsat,
         ggplot2::geom_sf(data = berlin_poly,
                          color = "gray60",
                          fill = "gray80",
-                         size = 1,
+                         size = 0.75,
                          show.legend = FALSE) +
 
 
@@ -3392,7 +3392,7 @@ plot_temp_maps <- function(landsat,
         # ggplot2::geom_sf(data = berlin_poly,
         #                  color = "gray60",
         #                  fill = "transparent",
-        #                  size = 1,
+        #                  size = 0.75,
         #                  show.legend = FALSE) +
 
         ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
@@ -3425,7 +3425,7 @@ plot_temp_maps <- function(landsat,
         ggplot2::geom_sf(data = berlin_poly,
                          color = "gray60",
                          fill = "gray80",
-                         size = 1,
+                         size = 0.75,
                          show.legend = FALSE) +
 
 
@@ -3437,7 +3437,7 @@ plot_temp_maps <- function(landsat,
         # ggplot2::geom_sf(data = berlin_poly,
         #                  color = "gray60",
         #                  fill = "transparent",
-        #                  size = 1,
+        #                  size = 0.75,
         #                  show.legend = FALSE) +
 
         ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
@@ -3479,7 +3479,7 @@ plot_temp_maps <- function(landsat,
         # ggplot2::geom_sf(data = berlin_poly,
         #                  color = "gray60",
         #                  fill = "gray80",
-        #                  size = 1,
+        #                  size = 0.75,
         #                  show.legend = FALSE) +
 
 
@@ -3491,7 +3491,7 @@ plot_temp_maps <- function(landsat,
         # ggplot2::geom_sf(data = berlin_poly,
         #                  color = "gray60",
         #                  fill = "transparent",
-        #                  size = 1,
+        #                  size = 0.75,
         #                  show.legend = FALSE) +
 
         ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
@@ -3536,7 +3536,7 @@ plot_temp_maps <- function(landsat,
         # ggplot2::geom_sf(data = berlin_poly,
         #                  color = "gray60",
         #                  fill = "gray80",
-        #                  size = 1,
+        #                  size = 0.75,
         #                  show.legend = FALSE) +
 
 
@@ -3548,7 +3548,7 @@ plot_temp_maps <- function(landsat,
         # ggplot2::geom_sf(data = berlin_poly,
         #                  color = "gray60",
         #                  fill = "transparent",
-        #                  size = 1,
+        #                  size = 0.75,
         #                  show.legend = FALSE) +
 
         ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
@@ -3590,7 +3590,7 @@ plot_temp_maps <- function(landsat,
         # ggplot2::geom_sf(data = berlin_poly,
         #                  color = "gray60",
         #                  fill = "gray80",
-        #                  size = 1,
+        #                  size = 0.75,
         #                  show.legend = FALSE) +
 
 
@@ -3602,7 +3602,7 @@ plot_temp_maps <- function(landsat,
         # ggplot2::geom_sf(data = berlin_poly,
         #                  color = "gray60",
         #                  fill = "transparent",
-        #                  size = 1,
+        #                  size = 0.75,
         #                  show.legend = FALSE) +
 
         ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
@@ -3651,7 +3651,7 @@ plot_temp_maps <- function(landsat,
         # ggplot2::geom_sf(data = berlin_poly,
         #                  color = "gray60",
         #                  fill = "gray80",
-        #                  size = 1,
+        #                  size = 0.75,
         #                  show.legend = FALSE) +
 
 
@@ -3663,7 +3663,7 @@ plot_temp_maps <- function(landsat,
         # ggplot2::geom_sf(data = berlin_poly,
         #                  color = "gray60",
         #                  fill = "transparent",
-        #                  size = 1,
+        #                  size = 0.75,
         #                  show.legend = FALSE) +
 
         ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
@@ -3708,7 +3708,7 @@ plot_temp_maps <- function(landsat,
         # ggplot2::geom_sf(data = berlin_poly,
         #                  color = "gray60",
         #                  fill = "gray80",
-        #                  size = 1,
+        #                  size = 0.75,
         #                  show.legend = FALSE) +
 
 
@@ -3720,7 +3720,7 @@ plot_temp_maps <- function(landsat,
         # ggplot2::geom_sf(data = berlin_poly,
         #                  color = "gray60",
         #                  fill = "transparent",
-        #                  size = 1,
+        #                  size = 0.75,
         #                  show.legend = FALSE) +
 
         ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
@@ -3762,7 +3762,7 @@ plot_temp_maps <- function(landsat,
         # ggplot2::geom_sf(data = berlin_poly,
         #                  color = "gray60",
         #                  fill = "gray80",
-        #                  size = 1,
+        #                  size = 0.75,
         #                  show.legend = FALSE) +
 
 
@@ -3774,7 +3774,7 @@ plot_temp_maps <- function(landsat,
         # ggplot2::geom_sf(data = berlin_poly,
         #                  color = "gray60",
         #                  fill = "transparent",
-        #                  size = 1,
+        #                  size = 0.75,
         #                  show.legend = FALSE) +
 
         ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
@@ -3842,11 +3842,28 @@ FFGGHH
         plot_layout(design = layout, heights = 1/3)
 
 
-    ggplot2::ggsave(filename = file,
-                    plot = p_map,
-                    dpi = dpi,
-                    height = height,
-                    width = width)
+    png(filename = file, width = width, height = height, res = dpi, units = "in")
+
+    gp <- grid::gpar(fontfamily = "Roboto Condensed", fontsize = base_size)
+
+    print(p_map)
+    grid::grid.text(gp = gp, "UrbClim", x = 0.03, y = 1/3 * 0.5, rot = 90)
+    grid::grid.text(gp = gp, "Berlin EnvAT", x = 0.03, y = 1/3 * 0.5 + 1/3, rot = 90)
+    grid::grid.text(gp = gp, "LandSat", x = 0.03, y = 1/3 * 0.5 + 2 * 1/3, rot = 90)
+
+    grid::grid.text(gp = gp, "Morning (0400)", y = 0.03, x = 1/3 * 0.5)
+    grid::grid.text(gp = gp, "Day / Afternoon (1400)", y = 0.03, x = 1/3 * 0.5 + 1/3)
+    grid::grid.text(gp = gp, "Night (2200)", y = 0.03, x = 1/3 * 0.5 + 2*  1/3)
+
+
+    dev.off()
+
+    #
+    # ggplot2::ggsave(filename = file,
+    #                 plot = p_map,
+    #                 dpi = dpi,
+    #                 height = height,
+    #                 width = width)
 
     return(p_map)
 
@@ -4783,6 +4800,8 @@ plot_dbh_temp_single_var <- function(pred_list,
                       ymin = response.low.mean,
                       ymax = response.high.mean)) +
 
+        geom_vline(xintercept = 0, linetype = 2, color = "black", alpha = 3/4) +
+
 
         stat_density(inherit.aes = FALSE,
                      data = model_df %>%
@@ -4821,8 +4840,9 @@ plot_dbh_temp_single_var <- function(pred_list,
         theme_minimal(base_size = base_size) +
         theme(legend.position = 'top',
               legend.direction = "horizontal",
-              panel.spacing = unit(2, "lines"),
-              strip.text = element_text(size = 12)) +
+              panel.spacing = unit(1.25, "lines"),
+              strip.text = element_text(size = 12),
+              strip.text.y = element_blank()) +
 
         scale_color_brewer(palette = 2, type = "qual") +
         scale_fill_brewer(palette = 2, type = "qual") +
