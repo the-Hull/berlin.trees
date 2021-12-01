@@ -5229,7 +5229,7 @@ plot_obs_predicted_model <- function(path_model,
         geom_hex(bins = 75, color = "transparent") +
         geom_smooth(method = "lm", formula = "y ~ x", color = "red") +
         geom_abline(slope = 1, intercept = 0, linetype = 2, color = "gray40") +
-        scale_fill_viridis_c() +
+        scale_fill_viridis_c(option = "plasma") +
         theme_minimal(base_size = 18) +
         labs(x = "Predicted", y = "Observed", fill = "N") +
         annotate("text",

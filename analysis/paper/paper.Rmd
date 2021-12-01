@@ -283,7 +283,7 @@ knitr::include_graphics(here::here("analysis/figures/map_00_studyarea.png"))
 ## General approach: space-for-time analyses
 
 <!-- Species-specifc growth responses in relation across Berlin were assessed in relat -->
-We modeled the stem diameter ($DBH$) of Berlin’s ten most abundant species (contingent to ancillary data availability) in relationship to their location, age, a measure of excess heat [UrbClim by @deridder2015; Berlin Environmental Atlas models; LandSat-derived surface urban heat island by @chakraborty2019], and additional environmental covariates with generalized additive models (GAMs, see Section$~$\@ref(sec:stat-gam) for details).
+We modeled the stem diameter ($DBH$) of Berlin’s ten most abundant species (contingent to ancillary data availability) in relationship to their location, age, a measure of (excess) heat [UrbClim by @deridder2015; Berlin Environmental Atlas models; LandSat-derived surface urban heat island by @chakraborty2019], and additional environmental covariates with generalized additive models (GAMs, see Section$~$\@ref(sec:stat-gam) for details).
 Covariates were extracted at 150 and 300$~m$ to infer the impact of reference scale of the urban fabric on tree growth. 
 From all tested models the most suitable (i.e., parsimonious with highest explanatory) was employed for further analyses.
 
@@ -519,7 +519,7 @@ knitr::include_graphics(here::here("./analysis/figures/fig_temp_maps.png"))
 ### Ancillary environmental data
 
 Following the general approach described above, four ancillary covariates next to a temperature measure were employed in models; these were chosen due to their availability at high spatial resolution and coverage, and/or because their influence on growth was previously identified in literature or their likely impact could be deduced using ecophysiological principles.
-We included planting bed area and the sum of exchangeable basic cation as a proxy for soil nutrient availability (point extractions), as well as the proportional coverage of local climate zone 6 (LCZ6; open mid-rise, see @demuzere2019 and @stewart2012 for details) and adjacent building height (spatial averages).
+We included planting bed area and the sum of exchangeable basic cation as a proxy for soil nutrient availability (point extractions), as well as the proportional coverage of local climate zone 6 (LCZ6; open mid-rise urban land cover, see @demuzere2019 and @stewart2012 for details) and adjacent building height (spatial averages).
 The latter was chosen as an increase reflects a transition away from densely urbanized areas and had the highest coverage for the processed tree inventory.  
 
 
@@ -676,7 +676,7 @@ We acknowledge that tree cores obtained at breast height do not represent absolu
 However, here they serve as a proxy for growth between young ($\gtrapprox 1960$) and older individuals to contextualize growth patterns inferred from the larger-scale tree inventory.
 
 
-### Stem diameter model development and selection
+### Stem diameter model development and selection {#sec:methods-gam-heat}
 
 The diameter ($DBH$) of the ten most abundant species were modeled using GAMs as follows:
 
@@ -762,14 +762,19 @@ knitr::include_graphics(here::here("analysis/figures/fig-biwi-growth.png"))
 
 ## Model selection
 
-* Null-model high, but for predictive purposes more is better
-* Temperature-based models on average better than without, but planting bed area and lcz6 individually outperform - indication that these variables are indeed important; choice of best performing model, which includes lcz6, coroborated. 
-*Landsat temp best on average - easily accessible/maintainable as compared to model outputs
-* $lcz6_{150}$ vs. $lcz6_{300}$ - scale of impact (further investigation, note in discussion) 
-* building height, as a proxy for urban fabric and incoming radiation had minimal effect (regardless of 150/300)
+* null model high, but for predictive purposes more is better
+Models including (excess) heat measures were on average better than those without.
 
 
-(ref:model-deviance) Overview of model fit, expressed as explained deviance, for all tested models. The Panels distinguish between models without (top) and with (bottom) spatial smooths to account for autocorrelation of residuals. Colored sub-sections define models without and with the applied (excess) heat measures. Symbols identify models with an interaction between temperature and age (diamond), and without (circle), while colors highlight included covariates and their reference radius (i.e. 150/300$~m$, but also note x-axis labels), and size indicates the model's observations. Generally, including temperature (interactions) improve model fits above the null-model (age only), and excluding planting bed area and LCZ6 cover, also above other non-temperature models. The LandSat-derived UHI measures provide the best fit on average, with the model including a temperature-age interaction and LCZ6 cover scoring highest. 
+However, this was not the case for planting bed area and $LCZ6_{\over{150~m}}$, which outperformed several temperature-based models.
+This indicated the importance of both covariates, with $LCZ6_{\over{150~m}}$ also represented in the best-performing model, corroborating its impact on stem diameter development.
+As $LCZ6_{\over{300~m}}$ only marginally increased performance compared to the null model (age only), the reference scale for the impact of the urban fabric (i.e., LCZ6) has a limit between $150$ to $300~m$.
+Nutrient availablity, similar to $LCZ6_{\over{300~m}}$, also only improved model performance marginally.
+Building height, regardless of its reference scale (i.e., $150$ $vs$ $300~m$), as another proxy for urban fabric, showed minimal to no improvement compared to the age-only null model.
+
+
+
+(ref:model-deviance) Overview of model fit, expressed as explained deviance, for all tested models. The Panels distinguish between models without (top) and with (bottom) spatial smooths to account for autocorrelation of residuals. Colored sub-sections define models without and with the applied (excess) heat measures. Symbols identify models with an interaction between temperature and age (diamond), and without (circle), while colors highlight included covariates and their reference radius (i.e. 150/300$~m$, but also note x-axis labels), and size indicates the model's observations. Generally, including temperature (interactions) improve model fits above the null model (age only), and excluding planting bed area and LCZ6 cover, also above other non-temperature models. The LandSat-derived UHI measures provide the best fit on average, with the model including a temperature-age interaction and LCZ6 cover scoring highest. 
 
 ```{r fig-model-deviance, fig.cap="(ref:model-deviance)", out.width="100%", include=TRUE, eval=TRUE}
 
@@ -781,7 +786,7 @@ knitr::include_graphics(here::here("analysis/figures/fig_model_deviance.png"))
 **Add table with ANOVA for interaction, non-interaction and MAE/RSME**
 
 
-(ref:model-performance) Predicted $vs.$ observed data for the best model according to explained deviance and 'local' AIC comparison, based on the LandSat-derived UHI measure [@chakraborty2019] for average summer conditions (2007) and LCZ6 [open to mid-rise; @stewart2012]. Hexagons and colors represent x-y bins (i.e., in the observed-predicted space) and their counts, and the red line is a least-squares fit.  The model captures the mean response well, as indicated by lighters colors along dashed 1:1 line, and its close approximation by the least squares fit, as well as model metrics (see text label in plot). However, the generally large scatter around this mean response indicates that predictions on individual-level would be inappropriate.
+(ref:model-performance) Predicted $vs.$ observed data for the best model according to explained deviance and 'local' AIC comparison, based on the LandSat-derived UHI measure [@chakraborty2019] for average summer conditions (2007) and LCZ6 [open to mid-rise,  @stewart2012]. Hexagons and colors represent x-y bins (i.e., in the observed-predicted space) and their counts, and the red line is a least-squares fit.  The model captures the mean response well, as indicated by lighters colors along dashed 1:1 line, and its close approximation by the least squares fit, as well as model metrics (see text label in plot). However, the generally large scatter around this mean response indicates that predictions on individual-level would be inappropriate.
 
 ```{r fig-model-performance, fig.cap="(ref:model-performance)", out.width="50%", include=TRUE, eval=TRUE}
 
@@ -794,23 +799,18 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_lc
 ## Urban heat and urban fabric effects on stem growth
 
 Relationships derived via the GAM in Equation$~$\@ref(eq:gam-full) with LCZ6 as covariate show fairly consistent responses across age groups considering trajectories, yet they differ somewhat in shape (Figure$~$\@ref(fig:fig-heat-effect)).
-Generally, younger age groups (30-35) showed increased growth, or little to no impact (*Acer platanoides*, *Acer pseudoplatanus*), with greater excess heat.
+Generally, younger age groups (30-35) showed increased growth, or little to no impact (*Acer platanoides*, *Acer pseudoplatanus*), with stronger UHI magnitude.
 At older ages, this trajectory gradually shifted toward decreasing stem diameter at higher temperatures.
 Notably, *Platanus acerifolia* showed an earlier reversal of it at age group 45-50 as compared to other species. 
 This may be due to the stronger upward curvature towards the estimates' lower temperature limit (see respective panel in Figure$~$\@ref(fig:fig-heat-effect)).
 Although the uncertainty around this edge is comparatively well-constrained, the low number of observations at the end of the continuum does call for caution for further interpretation.
-The distribution of individual street trees along the excess heat continuum, evident in the density estimates in Figure$~$\@ref(fig:fig-heat-effect), show that the majority of species investigated here are subjected to intermediate to high levels of excess heat.
+The distribution of individual street trees along the UHI continuum, evident in the density estimates in Figure$~$\@ref(fig:fig-heat-effect), show that the majority of species investigated here are subjected to intermediate to high UHI levels.
 Trees in younger age groups are typically further toward the upper end of this continuum.
-Several species - including *A. platanoides*, *A. pseudoplatanus*, *Acer hippocastanum*, *Quercus robur*,  and *Tilia euchlora* - have good coverage across the entire excess heat continuum (although skewed toward positive values), which increases the confidence in the observed trajectory shift from young to old.
-Contrastingly, the cultivar *Tilia intermedia* 'Palllida' is predominantly distributed along the upper end of the continuum, resulting in greater uncertainty in the estimated relationship across age groups and excess heat.
+Several species - including *A. platanoides*, *A. pseudoplatanus*, *Acer hippocastanum*, *Quercus robur*,  and *Tilia euchlora* - have good coverage across the entire UHI continuum (although skewed toward positive values), which increases the confidence in the observed trajectory shift from young to old.
+Contrastingly, the cultivar *Tilia intermedia* 'Palllida' is predominantly distributed along the upper end of the continuum, resulting in greater uncertainty in the estimated relationship across age groups and UHI magnitudes.
 
 
-
-The assessed tree species showed fairly consistent responses to exchess urban heating 
-
-
-
-(ref:heat-effect) Age-group averaged relationships between the LandSat-derived excess heat measure and stem diameter for the ten most abundant species from the best model (i.e., Equation$~$\@ref(eq:gam-full) with LCZ6 as covariate). Note the differing y-axis scales between panel rows. The colored lines and bands are the averaged GAM fit, and gray lines are least-squares estimates fitted to these averages. Estimates were only generated within temperature ranges that a given species experienced. Density plots (scaled to match 100$~cm$ on the y-axis) show the distribution of individual trees along the urban heat continuum, aiding both with interpreting uncertainties (band width, "wiggliness") and assessing species' exposure to urban heat. A general shift from increased or stable growth with temperature at younger ages to a decrease for older trees is apparent.
+(ref:heat-effect) Age-group averaged relationships between the LandSat-derived UHI and stem diameter for the ten most abundant species from the best model (i.e., Equation$~$\@ref(eq:gam-full) with LCZ6 as covariate). Note that estimates were derived with $LCZ6_{\over{150~m}} = 0.5$, and that y-axis scales differ between panel rows. The colored lines and bands are the averaged GAM fit, and gray lines are least-squares estimates fitted to these averages. Estimates were only generated within temperature ranges that a given species experienced. Density plots (scaled to match 100$~cm$ on the y-axis) show the distribution of individual trees along the urban heat continuum, aiding both with interpreting uncertainties (band width, "wiggliness") and assessing species' exposure to urban heat. A general shift from increased or stable growth with temperature at younger ages to a decrease for older trees is apparent.
 
 ```{r fig-heat-effect, fig.cap="(ref:heat-effect)", out.width="100%", include=TRUE, eval=TRUE}
 
@@ -820,11 +820,10 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_lc
 ```
 
 
+The chosen model also highlighted that, on average, trees growing in less urbanized environments (i.e., more open to mid-rise urban land cover; $LCZ6_{\over{150~m}}$) achieve somewhat greater diameters.
+Note, that planting bed area, similar to $LCZ6_{\over{150~m}}$, was identified as a covariate increasing explained deviance, both in models with and without a temperature measure, and represents an opportunity for further investigation, especially following additional data collection.
 
-
-
-
-(ref:lcz6-effect) Global effect of LCZ6 on growth
+(ref:lcz6-effect) Age-group averaged relationships between the LCZ6 and stem diameter for two $Tilia$ genera from the best model (i.e., Equation$~$\@ref(eq:gam-full) with LandSat-derived UHI as excess heat measure). LCZ6 cover was derived as a weighted average within a radius of 150$~m$ around each tree. Note the identical shape, but difference in intercept as a result of the model specification with a global smooth the non-temperature covariate for all species (see Section$~$\@ref(sec:methods-gam-heat)); the UHI magnitude was fixed at $3^\circ C$ where most trees are present across age groups. The model identified a steady increase of average stem diameter with open to mid-rise urban land cover. 
 
 ```{r fig-lcz6-effect, fig.cap="(ref:lcz6-effect)", out.width="50%", include=TRUE, eval=TRUE}
 
@@ -865,6 +864,9 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_xv
 	  - Increase temporal coverage and accuracy  
 		- which trees to prioritize for measurement campaigns  
 		- Supplement species matrix etc. with these analyses  
+		- *Landsat temp best on average - easily accessible/maintainable as compared to model outputs
+* $lcz6_{150}$ vs. $lcz6_{300}$ - scale of impact (further investigation, note in discussion) 
+        - planting bed area .. more data!
   + Open data important --> drives innovation
 
 
