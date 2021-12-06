@@ -2212,10 +2212,10 @@ make_model_grid <- function(){
     model_params <- new.env()
 
     model_params$k_uni <- 7
-    model_params$k_age <- 5
+    model_params$k_age <- 3
     # model_params$k_te <- c(7, 20)
     # model_params$k_te <- c(5, 15)
-    model_params$k_te <- c(5, 7)
+    model_params$k_te <- c(3, 7)
     model_params$k_spatial <- 400
     model_params$k_spatial_soilnutmodel <- 250
     model_params$k_soilnut <- 25
@@ -2785,7 +2785,7 @@ pred_dbh_temp_single_var <- function(path_model,
 
 
 
-    `%nin%` <- Negate(`%in%`)
+    # `%nin%` <- Negate(`%in%`)
 
 
 

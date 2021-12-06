@@ -490,8 +490,8 @@ if (grepl("docx", out_format)) {
 ### Temperature/UHI data
 
 Temperature and UHI data were summarized temporally either by the provider or manually to provide a characteristic representation of heat loading during summer at different times (morning, afternoon/day, night), from which tree averages (radius of 150$~m$) were calculated (Figure$~$\@ref(fig:fig-temp-overview)).
-Two data sets of urban air and one surface temperature were tested as explanatory variables in GAM models.
-The air temperatures from the Berlin environmental atlas (EnvAt) are model outputs that are representations of typical summer conditions at 0400, 1400 and 2200 hours; these data are provided at city block basis (spatial polygons), from which weighted averages were extracted.
+Two urban air temperature and one surface UHI data set were tested as explanatory variables in GAM models.
+The air temperatures from the Berlin environmental atlas (EnvAt) are processed model outputs [FITNAH-3D; cf. @gross1994] that are representations of typical summer conditions at 0400, 1400 and 2200 hours; these data are provided at city block basis (spatial polygons), from which weighted averages were extracted after rasterizing ($5~m$ resolution).
 UrbClim air temperatures are hourly model outputs [100$~m$ resolution, @deridder2015] based on ERA5 re-analyses data (ECMWF) for which observations from the hottest month  available (June, 2011) were averaged to hours equivalent to Berlin Environmental Atlas (referred to as Berlin EnvAt) data by using a window of $\pm~1~$hour (i.e., 0300 to 0500, etc.).
 Subsequently, a land-use and land-cover mask (CORINE; European Union, Copernicus Land Monitoring Service 2018, European Environment Agency) was used to define urban and rural/forested areas.
 Using this mask was deemed reasonable as Berlin's built-up area has not changed markedly over the past 50 years, i.e., about 52 to 61$\%$ [@mohamed2017]. 
@@ -519,8 +519,8 @@ knitr::include_graphics(here::here("./analysis/figures/fig_temp_maps.png"))
 ### Ancillary environmental data
 
 Following the general approach described above, four ancillary covariates next to a temperature measure were employed in models; these were chosen due to their availability at high spatial resolution and coverage, and/or because their influence on growth was previously identified in literature or their likely impact could be deduced using ecophysiological principles.
-We included planting bed area and the sum of exchangeable basic cation as a proxy for soil nutrient availability (point extractions), as well as the proportional coverage of local climate zone 6 (LCZ6; open mid-rise urban land cover, see @demuzere2019 and @stewart2012 for details) and adjacent building height (spatial averages).
-The latter was chosen as an increase reflects a transition away from densely urbanized areas and had the highest coverage for the processed tree inventory.  
+We included planting bed area and the sum of exchangeable basic cation as a proxy for soil nutrient availability (point extractions), as well as the proportional coverage of local climate zone 6 (LCZ6; open mid-rise urban land cover, see @demuzere2019 and @stewart2012 for details) and adjacent building height (rasterized to $5~m$ resolution).
+The latter was chosen as an increase reflects a transition away from densely urbanized areas and had the highest coverage (i.e., within [0-1]) for the processed tree inventory.  
 
 
 
@@ -868,6 +868,34 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_xv
 * $lcz6_{150}$ vs. $lcz6_{300}$ - scale of impact (further investigation, note in discussion) 
         - planting bed area .. more data!
   + Open data important --> drives innovation
+
+
+## Implications 
+
+### Green infrastructure management and planning
+
+The availability and quality of green infrastructure data, such as street tree inventories, and environmental covariates, determines the confidence in any inference of infrastructure performance in relation to its given context (e.g., temperature, planting bed area). 
+This is fundamental to inform management and planning to ensure that current and future targets are met. 
+Indeed, the execution of this study was possible due to the readily accessible and rich data sources provided by Berlin’s senate.
+However, few additions or alterations to data collection and provision schemes would have greatly  enhanced the utility and applicability of the data sets applied here. Note that we acknowledge the financial and logistic constraints that authorities are subject to, yet the suggestions below are likely valuable for this and other urban green infrastucture initiatives.
+Urban tree databases typically represent a single time point (e.g., see https://opentrees.org), despite repeated inventories at regular and/or irregular intervals within cities or their districts.
+Storing and providing multi-temporal inventories, rather than over-writing existing records, would give planners and researchers a wealth of additional information on individual tree performance, which – even at low temporal coverage – would allow verifying space-for-time substitutions, or make them superfluous. 
+We also urge authorities within and across cities to enhance and ideally standardize their (meta) data collection and provisioning to facilitate data quality control, increase confidence, and enable synthesis studies across districts and regions [@ossola2020]. 
+Key information includes (1) location, absolute age and planting date, (2) management regimes (e.g., planting regime, crown pruning, irrigation), (3) data collection protocol and body (e.g., actual measurement $vs.$ estimate or interpolation), as well as (4) tree provenance to account for potential differences in ecotype and/or acclimation [@watkins2020].
+However, there are financial and logistic trade-offs for data collection of the above, with contrasting needs across stakeholder groups [e.g., academics and authorities, @ostberg2013] where data that supports meeting long-term objectives should be prioritized.
+Lastly, less abundant species, which represent canditates for future tree selection, could be assessed with higher-quality standards regarding points measured above, to build a more reliable data source even at potentially lower coverage demographically and spatially.
+
+### Tree selection
+
+Tree species selection for urban forests depends on several often competing factors -  such as aesthetic appeal and ecosystem service provision [e.g., @roman2020] - and has been focused on identifying trees suitable for current and future conditions for the last decades with increasingly strong evidence basis [e.g., @hirons2019]. 
+Here, biogeographical approaches aim to match natural (i.e., non-urban) species distributions within current bioclimatic envelopes with future conditions at a planting site at larger scales [e.g., @broadmeadow2005].
+@watkins2020 used such "climate matching" to identify the space along environmental dimensions (heat, precipitation) which urban regions inhabit, falling within or extending the natural envelope. 
+Our work extends this approach by identifying the heat space (i.e., UHI range) occupied by several key species.
+This not only allows identifying species-specific and intra-specific (age-dependent) sensitivities to urban conditions, but can also inform how age cohorts may respond as temperatures at a given location shift along the present continuum in the future, while accounting for the impacts additional urban conditions (e.g., management, disturbance, urban fabric).
+The insights derived from this study, and potentially others following this approach in the future, can thus add another dimension to tree selection approaches implemented down to individual trees and locations.
+It thus complements quantitative and qualititaive tools, such as the climate matching tool, ecological site classification or species-climate matrix [see @hirons2019; @roloff2009; @brune 2019; and references therein].
+
+
 
 
 ## Conclusions
