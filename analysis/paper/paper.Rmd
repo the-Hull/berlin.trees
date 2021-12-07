@@ -840,6 +840,8 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_xv
 
 # Discussion
 
+
+
 1. Temperature, environmental and urban controls on tree growth  
       
 	+ Intra specific differences
@@ -869,36 +871,75 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_xv
         - planting bed area .. more data!
   + Open data important --> drives innovation
 
+		
+## Heat, environmental and urban controls on tree growth  
+
+Intra specific differences
+
+Quercus robur, Tilia intermedia and Aesculum hippocastanum performed best, matching with climate-species matrix in roloff and brune		
+		
+## Utility, transferrability and limitations of approach
+
+The major strength of this work is the estimation of growth sensitivity of urban trees to heat and other urban conditions at city-scale with little data and processing power requirements. 
+In particular,  differences within and between species across several dimensions (depending on model specification) are readily explored where only tree locations, age, diameter (or any other target) and selected variables are needed to implement this approach.
+Indeed, due to the high temporal and spatial variability of controls on growth, and thus variability in responses, such assessments should be developed specifically for a given setting, as well-understood tree characteristics [e.g., @roloff2009], could be strongly mediated at a given location or time. For instance, if drought hardiness is related to extensive root networks, the limited soil volumes available to street trees could render a species vulnerable to water stress. In addition, studies on climatic suitability and physiological responses are difficult to compare due to local acclimation of species to controls on growth and performance, as well as different methodological protocols [e.g., see @brune2016].
+Thus, the approach followed here, with its comparatively simple data requirements, can be implemented in a variety of settings to gain initial and/or guiding insights on tree performance in a specific urban region, and also serve as a benchmark to compare other empirical estimates or mechanistic modelswith.
+It may even allow estimating tree performance under future conditions to some extent (e.g., considering increase in temperature alone for this study), but is of course contingent on data coverage (e.g., demographics, environmental gradients).
+Furthermore, the implementation of GAM models here with `mgcv::bam()` is computationally efficient [@wood2017a], making model testing, selection and final application a rapid process even for abundant observations (here $n >150000$ and processing times of $t < 60~s$ on a desktop computer for the selected model).
+
+Two noteworthy caveats of the approach followed here lie in its empirical, data-driven nature, and its dependence on data quality.
+The presented results here are correlative. 
+While their interpretation follows first principles and may also allow anticipating the performance of a given tree under a range of increased temperatures, insights derived from mechanistic understanding are indispensable.
+This is because a change in one environmental condition, e.g., temperature, may also entail alterations to other drivers, and ultimately, affect physiological processes in ways not yet captured in existing data.
+The data provided in Berlin's tree inventory required extensive quality controlling, and it is likely that inaccurate (diameter, age) or interpolated (diameter) observations were including in the analyses.
+However, the minimum requirement of 10000 observations per species, and the focus on average diameter responses across age groups decreased potential impacts such observations may have had to a degree that was considered satisfactory, while uncertainty is communicated effectively (i.e., larger confidence bands for *T. intermedia 'Pallida'*).
+Further, the utility and transferability of the approach  *per se* were considered of value to the community and practitioners.
+
 
 ## Implications 
 
-### Green infrastructure management and planning
+### Tree selection
+
+Tree species selection for urban forests depends on several often competing factors -  such as aesthetic appeal and ecosystem service provision [e.g., @roman2020] - and has been focused on identifying trees suitable for current and future conditions for the last decades with increasingly strong evidence basis [e.g., @hirons2019]. 
+Here, biogeographical approaches aim to match natural (i.e., non-urban) species distributions within current bioclimatic envelopes with future conditions at a planting site [e.g., @broadmeadow2005].
+@watkins2020 used such "climate matching" to identify the space along environmental dimensions (heat, precipitation) which urban regions inhabit, falling within or extending the natural envelope. 
+Our work extends this approach by identifying the heat space (i.e., UHI range) occupied by several key species within a city.
+This not only allows identifying species-specific and intra-specific (age-dependent) sensitivities to urban conditions, but can also inform how age cohorts may respond as temperatures at a given location shift along the present continuum in the future, while accounting for the impacts of additional urban conditions (e.g., management, disturbance, urban fabric).
+The insights derived from this study, and potentially others following this approach in the future, can thus add another dimension to tree selection approaches implemented down to individual trees and locations.
+It thus complements quantitative and qualitative tools, such as the climate matching tool, ecological site classification or species-climate matrix [see @hirons2019; @roloff2009; @brune 2019; and references therein].
+
+
+### Green infrastructure management, planning and open data
 
 The availability and quality of green infrastructure data, such as street tree inventories, and environmental covariates, determines the confidence in any inference of infrastructure performance in relation to its given context (e.g., temperature, planting bed area). 
 This is fundamental to inform management and planning to ensure that current and future targets are met. 
 Indeed, the execution of this study was possible due to the readily accessible and rich data sources provided by Berlin’s senate.
-However, few additions or alterations to data collection and provision schemes would have greatly  enhanced the utility and applicability of the data sets applied here. Note that we acknowledge the financial and logistic constraints that authorities are subject to, yet the suggestions below are likely valuable for this and other urban green infrastucture initiatives.
+However, few additions or alterations to data collection and provision schemes would have greatly  enhanced the utility and applicability of the data sets applied here. 
+We acknowledge the financial and logistic constraints that authorities are subject to, yet the suggestions below are likely valuable for this and other urban green infrastructure initiatives, as several of them are easily implemented.
+
 Urban tree databases typically represent a single time point (e.g., see https://opentrees.org), despite repeated inventories at regular and/or irregular intervals within cities or their districts.
 Storing and providing multi-temporal inventories, rather than over-writing existing records, would give planners and researchers a wealth of additional information on individual tree performance, which – even at low temporal coverage – would allow verifying space-for-time substitutions, or make them superfluous. 
 We also urge authorities within and across cities to enhance and ideally standardize their (meta) data collection and provisioning to facilitate data quality control, increase confidence, and enable synthesis studies across districts and regions [@ossola2020]. 
 Key information includes (1) location, absolute age and planting date, (2) management regimes (e.g., planting regime, crown pruning, irrigation), (3) data collection protocol and body (e.g., actual measurement $vs.$ estimate or interpolation), as well as (4) tree provenance to account for potential differences in ecotype and/or acclimation [@watkins2020].
 However, there are financial and logistic trade-offs for data collection of the above, with contrasting needs across stakeholder groups [e.g., academics and authorities, @ostberg2013] where data that supports meeting long-term objectives should be prioritized.
-Lastly, less abundant species, which represent canditates for future tree selection, could be assessed with higher-quality standards regarding points measured above, to build a more reliable data source even at potentially lower coverage demographically and spatially.
+Less abundant species which are candidates for future plantings could be assessed with higher-quality standards regarding points measured above, to build a more reliable data source even at potentially lower coverage demographically and spatially.
+Managers and planners also should be aware of potential scale-limit of the urban fabric (e.g., $LCZ6_{\over{150~m}} vs. $LCZ6_{\over{300~m}}) on tree performance when altering surroundings or planting in a given area; efforts should be directed toward identifying the most pertinent environmental covariates and how their influence scales in space.
 
-### Tree selection
-
-Tree species selection for urban forests depends on several often competing factors -  such as aesthetic appeal and ecosystem service provision [e.g., @roman2020] - and has been focused on identifying trees suitable for current and future conditions for the last decades with increasingly strong evidence basis [e.g., @hirons2019]. 
-Here, biogeographical approaches aim to match natural (i.e., non-urban) species distributions within current bioclimatic envelopes with future conditions at a planting site at larger scales [e.g., @broadmeadow2005].
-@watkins2020 used such "climate matching" to identify the space along environmental dimensions (heat, precipitation) which urban regions inhabit, falling within or extending the natural envelope. 
-Our work extends this approach by identifying the heat space (i.e., UHI range) occupied by several key species.
-This not only allows identifying species-specific and intra-specific (age-dependent) sensitivities to urban conditions, but can also inform how age cohorts may respond as temperatures at a given location shift along the present continuum in the future, while accounting for the impacts additional urban conditions (e.g., management, disturbance, urban fabric).
-The insights derived from this study, and potentially others following this approach in the future, can thus add another dimension to tree selection approaches implemented down to individual trees and locations.
-It thus complements quantitative and qualititaive tools, such as the climate matching tool, ecological site classification or species-climate matrix [see @hirons2019; @roloff2009; @brune 2019; and references therein].
+Finally, open data was key for this study.
+We expressedly urge authorities to implement FAIR (findable, accessible, inter-operable and reusable) data principles to enable work similar to ours, as well as the creation of larger-scale databases and/or execution of synoptic studies [e.g., @ossola2020].
 
 
 
 
 ## Conclusions
+
+- novel application of open data to infer sensitivity to urban heat and other pertinent environmental drivers
+- identified age-shift and most tolerant species
+- provide policy-relevant suggestions for authorities and practicioners
+- open several avenues for further inquiry:
+  + multi-temporal
+  + increase covariate coverage to see if predictable performance alteration (planting bed!)
+  + less abundant species --> potential to identify suitable trees in a specific urban context (e.g., bespoke for Berlin)
 
 # Acknowledgements
 
