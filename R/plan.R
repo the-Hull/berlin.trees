@@ -866,6 +866,18 @@ plan <- drake::drake_plan(
 
 
 
+   ### stat: dbh temp sensitivites (plot and calc) --------------
+
+
+   plot_dbh_sens_lms = plot_dbh_temp_comparison(pred_list = pred_data_single_tempvar_fixed_lcz6,
+                                                model_df = model_df_stat_filtered,
+                                                age_filter = c('[45 - 50]', '[75 - 80]', '[90 - 95]'),
+                                                species_filter = NULL,
+                                                # species_filter = c("Tilia cordata", "Tilia platyphyllos"),
+                                                # species_filter = c("Tilia cordata","Platanus acerifolia"),
+                                                age_expression = age_expr,
+                                                prediction_range = "within",
+                                                base_size = 18),
 
 
    ### stat: moran comparison ------------------

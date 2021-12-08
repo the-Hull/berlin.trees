@@ -5251,6 +5251,210 @@ plot_obs_predicted_model <- function(path_model,
 
 
 
+#' Make single-temp var plot for individual species
+#'
+#' @param pred_list list, output from `pred_dbh_temp_single_var`
+#' @param model_df dframe used for predictions in pred_list
+#' @param age_filter character, age groups to exclude, using `%nin%`
+#' @param species_filter character, age groups to exclude, using `%in%`
+#' @param age_expression expression, used to define age groups
+#' @param prediction_range character, within or full?
+#' @param base_size numeric
+#'
+#' @return list with plot and lms of slopes for temp sensitivities
+#' @export
+#'
+#' @examples
+plot_dbh_temp_comparison <- function(
+    pred_list,
+    model_df,
+    age_filter,
+    species_filter,
+    age_expression,
+    base_size = 18,
+    prediction_range = "full"
+){
+
+    if(is.null(species_filter)){
+        species_filter <- shorten_species(unique(model_df$species_corrected))
+    }
+
+
+    `%nin%` <- Negate(`%in%`)
+
+    model_df <- model_df %>%
+        mutate(age_group = eval(age_expression),
+               species_corrected = shorten_species(species_corrected) ) %>%
+        dplyr::filter(
+            age_group %nin% age_filter,
+            species_corrected %in% species_filter) %>%
+        tidyr::drop_na(age_group)
+
+
+
+    plot_data <- pred_list$pred_groups %>%
+        filter(prediction_range == "within") %>%
+        # dplyr::select(-tempvar) %>%
+        tidyr::pivot_longer(cols = dplyr::all_of(names(pred_list$pred_var)),
+                            names_to = "uhi_tempvar",
+                            values_to = "temp_degc") %>%
+        dplyr::mutate(temp_degc_scaled = scales::rescale(temp_degc, to = c(0,1)),
+                      species_corrected = shorten_species(species_corrected)) %>%
+        dplyr::filter(prediction_range == prediction_range) %>%
+        dplyr::filter(age_group %nin% age_filter) %>%
+        dplyr::filter(species_corrected %in% shorten_species(species_filter)) %>%
+        dplyr::mutate(species_corrected = species_corrected %>%
+                          as.character(),
+                      species_corrected = ifelse(
+                          species_corrected == "A. pseudo- platanus",
+                          "A. pseudoplatanus",
+                          species_corrected)) %>%
+        dplyr::arrange(uhi_tempvar) %>%
+        tidyr::drop_na(temp_degc) %>%
+        dplyr::group_by(species_corrected, age_group) %>%
+        mutate(age_species_group_mean = mean(response.fit.mean),
+             response.mean.unadj = response.fit.mean,
+            response.fit.mean = response.fit.mean - mean(response.fit.mean),
+            response.low.mean = response.low.mean - mean(response.low.mean),
+            response.high.mean = response.high.mean - mean(response.high.mean)
+        )
+
+
+
+
+    lms <- plot_data %>%
+        tidyr::nest(data = -c(species_corrected, age_group)) %>%
+        mutate(models = purrr::map(data,
+                                   ~lm(response.fit.mean ~ temp_degc,
+                                       data = .)),
+               estimates = purrr::map(models,
+                                      broom::tidy),
+               goodness = purrr::map(models,
+                                     broom::glance)
+               )
+
+
+    zero_val <- lms %>%
+        dplyr::select(species_corrected, age_group, estimates) %>%
+        tidyr::unnest(cols = estimates) %>%
+        dplyr::select(species_corrected, age_group, term, estimate) %>%
+        tidyr::pivot_wider(names_from = term,
+                           values_from = estimate) %>%
+        dplyr::ungroup() %>%
+        dplyr::mutate(zero_threshold_degc = (0 - `(Intercept)`) / temp_degc) %>%
+        dplyr::select(-c(`(Intercept)`, zero_threshold_degc)) %>%
+        tidyr::pivot_wider(names_from = age_group, values_from = temp_degc)
+
+
+
+
+
+    gplot <- ggplot(data = plot_data %>%
+                        ungroup(),
+                    aes(y = response.fit.mean,
+                        x = temp_degc,
+                        colour = as.factor(species_corrected),
+                        fill =  as.factor(species_corrected),
+                        ymin = response.low.mean,
+                        ymax = response.high.mean)) +
+
+
+    geom_vline(xintercept = 0) +
+    geom_hline(yintercept = 0) +
+
+        geom_smooth(aes(group = species_corrected),
+                    formula = y ~ x,
+                    method = "lm",
+                    # fill = "transparent",
+                    # color = "gray50",
+                    data = plot_data %>% filter(prediction_range == "within"),
+                    alpha = 0.15, size = 0) +
+        geom_line(stat = "smooth",
+                  aes(group = species_corrected),
+                  formula = y ~ x,
+                  method = "lm",
+                  # fill = "transparent",
+                  # color = "gray50",
+                  data = plot_data %>% filter(prediction_range == "within"),
+                  alpha = 0.75) +
+
+
+        # geom_ribbon(linetype = 1) +
+
+
+        # geom_line(linetype = 3, color = "black", size = 0.35, alpha = 0.2)  +
+        # geom_line(data = plot_data %>% filter(prediction_range == "within"),
+        #           alpha = 0.2) +
+
+
+        #
+    facet_wrap(~age_group, scales = "free_y", nrow = 1) +
+
+        theme_minimal(base_size = base_size) +
+        theme(legend.position = 'top',
+              legend.direction = "horizontal",
+              panel.spacing = unit(2, "lines"),
+              strip.text = element_text(size = 12)) +
+
+        # scale_color_brewer(palette = 2, type = "qual") +
+        # scale_fill_brewer(palette = 2, type = "qual") +
+
+        scale_fill_manual(
+            values = pals::tol(n = n_distinct(plot_data$species_corrected)),
+            aesthetics = c("fill", "color")) +
+
+
+        labs(color = "Species",
+             fill = "Species",
+             x = expression(UHI~Magnitude~(degree*C)),
+             y = expression(bar(DBH)[centered]~(cm)))
+
+
+
+    zero_val_long <- zero_val %>%
+        # dplyr::mutate(rown = row_number()) %>%
+        dplyr::mutate(rown = 1) %>%
+        tidyr::pivot_longer(cols = -c(species_corrected, rown), names_to = 'age', values_to = "estimate")
+
+    estimate_plot <- ggplot(zero_val_long) +
+        geom_tile(aes(y = species_corrected,
+                      x = rown,
+                      fill = estimate),
+                  show.legend = FALSE) +
+        geom_text(aes(y = species_corrected,
+                      x = rown,
+                      label = round(estimate, 2))) +
+        facet_wrap(~age) +
+        ggplot2::scale_fill_distiller(palette = "RdBu",
+                                      rescaler = mid_rescaler(),
+                                      na.value = "transparent") +
+        ggplot2::scale_y_discrete(limits = rev) +
+        ggplot2::theme_minimal(base_size = base_size) +
+        ggplot2::labs(fill = "Slope Estimate") +
+        ggplot2::theme(legend.position = "bottom",
+              legend.dir = "horizontal",
+              axis.title = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_text(face = "italic")) +
+        ggplot2::guides(fill = guide_colorbar(barwidth = unit(3.5, "cm"),
+                                              title.vjust = 1,
+                                              ticks.colour = "gray30"))
+
+
+    # plot_dbh_sens_lms$plot + plot_dbh_sens_lms$est_plot + plot_layout(guides = "collect", widths = c(0.7, 0.3)) & theme(legend.position='bottom', legend.box = 'vertical')
+
+    return(list(plot = gplot, est_plot = estimate_plot, lms = lms, df = plot_data, estimates = zero_val))
+
+}
+
+
+
+
+
+
+
+
+
 
 
 #' Pairs Plot
@@ -6099,6 +6303,16 @@ make_wudapt_landcover_table <- function(wudapt_path, wudapt_desc_path, berlin_po
 
 
 # helpers -----------------------------------------------------------------
+
+
+#' Rescale color range
+#'
+#' @param mid
+mid_rescaler <- function(mid = 0) {
+    function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
+        scales::rescale_mid(x, to, from, mid)
+    }
+}
 
 
 #' Extract relevant metrics from model summary list
