@@ -820,6 +820,16 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_lc
 ```
 
 
+(ref:temp-sens) Temperature sensitivity .... 
+
+```{r fig-temp-sens, fig.cap="(ref:temp-sens)", out.width="100%", include=TRUE, eval=TRUE}
+
+
+knitr::include_graphics(here::here("analysis/figures/fig_model_day2007_lcz6_growthsens.png"))
+
+```
+
+
 The chosen model also highlighted that, on average, trees growing in less urbanized environments (i.e., more open to mid-rise urban land cover; $LCZ6_{\over{150~m}}$) achieve somewhat greater diameters.
 Note, that planting bed area, similar to $LCZ6_{\over{150~m}}$, was identified as a covariate increasing explained deviance, both in models with and without a temperature measure, and represents an opportunity for further investigation, especially following additional data collection.
 
@@ -831,6 +841,7 @@ Note, that planting bed area, similar to $LCZ6_{\over{150~m}}$, was identified a
 knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_xvar-lcz6_tilia.png"))
 
 ```
+
 
 
 

@@ -5260,6 +5260,10 @@ plot_obs_predicted_model <- function(path_model,
 #' @param age_expression expression, used to define age groups
 #' @param prediction_range character, within or full?
 #' @param base_size numeric
+#' @param file
+#' @param height
+#' @param width
+#' @param dpi
 #'
 #' @return list with plot and lms of slopes for temp sensitivities
 #' @export
@@ -5272,7 +5276,11 @@ plot_dbh_temp_comparison <- function(
     species_filter,
     age_expression,
     base_size = 18,
-    prediction_range = "full"
+    prediction_range = "full",
+    file,
+    height,
+    width,
+    dpi
 ){
 
     if(is.null(species_filter)){
@@ -5393,8 +5401,7 @@ plot_dbh_temp_comparison <- function(
         theme_minimal(base_size = base_size) +
         theme(legend.position = 'top',
               legend.direction = "horizontal",
-              panel.spacing = unit(2, "lines"),
-              strip.text = element_text(size = 12)) +
+              panel.spacing = unit(1.5, "lines")) +
 
         # scale_color_brewer(palette = 2, type = "qual") +
         # scale_fill_brewer(palette = 2, type = "qual") +
@@ -5404,8 +5411,8 @@ plot_dbh_temp_comparison <- function(
             aesthetics = c("fill", "color")) +
 
 
-        labs(color = "Species",
-             fill = "Species",
+        labs(color = NULL,
+             fill = NULL,
              x = expression(UHI~Magnitude~(degree*C)),
              y = expression(bar(DBH)[centered]~(cm)))
 
@@ -5441,7 +5448,21 @@ plot_dbh_temp_comparison <- function(
                                               ticks.colour = "gray30"))
 
 
-    # plot_dbh_sens_lms$plot + plot_dbh_sens_lms$est_plot + plot_layout(guides = "collect", widths = c(0.7, 0.3)) & theme(legend.position='bottom', legend.box = 'vertical')
+    p_plot <- gplot +
+        estimate_plot +
+        plot_annotation(tag_levels = "A") +
+        plot_layout(guides = "collect",
+                    widths = c(0.7, 0.3)) &
+        theme(legend.position='bottom',
+              legend.box = 'vertical',
+              legend.text = element_text(face = "italic"))
+
+    ggsave(filename = file,
+           plot = p_plot,
+           width = width,
+           height = height,
+           dpi = dpi,
+           units = "in")
 
     return(list(plot = gplot, est_plot = estimate_plot, lms = lms, df = plot_data, estimates = zero_val))
 

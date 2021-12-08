@@ -877,7 +877,11 @@ plan <- drake::drake_plan(
                                                 # species_filter = c("Tilia cordata","Platanus acerifolia"),
                                                 age_expression = age_expr,
                                                 prediction_range = "within",
-                                                base_size = 18),
+                                                base_size = 18,
+                                                file = "./analysis/figures/fig_model_day2007_lcz6_growthsens.png",
+                                                height = 6,
+                                                width = 12,
+                                                dpi = 300),
 
 
    ### stat: moran comparison ------------------
