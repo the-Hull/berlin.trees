@@ -882,9 +882,33 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_xv
 		
 ## Heat, environmental and urban controls on tree growth  
 
-Intra specific differences
+- Young to old shift
+increase in growth rates, temperature
+
+### Demographic patterns
+
+We showed that initial growth rates ($\lessapprox 30~a$) are greater in  recently established trees, as compared to older ones. 
+This pattern was found in annually-resolved incremental growth observations, and corresponds with prior work on urban-rural [e.g., @pretzsch2017] and intra-urban comparisons [@dahlhausen2019], where it was attributed to increased temperatures - namely, the UHI effect.
+Furthermore, the space-for-time substitution highlighted that recently established, i.e. younger, trees have greater (positive) sensitivity to heat than intermediate age groups, while the oldest trees showed lower average absolute growth (diameters) with increasing heat.
+We are not aware of other studies reporting such an age-dependent shift in sensitivity, and by contrast, for example, @pretzsch2017 showed ever increasing basal area increments within the age range investigated here for recent as compared to earlier growth.
+However, the consistency of this pattern across species allows for a satisfactory level of confidence in it.
+Indeed, @dahlhausen2019 report an age-dependent shift in growth rates depending on urban development intensity, ..where urban fabric may be indicative can be assumed indicative of temperatures..)
+Explanation found in individual optimum responses, and potentially their interaction, in relation to different drivers.
+For instance, higher temperatures (phys optimum), CO2/WUE.. but larger trees need to support greater leaf area at same soil volume (considering restriction).
+Thus it can be assumed that as trees grow and their requirements for resources (water, nutrients) increase, higher temperatures may be increasingly limiting. 
+Counter-intuitive perhaps? Young trees struggle to establish... management effort (irrigation) may also be crucial, but no data available.
+
+
+- live fast die young
+- water use efficiency
+
+
+
+- Intra specific differences
 
 Quercus robur, Tilia intermedia and Aesculum hippocastanum performed best, matching with climate-species matrix in roloff and brune		
+
+- Urban fabric: LCZ density and sensitive trees in hot spots
 		
 ## Utility, transferrability and limitations of approach
 
@@ -914,12 +938,12 @@ Here, biogeographical approaches aim to match natural (i.e., non-urban) species 
 Our work extends this approach by identifying the heat space (i.e., UHI range) occupied by several key species within a city.
 This not only allows identifying species-specific and intra-specific (age-dependent) sensitivities to urban conditions, but can also inform how age cohorts may respond as temperatures at a given location shift along the present continuum in the future, while accounting for the impacts of additional urban conditions (e.g., management, disturbance, urban fabric).
 The insights derived from this study, and potentially others following this approach in the future, can thus add another dimension to tree selection approaches implemented down to individual trees and locations.
-It thus complements quantitative and qualitative tools, such as the climate matching tool, ecological site classification or species-climate matrix [see @hirons2019; @roloff2009; @brune 2019; and references therein].
+It thus complements quantitative and qualitative tools, such as the climate matching tool, ecological site classification or species-climate matrix [see @hirons2019; @roloff2009; @brune2016; and references therein].
 
 
 ### Green infrastructure management, planning and open data
 
-The availability and quality of green infrastructure data, such as street tree inventories, and environmental covariates, determines the confidence in any inference of infrastructure performance in relation to its given context (e.g., temperature, planting bed area). 
+The availability and quality of green infrastructure data, such as street tree inventories, and environmental covariates, determine the confidence in any inference of infrastructure performance in relation to its context (e.g., temperature, planting bed area). 
 This is fundamental to inform management and planning to ensure that current and future targets are met. 
 Indeed, the execution of this study was possible due to the readily accessible and rich data sources provided by Berlin’s senate.
 However, few additions or alterations to data collection and provision schemes would have greatly  enhanced the utility and applicability of the data sets applied here. 
@@ -931,7 +955,7 @@ We also urge authorities within and across cities to enhance and ideally standar
 Key information includes (1) location, absolute age and planting date, (2) management regimes (e.g., planting regime, crown pruning, irrigation), (3) data collection protocol and body (e.g., actual measurement $vs.$ estimate or interpolation), as well as (4) tree provenance to account for potential differences in ecotype and/or acclimation [@watkins2020].
 However, there are financial and logistic trade-offs for data collection of the above, with contrasting needs across stakeholder groups [e.g., academics and authorities, @ostberg2013] where data that supports meeting long-term objectives should be prioritized.
 Less abundant species which are candidates for future plantings could be assessed with higher-quality standards regarding points measured above, to build a more reliable data source even at potentially lower coverage demographically and spatially.
-Managers and planners also should be aware of potential scale-limit of the urban fabric (e.g., $LCZ6_{\over{150~m}} vs. $LCZ6_{\over{300~m}}) on tree performance when altering surroundings or planting in a given area; efforts should be directed toward identifying the most pertinent environmental covariates and how their influence scales in space.
+Managers and planners also should be aware of potential scale-limit of the urban fabric (e.g., $LCZ6_{\over{150~m}}~vs.~LCZ6_{\over{300~m}}$) on tree performance when altering surroundings or planting in a given area; efforts should be directed toward identifying the most pertinent environmental covariates and how their influence scales in space.
 
 Finally, open data was key for this study.
 We expressedly urge authorities to implement FAIR (findable, accessible, inter-operable and reusable) data principles to enable work similar to ours, as well as the creation of larger-scale databases and/or execution of synoptic studies [e.g., @ossola2020].
