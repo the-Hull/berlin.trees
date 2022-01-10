@@ -38,7 +38,7 @@ bibliography:
   - 07_phenoTram.bib
 csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
 abstract: |
-  **This document outlines the rationale for an analysis of tree growth (potential) and its relationship with the Urban Heat Island (UHI) effect in Berlin using an extensive, publicly available data set. It introduces preliminary results and provides an outlook for up-coming and potential work.**
+  **Populate..We analzed tree growth (potential) and its relationship with the Urban Heat Island (UHI) effect, as well as other characteristics of the urban fabric, for the ten most abundant street tree species/cultivars in Berlin using open data. We identify the most heat-sensitive species, give recommendations for future tree selections and provide guidelines to for local authorities for the prioitiziation of data acquisition (i.e., inventories) as well as data provision.**
 keywords: |
   Uferbaeume; Anlagenbaeume; Strassenbaeume; 
 highlights: |
@@ -845,9 +845,6 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_xv
 
 
 
-## Exposed trees
-
-**Add figure with tree locations where growth is below the average - color = UHI?**
 
 # Discussion
 
