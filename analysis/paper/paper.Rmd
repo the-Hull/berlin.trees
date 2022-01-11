@@ -888,16 +888,18 @@ increase in growth rates, temperature
 ### Demographic patterns
 
 We showed that initial growth rates ($\lessapprox 30~a$) are greater in  recently established trees, as compared to older ones. 
-This pattern was found in annually-resolved incremental growth observations, and corresponds with prior work on urban-rural [e.g., @pretzsch2017] and intra-urban comparisons [@dahlhausen2019], where it was attributed to increased temperatures - namely, the UHI effect.
+This pattern was found in annually-resolved incremental growth observations, and corresponds with prior work on urban-rural [e.g., @pretzsch2017;@zhao2016] and intra-urban comparisons [e.g., @dahlhausen2018], where it was attributed to increased temperatures - namely, the UHI effect.
 Furthermore, the space-for-time substitution highlighted that recently established, i.e. younger, trees have greater (positive) sensitivity to heat than intermediate age groups, while the oldest trees showed lower average absolute growth (diameters) with increasing heat.
-We are not aware of other studies reporting such an age-dependent shift in sensitivity, and by contrast, for example, @pretzsch2017 showed ever increasing basal area increments within the age range investigated here for recent as compared to earlier growth.
-However, the consistency of this pattern across species allows for a satisfactory level of confidence in it.
-Indeed, @dahlhausen2019 report an age-dependent shift in growth rates depending on urban development intensity, ..where urban fabric may be indicative can be assumed indicative of temperatures..)
-Explanation found in individual optimum responses, and potentially their interaction, in relation to different drivers.
-For instance, higher temperatures (phys optimum), CO2/WUE.. but larger trees need to support greater leaf area at same soil volume (considering restriction).
-Thus it can be assumed that as trees grow and their requirements for resources (water, nutrients) increase, higher temperatures may be increasingly limiting. 
-Counter-intuitive perhaps? Young trees struggle to establish... management effort (irrigation) may also be crucial, but no data available.
-
+We are not aware of other studies reporting such an age-dependent shift in sensitivity.
+<!-- , and by contrast, for example, @pretzsch2017 showed ever increasing basal area increments within the age range investigated here for recent as compared to earlier growth. -->
+However, the consistency of this pattern across species provides a satisfactory level of confidence in it, and indeed, @dahlhausen2018 also report a time - and by implication an age-dependent - shift of temperature sensitivity on growth depending on urban development intensity, but do not further distinguish between age groups.
+The age-dependent shift may be explained by a combination of physiological and environmental changes over time, and/or may be related to management practices, but we acknowledge that additional analyses is required to disentangle these processes.
+For instance, higher temperatures may have benefited physiological processes close to their respective optima in both young and old individuals. 
+But, as older trees must support greater leaf area through rooting in similarly small (restricted) soil volumes, water availability and nutrients may become increasingly limiting.
+Higher rates of transpiration and photosynthesis, driven through temperature increases, could thus turn detrimental as the ratios between soil volume, root and leaf area change throughout a trees life span and in time.
+These e
+In addition to this, younger trees are typically more rigorously managed and irrigated, which may (further) alter age-dependent temperature sensitivity.
+We lack data on demographic differences in management to confirm this, and acknowledge that younger trees here also surpassed their establishment phase, which entails high mortality for recently planted individuals [@harris2017]  during which the above would not apply
 
 - live fast die young
 - water use efficiency
