@@ -895,7 +895,7 @@ The age-dependent shift may be explained by a combination of physiological and e
 For instance, higher temperatures may have benefited physiological processes close to their respective optima in both young and old individuals. 
 But, as older trees must support greater leaf area through rooting in similarly small (restricted) soil volumes, water availability and nutrients may become increasingly limiting.
 Higher rates of transpiration and photosynthesis, driven through temperature increases, could thus turn detrimental as the ratios between soil volume, root and leaf area change throughout a trees life span and in time.
-In addition to this, younger trees are typically more rigorously managed and irrigated [e.g., [@koeser2014]], which may (further) alter age-dependent temperature sensitivity.
+In addition to this, younger trees are typically more rigorously managed and irrigated [e.g., @koeser2014], which may (further) alter age-dependent temperature sensitivity.
 We lack data on demographic differences in management to confirm this, and acknowledge that younger trees here also surpassed their establishment phase, which entails high mortality during the first five years after planting [@harris2017;@hilbert2019] during which the above would not apply
 
 
