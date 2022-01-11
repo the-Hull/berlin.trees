@@ -1,8 +1,9 @@
 ---
 title: "Assessing the impact of urban heating on tree growth in Berlin with open inventory and environmental data"
 author:
-  - Alexander G. Hurley$^{a *}$, Ingo Heinrich$^a$, ...
-  - $^a$ *Geoforschungszentrum Potsdam, Section 4.3, Germany*
+  - Alexander G. Hurley$^{a *}$, Ingo Heinrich$^{a,b}$, ...
+  - $^a$ *Geoforschungszentrum Potsdam, Section 4.3, Potsdam, Germany*
+  - $^b$ *Deutsches Archäologisches Institut, Dendroclimatology, Berlin, Germany*
   - "* Corresponding author: hurley@gfz-potsdam.de"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 always_allow_html: true
@@ -882,9 +883,6 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_xv
 		
 ## Heat, environmental and urban controls on tree growth  
 
-- Young to old shift
-increase in growth rates, temperature
-
 ### Demographic patterns
 
 We showed that initial growth rates ($\lessapprox 30~a$) are greater in  recently established trees, as compared to older ones. 
@@ -897,20 +895,18 @@ The age-dependent shift may be explained by a combination of physiological and e
 For instance, higher temperatures may have benefited physiological processes close to their respective optima in both young and old individuals. 
 But, as older trees must support greater leaf area through rooting in similarly small (restricted) soil volumes, water availability and nutrients may become increasingly limiting.
 Higher rates of transpiration and photosynthesis, driven through temperature increases, could thus turn detrimental as the ratios between soil volume, root and leaf area change throughout a trees life span and in time.
-These e
-In addition to this, younger trees are typically more rigorously managed and irrigated, which may (further) alter age-dependent temperature sensitivity.
-We lack data on demographic differences in management to confirm this, and acknowledge that younger trees here also surpassed their establishment phase, which entails high mortality for recently planted individuals [@harris2017]  during which the above would not apply
-
-- live fast die young
-- water use efficiency
+In addition to this, younger trees are typically more rigorously managed and irrigated [e.g., [@koeser2014]], which may (further) alter age-dependent temperature sensitivity.
+We lack data on demographic differences in management to confirm this, and acknowledge that younger trees here also surpassed their establishment phase, which entails high mortality during the first five years after planting [@harris2017;@hilbert2019] during which the above would not apply
 
 
 
-- Intra specific differences
+### Intra-specific differences and the urban fabric
 
-Quercus robur, Tilia intermedia and Aesculum hippocastanum performed best, matching with climate-species matrix in roloff and brune		
 
-- Urban fabric: LCZ density and sensitive trees in hot spots
+- Quercus robur, Tilia intermedia and Aesculum hippocastanum performed best, matching with climate-species matrix in roloff and brune		
+- least: Platanus acerifolia, Acer pseudoplatanus.. data issues or location specific factors where trees were planted. Avenue for further work to confirm and identify drivers.
+- Urban fabric: LCZ density 
+- and sensitive trees in hot spots
 		
 ## Utility, transferrability and limitations of approach
 
@@ -950,6 +946,8 @@ This is fundamental to inform management and planning to ensure that current and
 Indeed, the execution of this study was possible due to the readily accessible and rich data sources provided by Berlin’s senate.
 However, few additions or alterations to data collection and provision schemes would have greatly  enhanced the utility and applicability of the data sets applied here. 
 We acknowledge the financial and logistic constraints that authorities are subject to, yet the suggestions below are likely valuable for this and other urban green infrastructure initiatives, as several of them are easily implemented.
+
+**Increased growth rates.. live fast, die young - high turnover! requires focused planting and/or maintenance to counter [@smith2019].**
 
 Urban tree databases typically represent a single time point (e.g., see https://opentrees.org), despite repeated inventories at regular and/or irregular intervals within cities or their districts.
 Storing and providing multi-temporal inventories, rather than over-writing existing records, would give planners and researchers a wealth of additional information on individual tree performance, which – even at low temporal coverage – would allow verifying space-for-time substitutions, or make them superfluous. 
