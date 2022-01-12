@@ -902,11 +902,20 @@ We lack data on demographic differences in management to confirm this, and ackno
 
 ### Intra-specific differences and the urban fabric
 
+Generally, the ten investigated species and cultivars showed consistent responses in sign, but differed substantially in magnitude, modulated by age.
+*Aesculum hippocastanum* , *Tilia intermedia*, *T. intermedia 'pallida'* and showed greatest absolute growth at high temperatures at younger (30-35) as well as older ages (60-65).
+The drought tolerance and performance under high temperatures is well documented for the latter two and features in tree selection frameworks, such as species climate matrices in @roloff2009 and in @brune2016, where several studies investigating (hydro)climatic sensitivity were summarized.
+Contrastingly, *Acer pseudoplatanus* showed decreased absolute growth with higher temperatures; this corresponds with their classification as *not very suitable* under [@roloff2009].
+*Platanus acerifolia* and *Acer platanoides* are considered *suitable* and *very suitable* under @roloff2009, yet show the greatest decline with temperatures here.
+Indeed, several several studies reviewed in @brune2016 highlight *A. platanoides* as drought-tolerant.
+Such contrasting indications are also reported for *A. pseudoplatanus*, and even report *A. hippocastanum* as only moderately tolerant, despite performing best here. 
+These differences may be due to idiosyncrasies of planting sites, such as low soil volume and increased potential for water stress, (long-term) interactions with pathogens and herbivores [e.g., @meineke2018], or perhaps related to data quality.
+Most important, these differences highlight the need for assessments of performance (e.g., as growth) under location-specific conditions, and this study provides a first attempt and insights into temperature sensitivity at the scale of an entire metropolis.
 
-- Quercus robur, Tilia intermedia and Aesculum hippocastanum performed best, matching with climate-species matrix in roloff and brune		
-- least: Platanus acerifolia, Acer pseudoplatanus.. data issues or location specific factors where trees were planted. Avenue for further work to confirm and identify drivers.
+
 - Urban fabric: LCZ density 
-- and sensitive trees in hot spots
+- and sensitive trees in hot spots ..**Increased growth rates.. live fast, die young - high turnover! requires focused planting and/or maintenance to counter [@smith2019].**
+
 		
 ## Utility, transferrability and limitations of approach
 
@@ -947,7 +956,6 @@ Indeed, the execution of this study was possible due to the readily accessible a
 However, few additions or alterations to data collection and provision schemes would have greatly  enhanced the utility and applicability of the data sets applied here. 
 We acknowledge the financial and logistic constraints that authorities are subject to, yet the suggestions below are likely valuable for this and other urban green infrastructure initiatives, as several of them are easily implemented.
 
-**Increased growth rates.. live fast, die young - high turnover! requires focused planting and/or maintenance to counter [@smith2019].**
 
 Urban tree databases typically represent a single time point (e.g., see https://opentrees.org), despite repeated inventories at regular and/or irregular intervals within cities or their districts.
 Storing and providing multi-temporal inventories, rather than over-writing existing records, would give planners and researchers a wealth of additional information on individual tree performance, which – even at low temporal coverage – would allow verifying space-for-time substitutions, or make them superfluous. 
