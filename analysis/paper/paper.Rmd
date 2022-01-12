@@ -766,11 +766,14 @@ knitr::include_graphics(here::here("analysis/figures/fig-biwi-growth.png"))
 * null model high, but for predictive purposes more is better
 Models including (excess) heat measures were on average better than those without.
 
+The null models containing only age to explain diameter captured a large portion of deviance.
 
-However, this was not the case for planting bed area and $LCZ6_{\over{150~m}}$, which outperformed several temperature-based models.
+Including additional covariates thus resulted only in comparatively small buincreases of predictive skill
+The inclusion of temperature and temperature-age interactions improved the predictive skill, with models including the LandSat-derived UHI measures performing best on average.
+Note that non-temperature models containing planting bed area and $LCZ6_{\over{150~m}}$ alone outperformed several of those including other temperature measures and covariate combinations.
 This indicated the importance of both covariates, with $LCZ6_{\over{150~m}}$ also represented in the best-performing model, corroborating its impact on stem diameter development.
-As $LCZ6_{\over{300~m}}$ only marginally increased performance compared to the null model (age only), the reference scale for the impact of the urban fabric (i.e., LCZ6) has a limit between $150$ to $300~m$.
-Nutrient availablity, similar to $LCZ6_{\over{300~m}}$, also only improved model performance marginally.
+As $LCZ6_{\over{300~m}}$ only marginally increased performance compared to the null model (age only), the reference scale for the impact of the urban fabric (i.e., LCZ6) has a limit at $<300~m$.
+Nutrient availability, similar to $LCZ6_{\over{300~m}}$, also only improved model performance marginally.
 Building height, regardless of its reference scale (i.e., $150$ $vs$ $300~m$), as another proxy for urban fabric, showed minimal to no improvement compared to the age-only null model.
 
 
@@ -821,7 +824,7 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_lc
 ```
 
 
-(ref:temp-sens) Temperature sensitivity .... 
+(ref:temp-sens) Temperature sensitivity of diameter growth centered on species-specific means for comparability and to aid interpretation of inter-specific differences. Lines and bands are from ordinary least squares fits on the GAM estimates in Fig.$~$\@ref(fig:fig-heat-effect) (A) and the corresponding coefficients (slopes, B). 
 
 ```{r fig-temp-sens, fig.cap="(ref:temp-sens)", out.width="100%", include=TRUE, eval=TRUE}
 
@@ -900,10 +903,10 @@ We lack data on demographic differences in management to confirm this, and ackno
 
 
 
-### Intra-specific differences and the urban fabric
+### Intra-specific differences
 
 Generally, the ten investigated species and cultivars showed consistent responses in sign, but differed substantially in magnitude, modulated by age.
-*Aesculum hippocastanum* , *Tilia intermedia*, *T. intermedia 'pallida'* and showed greatest absolute growth at high temperatures at younger (30-35) as well as older ages (60-65).
+*Aesculum hippocastanum* , *Tilia intermedia*, *T. intermedia* 'pallida' and showed greatest absolute growth at high temperatures at younger (30-35) as well as older ages (60-65).
 The drought tolerance and performance under high temperatures is well documented for the latter two and features in tree selection frameworks, such as species climate matrices in @roloff2009 and in @brune2016, where several studies investigating (hydro)climatic sensitivity were summarized.
 Contrastingly, *Acer pseudoplatanus* showed decreased absolute growth with higher temperatures; this corresponds with their classification as *not very suitable* under [@roloff2009].
 *Platanus acerifolia* and *Acer platanoides* are considered *suitable* and *very suitable* under @roloff2009, yet show the greatest decline with temperatures here.
@@ -913,23 +916,20 @@ These differences may be due to idiosyncrasies of planting sites, such as low so
 Most important, these differences highlight the need for assessments of performance (e.g., as growth) under location-specific conditions, and this study provides a first attempt and insights into temperature sensitivity at the scale of an entire metropolis.
 
 
-- Urban fabric: LCZ density 
-- and sensitive trees in hot spots ..**Increased growth rates.. live fast, die young - high turnover! requires focused planting and/or maintenance to counter [@smith2019].**
-
 		
 ## Utility, transferrability and limitations of approach
 
 The major strength of this work is the estimation of growth sensitivity of urban trees to heat and other urban conditions at city-scale with little data and processing power requirements. 
 In particular,  differences within and between species across several dimensions (depending on model specification) are readily explored where only tree locations, age, diameter (or any other target) and selected variables are needed to implement this approach.
 Indeed, due to the high temporal and spatial variability of controls on growth, and thus variability in responses, such assessments should be developed specifically for a given setting, as well-understood tree characteristics [e.g., @roloff2009], could be strongly mediated at a given location or time. For instance, if drought hardiness is related to extensive root networks, the limited soil volumes available to street trees could render a species vulnerable to water stress. In addition, studies on climatic suitability and physiological responses are difficult to compare due to local acclimation of species to controls on growth and performance, as well as different methodological protocols [e.g., see @brune2016].
-Thus, the approach followed here, with its comparatively simple data requirements, can be implemented in a variety of settings to gain initial and/or guiding insights on tree performance in a specific urban region, and also serve as a benchmark to compare other empirical estimates or mechanistic modelswith.
+Thus, the approach followed here, with its comparatively simple data requirements, can be implemented in a variety of settings to gain initial and/or guiding insights on tree performance in a specific urban region, and also serve as a benchmark to compare other empirical estimates or mechanistic models with.
 It may even allow estimating tree performance under future conditions to some extent (e.g., considering increase in temperature alone for this study), but is of course contingent on data coverage (e.g., demographics, environmental gradients).
 Furthermore, the implementation of GAM models here with `mgcv::bam()` is computationally efficient [@wood2017a], making model testing, selection and final application a rapid process even for abundant observations (here $n >150000$ and processing times of $t < 60~s$ on a desktop computer for the selected model).
 
 Two noteworthy caveats of the approach followed here lie in its empirical, data-driven nature, and its dependence on data quality.
 The presented results here are correlative. 
 While their interpretation follows first principles and may also allow anticipating the performance of a given tree under a range of increased temperatures, insights derived from mechanistic understanding are indispensable.
-This is because a change in one environmental condition, e.g., temperature, may also entail alterations to other drivers, and ultimately, affect physiological processes in ways not yet captured in existing data.
+This is because a change in one environmental condition, e.g., temperature or pest abundance, may also entail alterations to other drivers, and ultimately, affect physiological processes in ways not yet captured in existing data.
 The data provided in Berlin's tree inventory required extensive quality controlling, and it is likely that inaccurate (diameter, age) or interpolated (diameter) observations were including in the analyses.
 However, the minimum requirement of 10000 observations per species, and the focus on average diameter responses across age groups decreased potential impacts such observations may have had to a degree that was considered satisfactory, while uncertainty is communicated effectively (i.e., larger confidence bands for *T. intermedia 'Pallida'*).
 Further, the utility and transferability of the approach  *per se* were considered of value to the community and practitioners.
@@ -944,6 +944,12 @@ Here, biogeographical approaches aim to match natural (i.e., non-urban) species 
 @watkins2020 used such "climate matching" to identify the space along environmental dimensions (heat, precipitation) which urban regions inhabit, falling within or extending the natural envelope. 
 Our work extends this approach by identifying the heat space (i.e., UHI range) occupied by several key species within a city.
 This not only allows identifying species-specific and intra-specific (age-dependent) sensitivities to urban conditions, but can also inform how age cohorts may respond as temperatures at a given location shift along the present continuum in the future, while accounting for the impacts of additional urban conditions (e.g., management, disturbance, urban fabric).
+Notably, increased growth rates at higher temperatures, as reported here, also entail greater demographic turnover through mortality [@smith2019].
+young age groups for most species showed greater absolute growth with higher temperatures, .
+<!-- Indeed, growing season temperatures in the Berlin region are predicted to rise for the remainder of this century. -->
+Thus, as the majority of individuals were situated at the upper end of the temperature continuum, high temperature sensitivity may entail additional management due to faster turn-over - subsequent replacement by more appropriate species.
+<!-- - ultimately, this will be a trade-off between tolerance of urban conditions, management goals (e.g., ecosystem services) and longevity. -->
+<!-- Assessments such as ours here may further aid in selecting appropriate species to achieve these goals. -->
 The insights derived from this study, and potentially others following this approach in the future, can thus add another dimension to tree selection approaches implemented down to individual trees and locations.
 It thus complements quantitative and qualitative tools, such as the climate matching tool, ecological site classification or species-climate matrix [see @hirons2019; @roloff2009; @brune2016; and references therein].
 
