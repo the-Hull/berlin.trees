@@ -977,7 +977,7 @@ We expressedly urge authorities to implement FAIR (findable, accessible, inter-o
 
 
 
-## Conclusions
+## Conclusion
 
 - novel application of open data to infer sensitivity to urban heat and other pertinent environmental drivers
 - identified age-shift and most tolerant species
