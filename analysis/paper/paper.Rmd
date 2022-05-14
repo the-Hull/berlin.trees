@@ -286,14 +286,12 @@ knitr::include_graphics(here::here("analysis/figures/map_00_studyarea.png"))
 ```
 
 
+<!-- ## General approach: space-for-time analyses -->
 
-
-## General approach: space-for-time analyses
-
-<!-- Species-specifc growth responses in relation across Berlin were assessed in relat -->
-We modeled the stem diameter ($DBH$) of Berlin’s ten most abundant species (contingent to ancillary data availability) in relationship to their location, age, a measure of (excess) heat [UrbClim by @deridder2015; Berlin Environmental Atlas models; LandSat-derived surface urban heat island by @chakraborty2019], and additional environmental covariates with generalized additive models (GAMs, see Section$~$\@ref(sec:stat-gam) for details).
-Covariates were extracted at 150 and 300$~m$ to infer the impact of reference scale of the urban fabric on tree growth. 
-From all tested models the most suitable (i.e., parsimonious with highest explanatory) was employed for further analyses.
+<!-- <!-- Species-specifc growth responses in relation across Berlin were assessed in relat --> -->
+<!-- We modeled the stem diameter ($DBH$) of Berlin’s ten most abundant species (contingent to ancillary data availability) in relationship to their location, age, a measure of (excess) heat [UrbClim by @deridder2015; Berlin Environmental Atlas models; LandSat-derived surface urban heat island by @chakraborty2019], and additional environmental covariates with generalized additive models (GAMs, see Section$~$\@ref(sec:stat-gam) for details). -->
+<!-- Covariates were extracted at 150 and 300$~m$ to infer the impact of reference scale of the urban fabric on tree growth.  -->
+<!-- From all tested models the most suitable (i.e., parsimonious with highest explanatory) was employed for further analyses. -->
 
 
 ## Data sources {#sec:dsources}
@@ -543,7 +541,12 @@ The latter was chosen as an increase reflects a transition away from densely urb
 <!-- For this study, the LCZ 6, representing dense mid-rise built up cover was used as a proxy for the degree of urbanization, and is the most frequent LCZ for Berlin [@fenner2017] (found ref in . -->
 <!-- Use percent sealed surface instead? -->
 
+## General approach: space-for-time analyses
 
+<!-- Species-specifc growth responses in relation across Berlin were assessed in relat -->
+We modeled the stem diameter ($DBH$) of Berlin’s ten most abundant species (contingent to ancillary data availability) in relationship to their location, age, a measure of (excess) heat [UrbClim by @deridder2015; Berlin Environmental Atlas models; LandSat-derived surface urban heat island by @chakraborty2019], and additional environmental covariates with generalized additive models (GAMs, see Section$~$\@ref(sec:stat-gam) for details).
+Covariates were extracted at 150 and 300$~m$ to infer the impact of reference scale of the urban fabric on tree growth. 
+From all tested models the most suitable (i.e., parsimonious with highest explanatory) was employed for further analyses.
 
 
 ## Dendrochronological sampling {#sec:methods-dendro}
@@ -740,7 +743,7 @@ $$AIC= −2log(L) \cdot 2k$$
 
 where $L$ is the maximum likelihood estimate, and $k$ is the number of parameters.
 Where any two comparable models had a $| \Delta AIC| > 10$, we considered the model with the lower score more suitable. 
-Future research may focus on collecting additional data (e.g., increasing the coverage on planting bed area) and subsequently deriving species-specific smooths for ancillary environmental covariates.
+<!-- Future research may focus on collecting additional data (e.g., increasing the coverage on planting bed area) and subsequently deriving species-specific smooths for ancillary environmental covariates. -->
 We chose to carry out the analysis in its current form rather than on considerably smaller but comparable sample sizes across models, to identify the strongest relationships in the existing data.
 This allowed us to highlight the utility of the approach *per se* and for Berlin in particular.
 **Measures used to asses goodness-of-fit were residual deviance, RSME and MAE (add formuals)**
@@ -776,10 +779,10 @@ knitr::include_graphics(here::here("analysis/figures/fig-biwi-growth.png"))
 The null models containing only age to explain diameter captured a large portion of deviance.
 Including additional covariates thus resulted only in comparatively small increases of predictive skill.
 The inclusion of temperature and temperature-age interactions improved the predictive skill, with models including the LandSat-derived UHI measures performing best on average.
-Note that non-temperature models containing planting bed area and $LCZ6_{\over{150~m}}$ alone outperformed several of those including other temperature measures and covariate combinations.
-This indicated the importance of both covariates, with $LCZ6_{\over{150~m}}$ also represented in the best-performing model, corroborating its impact on stem diameter development.
-As $LCZ6_{\over{300~m}}$ only marginally increased performance compared to the null model (age only), the reference scale for the impact of the urban fabric (i.e., LCZ6) likely has a limit at $<300~m$.
-Nutrient availability, similar to $LCZ6_{\over{300~m}}$, also only improved model performance marginally.
+Note that non-temperature models containing planting bed area and $LCZ6_{\frac{}{150~m}}$ alone outperformed several of those including other temperature measures and covariate combinations.
+This indicated the importance of both covariates, with $LCZ6_{\frac{}{150~m}}$ also represented in the best-performing model, corroborating its impact on stem diameter development.
+As $LCZ6_{\frac{}{300~m}}$ only marginally increased performance compared to the null model (age only), the reference scale for the impact of the urban fabric (i.e., LCZ6) likely has a limit at $<300~m$.
+Nutrient availability, similar to $LCZ6_{\frac{}{300~m}}$, also only improved model performance marginally.
 Building height, regardless of its reference scale (i.e., $150$ $vs$ $300~m$), as another proxy for urban fabric, showed minimal to no improvement compared to the age-only null model.
 
 
@@ -820,7 +823,7 @@ Several species - including *A. platanoides*, *A. pseudoplatanus*, *Acer hippoca
 Contrastingly, the cultivar *Tilia intermedia* 'Palllida' is predominantly distributed along the upper end of the continuum, resulting in greater uncertainty in the estimated relationship across age groups and UHI magnitudes.
 
 
-(ref:heat-effect) Age-group averaged relationships between the LandSat-derived UHI and stem diameter for the ten most abundant species from the best model (i.e., Equation$~$\@ref(eq:gam-full) with LCZ6 as covariate). Note that estimates were derived with $LCZ6_{\over{150~m}} = 0.5$, and that y-axis scales differ between panel rows. The colored lines and bands are the averaged GAM fit, and gray lines are least-squares estimates fitted to these averages. Estimates were only generated within temperature ranges that a given species experienced. Density plots (scaled to match 100$~cm$ on the y-axis) show the distribution of individual trees along the urban heat continuum, aiding both with interpreting uncertainties (band width, "wiggliness") and assessing species' exposure to urban heat. A general shift from increased or stable growth with temperature at younger ages to a decrease for older trees is apparent.
+(ref:heat-effect) Age-group averaged relationships between the LandSat-derived UHI and stem diameter for the ten most abundant species from the best model (i.e., Equation$~$\@ref(eq:gam-full) with LCZ6 as covariate). Note that estimates were derived with $LCZ6_{\frac{}{150~m}} = 0.5$, and that y-axis scales differ between panel rows. The colored lines and bands are the averaged GAM fit, and gray lines are least-squares estimates fitted to these averages. Estimates were only generated within temperature ranges that a given species experienced. Density plots (scaled to match 100$~cm$ on the y-axis) show the distribution of individual trees along the urban heat continuum, aiding both with interpreting uncertainties (band width, "wiggliness") and assessing species' exposure to urban heat. A general shift from increased or stable growth with temperature at younger ages to a decrease for older trees is apparent.
 
 ```{r fig-heat-effect, fig.cap="(ref:heat-effect)", out.width="100%", include=TRUE, eval=TRUE}
 
@@ -840,8 +843,8 @@ knitr::include_graphics(here::here("analysis/figures/fig_model_day2007_lcz6_grow
 ```
 
 
-The chosen model also highlighted that, on average, trees growing in less urbanized environments (i.e., more open to mid-rise urban land cover; $LCZ6_{\over{150~m}}$) achieve somewhat greater diameters.
-Note, that planting bed area, similar to $LCZ6_{\over{150~m}}$, was identified as a covariate increasing explained deviance, both in models with and without a temperature measure, and represents an opportunity for further investigation, especially following additional data collection.
+The chosen model also highlighted that, on average, trees growing in less urbanized environments (i.e., more open to mid-rise urban land cover; $LCZ6_{\frac{}{150~m}}$) achieve somewhat greater diameters.
+Note, that planting bed area, similar to $LCZ6_{\frac{}{150~m}}$, was identified as a covariate increasing explained deviance, both in models with and without a temperature measure, and represents an opportunity for further investigation, especially following additional data collection.
 
 (ref:lcz6-effect) Age-group averaged relationships between the LCZ6 and stem diameter for two $Tilia$ genera from the best model (i.e., Equation$~$\@ref(eq:gam-full) with LandSat-derived UHI as excess heat measure). LCZ6 cover was derived as a weighted average within a radius of 150$~m$ around each tree. Note the identical shape, but difference in intercept as a result of the model specification with a global smooth the non-temperature covariate for all species (see Section$~$\@ref(sec:methods-gam-heat)); the UHI magnitude was fixed at $3^\circ C$ where most trees are present across age groups. The model identified a steady increase of average stem diameter with open to mid-rise urban land cover. 
 
@@ -914,7 +917,7 @@ Most important, these differences highlight the need for assessments of performa
 
 
 		
-## Utility, transferrability and limitations of approach
+## Utility, transferability and limitations of approach
 
 The major strength of this work is the estimation of growth sensitivity of urban trees to heat and other urban conditions at city-scale with little data and processing power requirements. 
 In particular,  differences within and between species across several dimensions (depending on model specification) are readily explored where only tree locations, age, diameter (or any other target) and selected variables are needed to implement this approach.
@@ -922,6 +925,7 @@ Indeed, due to the high temporal and spatial variability of controls on growth, 
 Thus, the approach followed here, with its comparatively simple data requirements, can be implemented in a variety of settings to gain initial and/or guiding insights on tree performance in a specific urban region, and also serve as a benchmark to compare other empirical estimates or mechanistic models with.
 It may even allow estimating tree performance under future conditions to some extent (e.g., considering increase in temperature alone for this study), but is of course contingent on data coverage (e.g., demographics, environmental gradients).
 Furthermore, the implementation of GAM models here with `mgcv::bam()` is computationally efficient [@wood2017a], making model testing, selection and final application a rapid process even for abundant observations (here $n >150000$ and processing times of $t < 60~s$ on a desktop computer for the selected model).
+Future research may focus on collecting additional data (e.g., increasing the coverage on planting bed area) and subsequently deriving species-specific smooths for ancillary environmental covariates.
 
 Two noteworthy caveats of the approach followed here lie in its empirical, data-driven nature, and its dependence on data quality.
 The presented results here are correlative. 
@@ -934,9 +938,9 @@ Further, the utility and transferability of the approach  *per se* were consider
 
 ## Implications 
 
-### Tree selection
+<!-- ### Tree selection -->
 
-Tree species selection for urban forests depends on several often competing factors -  such as aesthetic appeal and ecosystem service provision [e.g., @roman2020] - and has been focused on identifying trees suitable for current and future conditions for the last decades with increasingly strong evidence basis [e.g., @hirons2019]. 
+Tree species selection for urban forests and urban greening depends on several often competing factors -  such as aesthetic appeal and ecosystem service provision [e.g., @roman2020] - and has been focused on identifying trees suitable for current and future conditions for the last decades with increasingly strong evidence basis [e.g., @hirons2019]. 
 Here, biogeographical approaches aim to match natural (i.e., non-urban) species distributions within current bioclimatic envelopes with future conditions at a planting site [e.g., @broadmeadow2005].
 @watkins2020 used such "climate matching" to identify the space along environmental dimensions (heat, precipitation) which urban regions inhabit, falling within or extending the natural envelope. 
 Our work extends this approach by identifying the heat space (i.e., UHI range) occupied by several key species within a city.
@@ -944,29 +948,27 @@ This not only allows identifying species-specific and intra-specific (age-depend
 Notably, increased growth rates at higher temperatures, as reported here, also entail greater demographic turnover through mortality [@smith2019].
 <!-- young age groups for most species showed greater absolute growth with higher temperatures, . -->
 <!-- Indeed, growing season temperatures in the Berlin region are predicted to rise for the remainder of this century. -->
-Thus, as the majority of individuals were situated at the upper end of the temperature continuum, high temperature sensitivity may entail additional management due to faster turn-over - subsequent replacement by more appropriate species.
+Thus, as the majority of individuals were situated at the upper end of the temperature continuum, high temperature sensitivity may entail additional management due to faster turn-over and potentially subsequent replacement by more appropriate species.
 <!-- - ultimately, this will be a trade-off between tolerance of urban conditions, management goals (e.g., ecosystem services) and longevity. -->
 <!-- Assessments such as ours here may further aid in selecting appropriate species to achieve these goals. -->
 The insights derived from this study, and potentially others following this approach in the future, can therefore add another dimension to tree selection approaches implemented down to individual trees and locations.
 It thus complements quantitative and qualitative tools, such as the climate matching tool, ecological site classification or species-climate matrix [see @hirons2019; @roloff2009; @brune2016; and references therein].
 
+<!--  ### Green infrastructure management, planning and open data --> 
 
-### Green infrastructure management, planning and open data
+<!-- The availability and quality of green infrastructure data, such as street tree inventories, and environmental covariates, determine the confidence in any inference of infrastructure performance in relation to its context (e.g., temperature, planting bed area).  -->
+<!-- This is fundamental to inform management and planning to ensure that current and future targets are met.  -->
+<!-- Indeed, the execution of this study was possible due to the readily accessible and rich data sources provided by Berlin’s senate. -->
+<!-- However, few additions or alterations to data collection and provision schemes would have greatly  enhanced the utility and applicability of the data sets applied here.  -->
+<!-- We acknowledge the financial and logistic constraints that authorities are subject to, yet the suggestions below are likely valuable for this and other urban green infrastructure initiatives, as several of them are easily implemented. -->
 
-The availability and quality of green infrastructure data, such as street tree inventories, and environmental covariates, determine the confidence in any inference of infrastructure performance in relation to its context (e.g., temperature, planting bed area). 
-This is fundamental to inform management and planning to ensure that current and future targets are met. 
-Indeed, the execution of this study was possible due to the readily accessible and rich data sources provided by Berlin’s senate.
-However, few additions or alterations to data collection and provision schemes would have greatly  enhanced the utility and applicability of the data sets applied here. 
-We acknowledge the financial and logistic constraints that authorities are subject to, yet the suggestions below are likely valuable for this and other urban green infrastructure initiatives, as several of them are easily implemented.
-
-
-Urban tree databases typically represent a single time point (e.g., see https://opentrees.org), despite repeated inventories at regular and/or irregular intervals within cities or their districts.
-Storing and providing multi-temporal inventories, rather than over-writing existing records, would give planners and researchers a wealth of additional information on individual tree performance, which – even at low temporal coverage – would increase confidence in space-for-time substitutions, or make them superfluous. 
-We also urge authorities within and across cities to enhance and ideally standardize their (meta) data collection and provisioning to facilitate data quality control, increase confidence, and enable synthesis studies across districts and regions [@ossola2020]. 
-Key information includes (1) location, absolute age and planting date, (2) management regimes (e.g., planting regime, crown pruning, irrigation), (3) data collection protocol and body (e.g., actual measurement $vs.$ estimate or interpolation), as well as (4) tree provenance to account for potential differences in ecotype and/or acclimation [@watkins2020].
-However, there are financial and logistic trade-offs for data collection of the above, with contrasting needs across stakeholder groups [e.g., academics and authorities, @ostberg2013] where data that supports meeting long-term objectives should be prioritized.
-Less abundant species which are candidates for future plantings could be assessed with higher-quality standards regarding the above, to build a more reliable data source even at potentially lower coverage demographically and spatially.
-Managers and planners also should be aware of potential scale-limit of the urban fabric (e.g., $LCZ6_{\over{150~m}}~vs.~LCZ6_{\over{300~m}}$) on tree performance when altering surroundings or planting in a given area; efforts should be directed toward identifying the most pertinent environmental covariates and how their influence scales in space.
+Urban tree databases may only represent a single point in time (e.g., see https://opentrees.org), despite repeated inventories at regular and/or irregular intervals within cities or their districts.
+However, storing and providing multi-temporal inventories, rather than over-writing existing records, would give planners and researchers a wealth of additional information on individual tree performance, which – even at low temporal coverage – would increase confidence in space-for-time substitutions, or make them superfluous. 
+In this regard, it is recommended to enhance and standardize (meta) data collection and provisioning to facilitate data quality control, thereby increasing confidence in the data, and enabling synthesis studies across districts and cities [@ossola2020]. 
+Key information should include (1) location, absolute age and planting date, (2) management regimes (e.g., planting regime, crown pruning, irrigation), (3) data collection protocol and body (e.g., actual measurement $vs.$ estimate or interpolation), as well as (4) tree provenance to account for potential differences in ecotype and/or acclimation [@watkins2020].
+<!-- However, there are financial and logistic trade-offs for data collection of the above, with contrasting needs across stakeholder groups [e.g., academics and authorities, @ostberg2013] where data that supports meeting long-term objectives should be prioritized. -->
+<!-- Less abundant species which are candidates for future plantings could be assessed with higher-quality standards regarding the above, to build a more reliable data source even at potentially lower coverage demographically and spatially. -->
+In addition, managers and planners also should be aware of potential scale-limit of the urban fabric (e.g., $LCZ6_{\frac{}{150~m}}~vs.~LCZ6_{\frac{}{300~m}}$) on tree performance when altering surroundings or planting in a given area; efforts should be directed toward identifying the most pertinent environmental covariates and how their influence scales in space.
 
 Finally, open data was key for this study.
 We expressedly urge authorities to implement FAIR (findable, accessible, inter-operable and reusable) data principles to enable work similar to ours, as well as the creation of larger-scale databases and/or execution of synoptic studies [e.g., @ossola2020].
