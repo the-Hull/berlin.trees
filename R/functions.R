@@ -4499,38 +4499,106 @@ make_deviance_plot <- function(deviance_list,
     #     scale_fill_brewer(type = "qual", palette = "Set3")
     #
 
+
+
+    # temp (model) labels
+
+    temp_text <- data.frame(is_spatial = rep(TRUE, 4),
+                            name = c(
+                                "bold(No~Temperature)",
+                                "bold(Urbclim)",
+                                "bold(Landsat)",
+                                "bold(Berlin~EnvAt)"
+                            ),
+                            x = c(4, 9, 11.5, 14),
+                            y = 79) %>%
+        rbind(
+            data.frame(is_spatial = rep(FALSE, 4),
+                       name = c(
+                           "bold(No~Temperature)",
+                           "bold(Urbclim)",
+                           "bold(Landsat)",
+                           "bold(Berlin~EnvAt)"
+                       ),
+                       x = c(4, 9, 11.5, 14),
+                       y = 75.5)
+        )
+
+
     gplot <- ggplot(
         deviance_list$deviances %>%
-            dplyr::mutate(is_spatial = grepl("spatial", mod_group),
-                          is_tensor = grepl("_x_", fixed = TRUE, ignore.case = FALSE, mod_group),
-                          mod_class = sub("(.*[_]species[_])(.*)", replacement = "\\2", mod_group),
-                          mod_group = forcats::fct_relevel(mod_group, stringr::str_sort(levels(mod_group))),
-                          expvar = forcats::fct_relevel(
-                              expvar,
-                              "nullmodel",
-                              "soil_nutrients",
-                              "baumsch_flaeche",
-                              "building_height",
-                              "building_height300",
-                              "lcz6",
-                              "lcz6_300",
-                              "urbclim_mod_morning_3_5",
-                              "urbclim_mod_afternoon_13_15",
-                              "urbclim_mod_night_21_23",
-                              "day_2007",
-                              "night_2007") %>%
-                              forcats::fct_relabel(., .fun = ~gsub("urbclim_mod_", "", x = .x)) %>%
-                              forcats::fct_relabel(., .fun = ~gsub("mod2015_T2M", "", x = .x)) %>%
-                              forcats::fct_relabel(., .fun = ~gsub("HMEA", " H", x = .x))),
+            dplyr::mutate(
+                is_spatial = grepl("spatial", mod_group),
+                is_tensor = grepl("_x_", fixed = TRUE, ignore.case = FALSE, mod_group),
+                mod_class = sub("(.*[_]species[_])(.*)", replacement = "\\2", mod_group),
+                mod_class = dplyr::case_when(
+                    mod_class == "baumsch_flaeche_reBEZIRK" ~ "Planting Area",
+                    mod_class == "building_height_reBEZIRK" ~ "Building Height (150 m)",
+                    mod_class == "building_height300_reBEZIRK" ~ "Building Height (300 m)",
+                    mod_class == "lcz6_reBEZIRK" ~ "LCZ6 (150 m)",
+                    mod_class == "lcz6_300_reBEZIRK" ~ "LCZ6 (300 m)",
+                    mod_class == "NOTEMP" ~ "No Temperature",
+                    mod_class == "reBEZIRK" ~ "Temperature Only",
+                    mod_class == "reBEZIRK_full" ~ "Saturated Model",
+                    mod_class == "soil_nutrients_reBEZIRK" ~ "Soil Nutrients"
+
+                ) %>%
+                    forcats::fct_relevel(mod_class, "Saturated Model", "No Temperature", "Temperature Only", after = Inf),
+                mod_group = forcats::fct_relevel(mod_group, stringr::str_sort(levels(mod_group))),
+                expvar =
+                    forcats::fct_relabel(expvar, .fun = ~gsub("urbclim_mod_", "", x = .x)) %>%
+                    forcats::fct_relabel(., .fun = ~gsub("mod2015_T2M", "", x = .x)) %>%
+                    forcats::fct_relabel(., .fun = ~gsub("HMEA", " H", x = .x)),
+                expvar = case_when(
+                    expvar == "nullmodel" ~ "Age only (Null)",
+                    expvar == "soil_nutrients" ~ "Soil Nutrients",
+                    expvar == "baumsch_flaeche" ~ "Planting Area",
+                    expvar == "building_height" ~ "B. Height (150 m)",
+                    expvar == "building_height300" ~ "B. Height (300 m)",
+                    expvar == "lcz6" ~ "LCZ6 (150 m)",
+                    expvar == "lcz6_300" ~ "LCZ6 (300 m)",
+                    expvar == "morning_3_5" ~ "03 - 05 H",
+                    expvar == "afternoon_13_15" ~ "13 - 15 H",
+                    expvar == "night_21_23" ~ "21 - 23 H",
+                    expvar == "day_2007" ~ "Day time (2007)",
+                    expvar == "night_2007" ~ "Night time (2007)",
+                    expvar == "04 H" ~ "04 H",
+                    expvar == "14 H" ~ "14 H",
+                    expvar == "22 H" ~ "22 H"
+                ) %>% as.factor(),
+                expvar =
+                    forcats::fct_relevel(
+                        expvar,
+                        "Age only (Null)",
+                        "Soil Nutrients",
+                        "Planting Area",
+                        "B. Height (150 m)",
+                        "B. Height (300 m)",
+                        "LCZ6 (150 m)",
+                        "LCZ6 (300 m)",
+                        "03 - 05 H",
+                        "13 - 15 H",
+                        "21 - 23 H",
+                        "Day time (2007)",
+                        "Night time (2007)")
+            ),
         aes(x = expvar,
             y = deviance_explained * 100)) +
         # geom_line(data = mod_means, aes(x = y),  color = "black", group = 1, alpha = 0.3) +
         # annotate("text", x = c(2.5, 5.5, 8, 10), y = rep(0.82, 4), label = c("no temp", "Urbclim", "Landsat", "Berlin UA")) +
         # annotate("text", x = c(1:4), y = rep(0.82, 4), label = c("bla", "blu", "bli", "kli")) +
-        annotate("text", x = c(4), y = rep(80, 1), label = "bold(no~temp)", parse = TRUE) +
-        annotate("text", x = c(9),   y = rep(80, 1), label = "bold(Urbclim)", parse = TRUE) +
-        annotate("text", x = c(11.5),   y = rep(80, 1), label = "bold(Landsat)", parse = TRUE) +
-        annotate("text", x = c(14),  y = rep(80, 1), label = "bold(Berlin~EnvAt)", parse = TRUE) +
+
+        # annotate("text", x = c(4), y = rep(80, 1), label = "bold(no~temp)", parse = TRUE) +
+        # annotate("text", x = c(9),   y = rep(80, 1), label = "bold(Urbclim)", parse = TRUE) +
+        # annotate("text", x = c(11.5),   y = rep(80, 1), label = "bold(Landsat)", parse = TRUE) +
+        # annotate("text", x = c(14),  y = rep(80, 1), label = "bold(Berlin~EnvAt)", parse = TRUE) +
+
+        geom_text(data = temp_text,
+                  aes(x = x, y = y, label = name),
+                  parse = TRUE) +
+
+
+
         annotate(geom = "rect", xmin = 0.5, xmax = 7.5, ymin = -Inf, ymax = Inf, alpha = 0.3) +
         annotate(geom = "rect", xmin = 7.5, xmax = 10.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "steelblue1") +
         annotate(geom = "rect", xmin = 10.5, xmax = 12.5, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "darkorange") +
@@ -4557,18 +4625,26 @@ make_deviance_plot <- function(deviance_list,
                 ),
             ncol = 2),
             shape = guide_legend(override.aes = list(size = 5))) +
-        theme_minimal() +
+        theme_minimal(base_size = 14) +
         theme(legend.position = "top",
               legend.direction = "vertical",
-              strip.text = element_text(size = 12)) +
+              strip.text = element_text(size = 14)) +
         # scale_fill_brewer(type = "qual", palette = "Set3") +
         scale_shape_manual(values = c("TRUE" = 23, "FALSE" = 21), labels = c("Interaction", "Additive")) +
         scale_fill_manual(values = pals::kelly(n = n_distinct(sub("(.*[_]species[_])(.*)", replacement = "\\2", deviance_list$deviances$mod_group))),
         # scale_fill_manual(values = pals::kelly(n = n_distinct(deviance_list$deviances$mod_group)),
                           aesthetics = c("fill")) +
-        scale_x_discrete(guide = guide_axis(n.dodge = 3) ) +
-        facet_wrap(~is_spatial, ncol = 1, labeller = labeller(is_spatial = c('TRUE' = "spatial - f(x,y)", 'FALSE' = 'non-spatial')))  +
-        labs(x = NULL, y = "Explained Deviance (%)", shape = "Temperature structure")
+        scale_x_discrete(guide = guide_axis(angle =  - 45) ) +
+        # scale_x_discrete(guide = guide_axis(n.dodge = 3) ) +
+        facet_wrap(~is_spatial,
+                   ncol = 1,
+                   labeller = labeller(is_spatial = c('TRUE' = "spatial - f(x,y)", 'FALSE' = 'non-spatial')),
+                   scales = "free_y")  +
+        labs(x = NULL,
+             y = "Explained Deviance (%)",
+             shape = "Temperature structure",
+             fill = "Model Structure",
+             size = "Sample (n)")
 
     ggplot2::ggsave(filename = file,
                     plot = gplot,
