@@ -511,7 +511,7 @@ The urban heat loading was then calculated as
 where $T$ is temperature ($^\circ C$) $x$ and $y$ define an urban grid cell.
 The LandSat-derived surface UHI data set by @chakraborty2019 (referred to as LandSat) estimates its measure in a similar fashion and the reader is referred to the detailed description therein; note this data set provides day and night-time averaged UHI estimates at 500$~m$ resolution, which were extracted for the hottest summer in this record (2007).
 
-(ref:temp-overview) Temp overviews; rows are landsat, berlin environmental atlas, and UrbClim, columns are morning, day/afternoon, night. **ADD Labels for Data source and time of day at left and bottom**
+(ref:temp-overview) Overview of temperature datasets used for assessing modelling impact on tree growth, with data sources in rows and averaged times in columns. Note the varying spatial coverage and resolution.
 
 ```{r fig-temp-overview, fig.cap="(ref:temp-overview)",fig.width = 12, fig.height = 12, out.width="100%"}
 
@@ -727,26 +727,44 @@ The functions $f_j$ are for species-specific smooths [i.e., with individual smoo
 The covariates for planting bed area and soil nutrient availability were log transformed to account for their skewed distribution, improving the estimation of coefficients for their respective basis functions.
 Note, that Equation$~$\@ref(eq:gam-age) was considered as the appropriate null model for interpretations, and a model including all covariates and the temperature-age interaction was tested as a saturated model.
 Models were implemented with `mgcv::bam()` [@wood2017a;@li2020a] and readers are referred to the detailed implementation in the supplemental material code.
-
 Considering all combinations of (excess) heat measures and covariates (with point, as well as 150/300$~m$ extractions), a total of `r nrow(drake::readd(bam_dbh_filtered))` models were applied.
-We selected the model with the highest explanatory power, based on residual deviance and observed vs. predicted fit, with comparatively largest sample size for final analyses.
-From this model we derived age and species dependent $DBH$ averages across a temperature measure from predicted values in 5-year age groups starting at 30, 45, 60, 75, 90.
+With these models, we derived age and species dependent $DBH$ averages across a temperature measure from predicted values in 5-year age groups starting at 30, 45, 60, 75, 90
+
+
+Model selection was based on explained deviance (similar to explained variance) and the Aikake's information criteria (AIC).
+The best model, considered having the highest explanatory power (highest explained deviance) and simplest structure (lowest AIC), was chosen used for final analyses.
+Explained deviance assesses model fit in generalized linear modelling similar to explained variance in ordinary least squares modelling, but relies on a generalized form of residual, i.e., deviance residuals [see @wood2017].
+Deviance for the Gamma distribution is calculated as
+
+
+\begin{equation}
+D(y, \hat{\mu}) = 2 \cdot \left\{ \frac{y−\hat{\mu}}{\hat{\mu}}  − log(\frac{y}{\hat{\mu}}) \right\}
+
+(\#eq:gam-deviance)
+\end{equation}
+
+where $y$ is the observed and $\hat{\mu}$ the expected value.
+
 
 As the spatial extent and coverage varied between temperature and ancillary data, more complex models (and specifically those including planting bed area and LandSat temperatures) typically also had fewer total observations.
-While this prevented a full comparison with information-based model selection criteria, such as Aikake's (AIC), the appropriateness of models that differed only in their implementation of the temperature-age interaction (i.e., $f_j(temp_i)$ $vs.$ $f_j(temp_i, age_i)$) could be assessed.
+While this prevented a full comparison with information-based model selection criteria like AIC, the appropriateness of models that differed only in their implementation of the temperature-age interaction (i.e., $f_j(temp_i)$ $vs.$ $f_j(temp_i, age_i)$) could be assessed.
 For this reason, the suite of developed models presented above were limited to comparatively simple structures (i.e., few terms, interactions and restricted number of basis functions), reducing the potential for choosing over-fitted models without formal comparison.
 AIC is calculated as:
 
+\begin{equation}
+AIC= −2log(L) \cdot 2k
+(\#eq:aic)
+\end{equation}
 
-
-$$AIC= −2log(L) \cdot 2k$$
 
 where $L$ is the maximum likelihood estimate, and $k$ is the number of parameters.
 Where any two comparable models had a $| \Delta AIC| > 10$, we considered the model with the lower score more suitable. 
 <!-- Future research may focus on collecting additional data (e.g., increasing the coverage on planting bed area) and subsequently deriving species-specific smooths for ancillary environmental covariates. -->
 We chose to carry out the analysis in its current form rather than on considerably smaller but comparable sample sizes across models, to identify the strongest relationships in the existing data.
 This allowed us to highlight the utility of the approach *per se* and for Berlin in particular.
-**Measures used to asses goodness-of-fit were residual deviance, RSME and MAE (add formuals)**
+Lastly, we also report the root mean squared error ($RSME = \sqrt{\frac{1}{n}  \sum_{i=1}^{n}{(y_i - \hat{y}_i)^2}}$ and mean absolute error ($MAE = \frac{1}{n}|y_i - \hat{y}_i|$ for the final model.
+
+
 
 
 
