@@ -124,7 +124,7 @@ Furthermore, @moser-reischl2019a identified positive associations between air te
 <!-- [@briber2015; @obrien2012] … generally increased growth -->
 <!-- Contrastingly,  @gillner2014 highlight decreased growth for *Acer* species  (*A. platanoides* and *pseudoplatanus*), *Platanus x hispanica* and *Quercus rubra* with higher summer temperatures of the preceding year, especially when compounded with drought, in another major German city (Dresden).  -->
 <!-- @quigley2004 identified absolute growth potential decreased for species between rural and urban conspecifics, yet assessments were -->
-<!-- <!-- lacked spatially-explicit effect size estimates across the urban-rural space and  --> -->
+<!-- <!-- lacked spatially-explicit effect size estimates across the urban-rural space and  --> 
 <!-- limited to comparatively small sample sizes per group ($n_{total}~=~230$ divided in 15 species, 3 groups and 2 locations). -->
 <!-- @pretzsch2017 inferred enhanced growth in recent decades and across urban locations spanning several latitudes, including Berlin - however, only 145 individuals of one species (*T. cordata*) were assessed there. -->
 <!-- As mentioned previously, climate-growth relationships can vary substantially between species, and in fact, @quigley2004 and @pretzsch2017 report contrasting results regarding average tree diameter, i.e. smaller or larger for urban $vs.$ rural trees of same age. -->
@@ -154,7 +154,7 @@ It is thus likely that the varying and even contrasting growth responses observe
 These limitations could be overcome by developing extensive dendroecological surveys (i.e., incremental growth) and/or inventories (single or repeat) combined with pertinent environmental data with adequate spatio-temporal coverage and resolution. 
 Inventories are logistically and financially more feasible, and - together with environmental data - are increasingly more available [e.g. @ossola2020] due to open data policies and their value being recognized across domains for urban greenspace planning and adaptation [@hansen2019; @monteiro2020].
 Berlin, as one of the greenest cities in Europe, provides an openly accessible tree inventory, with spatio-temporal environmental data sets relevant to tree growth. 
-It features nearly 650000 individuals covering 94 genera and some 600 species and/or cultivars, listing information on location, stem diameter (at breast height; $DBH$), and stem height, among other variables, for the majority of street and park trees.
+It features nearly 700000 individuals covering 94 genera and some 600 species and/or cultivars, listing information on location, stem diameter (at breast height; $DBH$), and stem height, among other variables, for the majority of street and park trees.
 For this study, our objective was to assess the impact of excess urban heat, i.e. the UHI effect, on tree growth ($DBH$) using this openly available inventory data set, complemented by additional open data sources as well as incremental growth data from tree cores. 
 The assessment relied on flexible statistical models that could capture species and location-specific responses to heat and other urban factors.
 Specifically, we aimed to (1) assess heat exposure of the most abundant species; (2) determine the impact of (excess) heat on stem growth across tree age classes with a space-for-time substitution; (3) highlight the role of location-specific environmental factors in mediating temperature responses.
@@ -314,7 +314,7 @@ dsources$Accessed <- format(dsources$Accessed, "%b '%y")
 
 ```{r tab-dsources, eval = TRUE}
 
-caption <- "Data description used for maps/visualizations and analyses. Resolution and radius are provided in $m$, the latter is the buffer in which data was averaged around each trees. A zero-radius refers to a point extraction from categorical and location specific data. Polygons with radius data were rasterized to a resolution of $5~m$"
+caption <- "Data description used for maps/visualizations and analyses. Resolution and radius are in $m$, the latter is the buffer in which data was averaged around each tree. A zero-radius refers to a point extraction from categorical and location specific data. Polygons with radius data were rasterized to a resolution of $5~m$"
 caption_ov_short <- "Data descriptions"
 
 dsource <- dsources[-which(dsources$File == 'Wintertime_gridded_UHI_data.zip'), ]
@@ -406,7 +406,7 @@ table_ds %>%
 
 Berlin’s open data provided tree inventories including species, age, location, and circumference which was transformed into diameter.
 Note that only street trees in urban, not rural areas or within green spaces, were considered here, but individual trees may grow along streets adjacent to green spaces and parks of varying sizes.
-Implausible observations, likely from erroneous data entry, were removed.
+Implausible observations, possibly from erroneous data entry, were removed.
 Additional manual data processing for quality control was done with a bespoke software  `datacleanr` by Hurley *et al*. (submitted), where obvious outliers or clearly interpolated data were removed; the latter was deemed necessary, as several observations in multiple city districts were derived by linear relationships (i.e., straight-line), which do not capture the ontogenic growth dynamics of trees, and leave no variation related to variables other than age.
 All of these operations were recorded, and can be viewed and reproduced via the supplementary code.
 Lastly, observations with unlikely diameter-age combinations were identified via the residuals of a generalized linear model between diameter and age with a Gamma log-link distribution: if individual residuals exceeded seven times the median absolute deviation of all residuals, they were removed.
