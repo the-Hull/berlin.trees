@@ -1004,6 +1004,14 @@ plan <- drake::drake_plan(
 
     overview_table = make_overview_table(full_data_set_clean),
 
+   n_total_obs = nrow(model_df_stat_filtered),
+
+   n_total_species_obs = model_df_stat_filtered %>%
+       dplyr::group_by(species_corrected) %>%
+       dplyr::count(sort = TRUE) %>%
+       dplyr::rename('Species' = 1) %>%
+       mutate(Species = paste0('*',Species, '*')),
+
 
    # Generate table of genera age distribution
 
