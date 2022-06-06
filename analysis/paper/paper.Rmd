@@ -691,6 +691,75 @@ However, here they serve as a proxy for growth between young ($\gtrapprox 1960$)
 ### Stem diameter model development and selection {#sec:methods-gam-heat}
 
 We focused the analyses on the ten most abundant species after data quality control with a minimum of 10000 observations to ensure greatest possible spatial coverage and to increase confidence in estimates, totalling `r drake::readd(n_total_obs)` trees.
+
+
+
+
+
+```{r model-samples}
+
+drake::loadd(n_total_species_obs)
+
+
+caption <- "Ten Most abundant species and total sample size (n) for which GAM models were developed. Note that ancillary data availability across variables determined final sample sizes in individual models."
+caption_ov_short <- caption
+
+
+if (grepl("docx", out_format) ){
+  table_ds <- n_total_species_obs %>% 
+  knitr::kable(booktabs = TRUE,
+              
+             caption = caption,
+             caption.short = caption,
+             format = "pipe",
+             escape = FALSE) 
+} else if (knitr::is_latex_output() ) {
+  table_ds <- n_total_species_obs %>% 
+  knitr::kable(booktabs = TRUE,
+              
+             caption = caption,
+             caption.short = caption,
+             format = "latex",
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             escape = FALSE) 
+  
+} else {
+table_ds <- n_total_species_obs %>% 
+  knitr::kable(booktabs = TRUE,
+               format = "html",
+               
+             caption = caption,
+             caption.short = caption_ov_short,
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             escape = FALSE) 
+}
+
+
+table_ds %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 11,
+                            latex_options = c("hold_position")) %>% 
+  kableExtra::row_spec(0, bold = TRUE, font_size = 12) 
+
+
+
+
+    
+
+```
+
+
+
 The diameter ($DBH$) of these species was modeled using GAMs as follows:
 
 
@@ -724,7 +793,7 @@ These were compared to a sub-set of models without a spatial component (cf. Equa
 We also tested a suite of models without the spatial smooth for comparison
 **what's the impact of remaining auto correlation? inflated errors, larger coefficients?**
 
-Further, we implemented the interaction between temperature and age (i.e., $f_j(temp, age)$ as tensor smooths [@wood2006] to account for the different variable scales (i.e., units); all models were also tested without this interaction using a thin plate regression spline smooth for temperature (not shown in equations above).
+Further, we implemented the interaction between temperature and age (i.e., $f_j(temp, age)$) as tensor smooths [@wood2006] to account for the different variable scales (i.e., units); all models were also tested without this interaction using a thin plate regression spline smooth for temperature (not shown in equations above).
 The functions $f_j$ are for species-specific smooths [i.e., with individual smoothness penalties and functional shapes as detailed by @pedersen2019].
 The covariates for planting bed area and soil nutrient availability were log transformed to account for their skewed distribution, improving the estimation of coefficients for their respective basis functions.
 Note, that Equation$~$\@ref(eq:gam-age) was considered as the appropriate null model for interpretations, and a model including all covariates and the temperature-age interaction was tested as a saturated model.
@@ -836,11 +905,13 @@ knitr::include_graphics(here::here("analysis/figures/fig_model_deviance.png"))
 
 ```
 
-**Add text for figure 3.3!**
+
+The final model, comprising a temperature-age interaction, the covariate $LCZ6_{\frac{}{150~m}}$ and LandSat derived UHI following Equation$~$\@ref(eq:gam-full), showed good agreement between predicted and observed $DBH$ for the majority of observations (Figure$~$\@ref(fig:fig-model-performance); $R^2~=~0.79$) resulting in a fairly low MAE of $6.03~cm$, and a RMSE of $7.7\cdot 10^{-7}$. 
+While some prediction errors are large (spread in Figure$~$\@ref(fig:fig-model-performance)), the predictions are unbiased (see correspondence of 1:1 and least-squares fit in Figure$~$\@ref(fig:fig-model-performance)).
+Thus, we consider using species and age-group averages as appropriate for identifying and discussing relationships between $DBH$ and other covariates.
 
 
-
-(ref:model-performance) Predicted $vs.$ observed data for the best model according to explained deviance and 'local' AIC comparison, based on the LandSat-derived UHI measure [@chakraborty2019] for average summer conditions (2007) and LCZ6 [open to mid-rise,  @stewart2012]. Hexagons and colors represent x-y bins (i.e., in the observed-predicted space) and their counts, and the red line is a least-squares fit.  The model captures the mean response well, as indicated by lighters colors along dashed 1:1 line, and its close approximation by the least squares fit, as well as model metrics (see text label in plot). However, the generally large scatter around this mean response indicates that predictions on individual-level would be inappropriate.
+(ref:model-performance) Predicted $vs.$ observed data for the best model according to explained deviance and AIC comparison, based on the LandSat-derived UHI measure [@chakraborty2019] for average summer conditions (2007) and LCZ6 [open to mid-rise,  @stewart2012]. Hexagons and colors represent x-y bins (i.e., in the observed-predicted space) and their counts (N), and the red line is a least-squares fit.  The model captures the mean response well, as indicated by lighters colors along dashed 1:1 line, and its close approximation by the least squares fit, as well as model metrics (see text label in plot).
 
 ```{r fig-model-performance, fig.cap="(ref:model-performance)", out.width="50%", include=TRUE, eval=TRUE}
 
