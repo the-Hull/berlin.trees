@@ -39,6 +39,16 @@ bibliography:
   - 07_phenoTram.bib
 csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
 abstract: |
+
+The manifold ecological and societal benefits urban trees provide depend on their health and performance. 
+Excess heat common for cities (i.e., Urban Heat Island; UHI) combined with other urban conditions, affects tree physiological processes with outcomes ranging from enhanced growth to branch die-back and even mortality. 
+Thus, assessing the effect of increased temperatures on urban trees is necessary for understanding and adapting to current and expected climatic and socio-economic conditions – as well as their interactions - in this century.
+The growing conditions of urban trees vary substantially in space and time, jointly controlled by local climate and the urban fabric. 
+However, to date, studies assessing growth dynamics have primarily been based on remote sensing (typically with productivity as a growth proxy) focusing on community rather than individual level, or relied on labor-intensive methods that limit sample sizes and thus spatial (and temporal) coverage. 
+Here, we present an approach to assess the growth potential of tree species in relation to the UHI in a large metropolis, Berlin (Germany), accounting for location-specific factors down to individual tree level for an extensive inventory data set comprising nearly 700000 trees. 
+Out of a suite of generalized additive models based on different UHI or temperature data sets and ancillary environmental/urban data, we identified the best variable combinations to predict diameter at breast height while accounting for age, management effects, and the spatial dependence of observations (autocorrelation) for the ten most abundant street trees.
+
+
   **Populate..We analzed tree growth (potential) and its relationship with the Urban Heat Island (UHI) effect, as well as other characteristics of the urban fabric, for the ten most abundant street tree species/cultivars in Berlin using open data. We identify the most heat-sensitive species, give recommendations for future tree selections and provide guidelines to for local authorities for the prioitiziation of data acquisition (i.e., inventories) as well as data provision.**
 keywords: |
   Uferbaeume; Anlagenbaeume; Strassenbaeume; 
@@ -288,7 +298,7 @@ knitr::include_graphics(here::here("analysis/figures/map_00_studyarea.png"))
 
 <!-- ## General approach: space-for-time analyses -->
 
-<!-- <!-- Species-specifc growth responses in relation across Berlin were assessed in relat --> -->
+<!-- <!-- Species-specifc growth responses in relation across Berlin were assessed in relat --> 
 <!-- We modeled the stem diameter ($DBH$) of Berlin’s ten most abundant species (contingent to ancillary data availability) in relationship to their location, age, a measure of (excess) heat [UrbClim by @deridder2015; Berlin Environmental Atlas models; LandSat-derived surface urban heat island by @chakraborty2019], and additional environmental covariates with generalized additive models (GAMs, see Section$~$\@ref(sec:stat-gam) for details). -->
 <!-- Covariates were extracted at 150 and 300$~m$ to infer the impact of reference scale of the urban fabric on tree growth.  -->
 <!-- From all tested models the most suitable (i.e., parsimonious with highest explanatory) was employed for further analyses. -->
@@ -547,7 +557,7 @@ The latter was chosen as an increase reflects a transition away from densely urb
 <!-- Species-specifc growth responses in relation across Berlin were assessed in relat -->
 We modeled the stem diameter ($DBH$) of Berlin’s ten most abundant species (contingent to ancillary data availability) in relationship to their location, age, a measure of (excess) heat [UrbClim by @deridder2015; Berlin Environmental Atlas models; LandSat-derived surface urban heat island by @chakraborty2019], and additional environmental covariates with generalized additive models (GAMs, see Section$~$\@ref(sec:stat-gam) for details).
 Covariates were extracted at 150 and 300$~m$ to infer the impact of reference scale of the urban fabric on tree growth. 
-From all tested models the most suitable (i.e., parsimonious with highest explanatory) was employed for further analyses.
+From all tested models the most suitable (i.e., parsimonious with highest explanatory power) was employed for further analyses.
 
 
 ## Dendrochronological sampling {#sec:methods-dendro}
@@ -793,7 +803,7 @@ These were compared to a sub-set of models without a spatial component (cf. Equa
 We also tested a suite of models without the spatial smooth for comparison
 **what's the impact of remaining auto correlation? inflated errors, larger coefficients?**
 
-Further, we implemented the interaction between temperature and age (i.e., $f_j(temp, age)$) as tensor smooths [@wood2006] to account for the different variable scales (i.e., units); all models were also tested without this interaction using a thin plate regression spline smooth for temperature (not shown in equations above).
+Furthermore, we implemented the interaction between temperature and age (i.e., $f_j(temp, age)$) as tensor smooths [@wood2006] to account for the different variable scales (i.e., units); all models were also tested without this interaction using a thin plate regression spline smooth for temperature (not shown in equations above).
 The functions $f_j$ are for species-specific smooths [i.e., with individual smoothness penalties and functional shapes as detailed by @pedersen2019].
 The covariates for planting bed area and soil nutrient availability were log transformed to account for their skewed distribution, improving the estimation of coefficients for their respective basis functions.
 Note, that Equation$~$\@ref(eq:gam-age) was considered as the appropriate null model for interpretations, and a model including all covariates and the temperature-age interaction was tested as a saturated model.
@@ -833,7 +843,7 @@ Where any two comparable models had a $| \Delta AIC| > 10$, we considered the mo
 <!-- Future research may focus on collecting additional data (e.g., increasing the coverage on planting bed area) and subsequently deriving species-specific smooths for ancillary environmental covariates. -->
 We chose to carry out the analysis in its current form rather than on considerably smaller but comparable sample sizes across models, to identify the strongest relationships in the existing data.
 This allowed us to highlight the utility of the approach *per se* and for Berlin in particular.
-Lastly, we also report the root mean squared error ($RSME = \sqrt{\frac{1}{n}  \sum_{i=1}^{n}{(y_i - \hat{y}_i)^2}}$) and mean absolute error ($MAE = \frac{1}{n}|y_i - \hat{y}_i|$) for the final model.
+Lastly, we also report the root mean squared error ($RMSE = \sqrt{\frac{1}{n}  \sum_{i=1}^{n}{(y_i - \hat{y}_i)^2}}$) and mean absolute error ($MAE = \frac{1}{n}|y_i - \hat{y}_i|$) for the final model.
 
 
 
@@ -1120,18 +1130,18 @@ AGH and IH were supported through the Helmholtz-Climate-Initiative (HI-CAM), fun
 
 `r pgbreak()`
 
-### Colophon
+<!-- ### Colophon -->
 
-This report was generated on `r Sys.time()` using the following computational environment and dependencies: 
+<!-- This report was generated on `r Sys.time()` using the following computational environment and dependencies:  -->
 
-```{r colophon, cache = FALSE}
-# which R packages and versions?
-if ("devtools" %in% installed.packages()) devtools::session_info()
-```
+<!-- ```{r colophon, cache = FALSE} -->
+<!-- # which R packages and versions? -->
+<!-- if ("devtools" %in% installed.packages()) devtools::session_info() -->
+<!-- ``` -->
 
-The current Git commit details are:
+<!-- The current Git commit details are: -->
 
-```{r}
-# what commit is this file at? 
-if ("git2r" %in% installed.packages() & git2r::in_repository(path = ".")) git2r::repository(here::here())  
-```
+<!-- ```{r} -->
+<!-- # what commit is this file at?  -->
+<!-- if ("git2r" %in% installed.packages() & git2r::in_repository(path = ".")) git2r::repository(here::here())   -->
+<!-- ``` -->

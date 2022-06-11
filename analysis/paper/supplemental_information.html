@@ -205,7 +205,7 @@ summary {
 <h4 class="author">Alexander G. Hurley<span class="math inline">\(^{a *}\)</span>, Ingo Heinrich<span class="math inline">\(^a\)</span>, …</h4>
 <h4 class="author"><span class="math inline">\(^a\)</span> <em>Geoforschungszentrum Potsdam, Section 4.3, Germany</em></h4>
 <h4 class="author">* Corresponding author: <a href="mailto:hurley@gfz-potsdam.de" class="email">hurley@gfz-potsdam.de</a></h4>
-<h4 class="date">06 June, 2022</h4>
+<h4 class="date">11 June, 2022</h4>
 <div class="abstract">
 <p class="abstract">Abstract</p>
 <p><strong>This document outlines the rationale for an analysis of tree growth (potential) and its relationship with the Urban Heat Island (UHI) effect in Berlin using an extensive, publicly available data set. It introduces preliminary results and provides an outlook for up-coming and potential work.</strong></p>
@@ -240,7 +240,7 @@ text-align: justify}
 </div>
 <div id="colophon" class="section level3" number="2.0.1">
 <h3><span class="header-section-number">2.0.1</span> Colophon</h3>
-<p>This report was generated on 2022-06-06 18:34:04 using the following computational environment and dependencies:</p>
+<p>This report was generated on 2022-06-11 18:26:09 using the following computational environment and dependencies:</p>
 <pre><code>#&gt; ─ Session info ───────────────────────────────────────────────────────────────
 #&gt;  setting  value                       
 #&gt;  version  R version 4.1.0 (2021-05-18)
@@ -251,7 +251,7 @@ text-align: justify}
 #&gt;  collate  en_US.UTF-8                 
 #&gt;  ctype    en_US.UTF-8                 
 #&gt;  tz       Europe/Berlin               
-#&gt;  date     2022-06-06                  
+#&gt;  date     2022-06-11                  
 #&gt; 
 #&gt; ─ Packages ───────────────────────────────────────────────────────────────────
 #&gt;  ! package       * version  date       lib source        
@@ -262,15 +262,15 @@ text-align: justify}
 #&gt;  P base64url       1.4      2018-05-14 [?] CRAN (R 4.1.0)
 #&gt;  P blob            1.2.1    2020-01-20 [?] CRAN (R 4.1.0)
 #&gt;  P bookdown      * 0.21     2020-10-13 [?] CRAN (R 4.1.0)
-#&gt;  P boot            1.3-28   2021-05-03 [?] CRAN (R 4.0.5)
+#&gt;    boot            1.3-28   2021-05-03 [4] CRAN (R 4.0.5)
 #&gt;  P broom           0.7.9    2021-07-27 [?] CRAN (R 4.1.0)
 #&gt;  P callr           3.7.0    2021-04-20 [?] CRAN (R 4.1.0)
 #&gt;  P cellranger      1.1.0    2016-07-27 [?] CRAN (R 4.1.0)
 #&gt;  P ckanr         * 0.5.0    2020-07-30 [?] CRAN (R 4.1.0)
-#&gt;  P class           7.3-19   2021-05-03 [?] CRAN (R 4.0.5)
+#&gt;    class           7.3-19   2021-05-03 [4] CRAN (R 4.0.5)
 #&gt;  P classInt        0.4-3    2020-04-07 [?] CRAN (R 4.1.0)
 #&gt;  P cli             3.0.0    2021-06-30 [?] CRAN (R 4.1.0)
-#&gt;  P codetools       0.2-18   2020-11-04 [?] CRAN (R 4.0.3)
+#&gt;    codetools       0.2-18   2020-11-04 [4] CRAN (R 4.0.3)
 #&gt;  P colorspace      1.4-1    2019-03-18 [?] CRAN (R 4.1.0)
 #&gt;  P crayon          1.4.1    2021-02-08 [?] CRAN (R 4.1.0)
 #&gt;  P crul            1.0.0    2020-07-30 [?] CRAN (R 4.1.0)
@@ -315,9 +315,9 @@ text-align: justify}
 #&gt;  P intervals       0.15.2   2020-04-04 [?] CRAN (R 4.1.0)
 #&gt;  P jsonlite        1.7.2    2020-12-09 [?] CRAN (R 4.1.0)
 #&gt;  P kableExtra    * 1.3.4    2021-02-20 [?] CRAN (R 4.1.0)
-#&gt;  P KernSmooth      2.23-20  2021-05-03 [?] CRAN (R 4.0.5)
+#&gt;    KernSmooth      2.23-20  2021-05-03 [4] CRAN (R 4.0.5)
 #&gt;  P knitr           1.33     2021-04-24 [?] CRAN (R 4.1.0)
-#&gt;  P lattice         0.20-44  2021-05-02 [?] CRAN (R 4.1.0)
+#&gt;    lattice         0.20-44  2021-05-02 [4] CRAN (R 4.1.0)
 #&gt;  P lifecycle       1.0.0    2021-02-15 [?] CRAN (R 4.1.0)
 #&gt;  P listenv         0.8.0    2019-12-05 [?] CRAN (R 4.1.0)
 #&gt;  P lme4          * 1.1-27   2021-05-15 [?] CRAN (R 4.1.0)
@@ -325,7 +325,7 @@ text-align: justify}
 #&gt;  P magrittr      * 2.0.1    2020-11-17 [?] CRAN (R 4.1.0)
 #&gt;  P mapproj         1.2.7    2020-02-03 [?] CRAN (R 4.1.0)
 #&gt;  P maps            3.3.0    2018-04-03 [?] CRAN (R 4.1.0)
-#&gt;  P MASS            7.3-54   2021-05-03 [?] CRAN (R 4.0.5)
+#&gt;    MASS            7.3-54   2021-05-03 [4] CRAN (R 4.0.5)
 #&gt;  P Matrix        * 1.3-3    2021-05-04 [?] CRAN (R 4.1.0)
 #&gt;  P matrixStats     0.57.0   2020-09-25 [?] CRAN (R 4.1.0)
 #&gt;  P memoise         1.1.0    2017-04-21 [?] CRAN (R 4.1.0)
@@ -333,7 +333,7 @@ text-align: justify}
 #&gt;  P minqa           1.2.4    2014-10-09 [?] CRAN (R 4.1.0)
 #&gt;  P munsell         0.5.0    2018-06-12 [?] CRAN (R 4.1.0)
 #&gt;  P ncdf4         * 1.17     2019-10-23 [?] CRAN (R 4.1.0)
-#&gt;  P nlme            3.1-152  2021-02-04 [?] CRAN (R 4.0.3)
+#&gt;    nlme            3.1-152  2021-02-04 [4] CRAN (R 4.0.3)
 #&gt;  P nloptr          1.2.2.2  2020-07-02 [?] CRAN (R 4.1.0)
 #&gt;  P pals            1.7      2021-04-17 [?] CRAN (R 4.1.0)
 #&gt;  P patchwork     * 1.1.1    2020-12-17 [?] CRAN (R 4.1.0)
@@ -398,14 +398,16 @@ text-align: justify}
 #&gt;  P zoo             1.8-9    2021-03-09 [?] CRAN (R 4.1.0)
 #&gt; 
 #&gt; [1] /home/hurley/_work/renv/berlin.trees-c2f6692a/R-4.1/x86_64-pc-linux-gnu
-#&gt; [2] /tmp/RtmpiD7fmH/renv-system-library
-#&gt; [3] /tmp/Rtmpdadncj/renv-system-library
+#&gt; [2] /usr/local/lib/R/site-library
+#&gt; [3] /usr/lib/R/site-library
+#&gt; [4] /usr/lib/R/library
+#&gt; [5] /tmp/RtmpxLGnDx/renv-system-library
 #&gt; 
 #&gt;  P ── Loaded and on-disk path mismatch.</code></pre>
 <p>The current Git commit details are:</p>
 <pre><code>#&gt; Local:    master /home/hurley/_work/p_024_GFZ_berlin_trees/berlin.trees
 #&gt; Remote:   master @ origin (https://github.com/the-Hull/berlin.trees)
-#&gt; Head:     [a3e2758] 2022-06-06: updating writing</code></pre>
+#&gt; Head:     [e45b32b] 2022-06-06: abs meth missing</code></pre>
 </div>
 </div>
 
