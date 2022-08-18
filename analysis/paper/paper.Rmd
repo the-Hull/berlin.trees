@@ -39,6 +39,7 @@ header-includes:
 - \usepackage{tabu}
 - \usepackage{threeparttable}
 - \usepackage[normalem]{ulem}
+
 bibliography: 
   - uhi_references.bib
   - 04_gfz_UHI.bib
@@ -280,17 +281,7 @@ The city provides extensive public green space covering around 30$~\%$ of its ar
 <!-- It has a pronounced urban heat island, owing to its high degree of built-up and sealed surfaces, with air temperatures up to 12$^\circ C$ higher in urban compared to adjacent rural areas [@fenner2014]. -->
 
 
-
-
-(ref:study-area) Berlin's generalized land-use derived from @suvkberlin2019 and location within the European context (inset).
-
-```{r fig-study-area, fig.cap="(ref:study-area)",fig.width = 12, fig.height = 14, out.width="50%"}
-
-
-
-
-knitr::include_graphics(here::here("analysis/figures/map_00_studyarea.png"))
-```
+**Fig. \@ref(fig:fig-study_area)**
 
 
 <!-- ## General approach: space-for-time analyses -->
@@ -307,106 +298,7 @@ knitr::include_graphics(here::here("analysis/figures/map_00_studyarea.png"))
 
 An overview of data used for models, including sources, types, and application, is provided in Table$~$\@ref(tab:tab-dsources), with detailed descriptions in the following subsections.
 
-
-```{r dsources-prep, include=FALSE}
-
-options(knitr.kable.NA = "")
-
-
-dsources_path <- "analysis/data/tables/data_sources.xlsx"
-dsources <- readxl::read_excel(dsources_path, na = "NA")
-dsources$Accessed <- format(dsources$Accessed, "%b '%y")
-
-```
-
-```{r tab-dsources, eval = TRUE}
-
-caption <- "Data description used for maps/visualizations and analyses. Resolution and radius are in $m$, the latter is the buffer in which data was averaged around each tree. A zero-radius refers to a point extraction from categorical and location specific data. Polygons with radius data were rasterized to a resolution of $5~m$"
-caption_ov_short <- "Data descriptions"
-
-dsource <- dsources[-which(dsources$File == 'Wintertime_gridded_UHI_data.zip'), ]
-
-
-dsources <- dsources %>%
-    dplyr::mutate(Category = forcats::fct_relevel(Category, 'trees', 'temperature', 'landuse', 'ancillary', 'gov')) %>% 
-    arrange(Category) %>%
-  dplyr::select(Name = `Name-eng`, Accessed, Type, Unit = `Unit-latex`, Resolution, Radius, Source = `Source-short`, Reference = TextRef) %>%
-  # dplyr::filter(Name != "UHI Berlin",
-  dplyr::filter(Name != "Park Trees",
-                Name != "Riparian Trees") 
-
-
-if (grepl("docx", out_format)) {
-    table_ds <- dsources %>% 
-        knitr::kable(booktabs = TRUE,
-                     
-                     caption = caption,
-                     caption.short = caption,
-                     format = "pipe",
-                     # col.names = c("Subject/Relevance",
-                     #              "Desc.",
-                     #              "Type",
-                     #              "Obsv. (n)",
-                     #              "Resolution (m)",
-                     #              "Source")
-                     escape = FALSE) %>% 
-        kableExtra::landscape()
-} else if(knitr::is_latex_output() ){
-    table_ds <- dsources %>% 
-        knitr::kable(booktabs = TRUE,
-                     
-                     caption = caption,
-                     caption.short = caption,
-                     format = "latex",
-                     # col.names = c("Subject/Relevance",
-                     #              "Desc.",
-                     #              "Type",
-                     #              "Obsv. (n)",
-                     #              "Resolution (m)",
-                     #              "Source")
-                     escape = FALSE) %>% 
-        kableExtra::landscape()
-    
-} else {
-    table_ds <- dsources %>% 
-        knitr::kable(booktabs = TRUE,
-                     format = "html",
-                     
-                     caption = caption,
-                     caption.short = caption_ov_short,
-                     # col.names = c("Subject/Relevance",
-                     #              "Desc.",
-                     #              "Type",
-                     #              "Obsv. (n)",
-                     #              "Resolution (m)",
-                     #              "Source")
-                     escape = FALSE) 
-}
-
-
-table_ds %>% 
-  kableExtra::kable_styling(full_width = TRUE, 
-                            font_size = 11,
-                            latex_options = c("hold_position")) %>% 
-  kableExtra::row_spec(0, bold = TRUE, font_size = 12) 
-
-
-# dsources %>%
-#   
-#   knitr::kable(caption = caption, escape = FALSE) %>%
-#   kableExtra::kable_styling(full_width = TRUE,
-#                             bootstrap_options = c("striped", "hover", "condensed", "responsive"))
-
-
-# flextable::set_flextable_defaults(padding.left = 0)
-# 
-# dsources %>%
-#   dplyr::select(`Name-eng`, Accessed, Type, Source, TextRef) %>%
-#   flextable::flextable() %>%
-#   flextable::autofit()
-
-
-```
+**Table Table$~$\@ref(tab:tab-dsources)**
 
 
 ### Street trees  
@@ -432,74 +324,7 @@ This approach is considered conservative (see supplementary information), yet al
 Table$~$\@ref(tab:tab-age) shows the binned distribution of genera across age classes.
 Final samples applied in models were smaller, following the availability of ancillary data for a given observation, and limited to a maximum age of 125 years to increase confidence in reported values, and ultimately model estimates.
 
-
-```{r tab-age}
-
-drake::loadd(age_tables)
-
-age_tables <- age_tables %>% 
-  dplyr::arrange(desc(n_total))
-colnames(age_tables)[c(1,7,8, 9)] <- c("Genera", "150+", "Total (n)", "Missing (n)") 
-
-age_tables <- dplyr::bind_rows(age_tables[age_tables$Genera!="Other",],
-                        age_tables[age_tables$Genera=="Other",])
-
-  
-add_row <- as.data.frame(matrix(c(NA, colSums(age_tables[,-1])), nrow = 1))
-add_row[1,1] <- "Marg. Totals"
-colnames(add_row) <- colnames(age_tables)
-
-age_tables <- dplyr::bind_rows(age_tables,
-                    add_row)
-
-
-caption_trees <- "Binned age-distribution for street tree genera in Berlin data set, and entries missing age information. "
-caption_trees_short <- "Binned age-distribution for genera in Berlin data set."
-
-if (grepl("docx", out_format)) {
-    table_dat_req_kable <- age_tables %>% 
-        knitr::kable(booktabs = TRUE,
-                     format = "pipe",
-                     caption = caption_trees,
-                     caption.short = caption_trees_short
-        ) %>% 
-        kableExtra::row_spec(13, hline_after = TRUE) 
-} else if(knitr::is_latex_output() ){
-    table_dat_req_kable <- age_tables %>% 
-        knitr::kable(booktabs = TRUE,
-                     format = "latex",
-                     caption = caption_trees,
-                     caption.short = caption_trees_short
-        ) %>% 
-        kableExtra::row_spec(13, hline_after = TRUE) 
-    
-} else {
-    table_dat_req_kable <- age_tables %>% 
-        knitr::kable(booktabs = TRUE,
-                     format = "html",
-                     caption = caption_trees,
-                     caption.short = caption_trees_short
-        ) %>% 
-        kableExtra::row_spec(13, extra_css = "border-bottom: 1px solid")
-    
-    # %>% 
-#   kableExtra::kable_styling(full_width = TRUE, 
-#                             font_size = 10) %>% 
-#   kableExtra::column_spec(1, italic = TRUE) %>%
-#   kableExtra::row_spec(0, bold = TRUE) %>% 
-#     kableExtra::row_spec(13, hline_after = TRUE) 
-
-}
-
-
-   table_dat_req_kable %>% 
-  kableExtra::kable_styling(full_width = TRUE, 
-                            font_size = 11) %>% 
-  kableExtra::column_spec(1, italic = TRUE) %>%  
-  kableExtra::row_spec(0, italic = FALSE, bold = TRUE, font_size = 12) 
-
-```
-
+**Table \@ref(tab:tab-age)**
 
 ### Temperature/UHI data {#sec:tempdata}
 
@@ -519,15 +344,7 @@ The urban heat loading was then calculated as
 where $T$ is temperature ($^\circ C$) $x$ and $y$ define an urban grid cell.
 The LandSat-derived surface UHI data set by @chakraborty2019 (referred to as LandSat) estimates its measure in a similar fashion and the reader is referred to the detailed description therein; note this data set provides day and night-time averaged UHI estimates at 500$~m$ resolution, which were extracted for the hottest summer in this record (2007).
 
-(ref:temp-overview) Overview of data sets used for assessing the relationship between temperature and tree growth, with data sources in rows and averaged time intervals in columns. Note the varying spatial coverage and resolution as noted in Table \@ref(tab:tab-dsources).
-
-```{r fig-temp-overview, fig.cap="(ref:temp-overview)",fig.width = 12, fig.height = 12, out.width="100%"}
-
-
-
-
-knitr::include_graphics(here::here("./analysis/figures/fig_temp_maps.png"))
-```
+**Fig. \@ref(fig:fig-temp-overview)
 
 
 ### Ancillary environmental data
@@ -565,89 +382,7 @@ Two to three cores were extracted at breast height from each tree.
 These were then prepared using standard dendro-ecological methods (i.e., mounting, sanding, measuring), and cross-dated with TSAP-Win\textsuperscript{TM} and COFECHA [@holmes1986], producing mean tree series of incremental growth.
 Additionally, cambial age of each increment was established by counting years from the inner most ring at the pith ($a = 0$) outward; on tangentially bored cores, missing rings to the pith were estimated.
 
-
-```{r tab-dendro-sites}
-
-drake::loadd(series_long)
-drake::loadd(species_lookup)
-
-sampling_site_overview <-     series_long %>% 
-        dplyr::filter(grepl("urban", x = site_type)) %>% 
-        dplyr::select(sample_location, species, tree_id) %>% 
-        dplyr::group_by(sample_location, species) %>%
-        dplyr::summarize(tree_id = unique(tree_id)) %>% 
-        # mutate(site_type = gsub("[-].*$", "", site_type)) %>% 
-        dplyr::tally() %>% 
-    dplyr::mutate(sample_location = stringr::str_replace(sample_location, "[-][a-zA-Zä]+$", "") %>% 
-               stringr::str_replace(pattern = "-StEi", ""))
-
-
-spec_matched <- species_lookup$Species[match(sampling_site_overview$species, species_lookup$Code)]
-
-sampling_site_overview$species_long <- spec_matched
-
-sampling_site_overview <- sampling_site_overview %>% 
-    dplyr::select(Location = sample_location, Species = species_long, n)
-
-
-
-caption <- "Overview of urban sampling locations and species sample sizes (n). Individual trees were sampled two or tree times to obtain a mean-tree ring width series."
-caption_ov_short <- caption
-
-
-if (grepl("docx", out_format) ){
-  table_ds <- sampling_site_overview %>% 
-  knitr::kable(booktabs = TRUE,
-              
-             caption = caption,
-             caption.short = caption,
-             format = "pipe",
-             escape = FALSE) 
-} else if (knitr::is_latex_output() ) {
-  table_ds <- sampling_site_overview %>% 
-  knitr::kable(booktabs = TRUE,
-              
-             caption = caption,
-             caption.short = caption,
-             format = "latex",
-             # col.names = c("Subject/Relevance",
-             #              "Desc.",
-             #              "Type",
-             #              "Obsv. (n)",
-             #              "Resolution (m)",
-             #              "Source")
-             escape = FALSE) 
-  
-} else {
-table_ds <- sampling_site_overview %>% 
-  knitr::kable(booktabs = TRUE,
-               format = "html",
-               
-             caption = caption,
-             caption.short = caption_ov_short,
-             # col.names = c("Subject/Relevance",
-             #              "Desc.",
-             #              "Type",
-             #              "Obsv. (n)",
-             #              "Resolution (m)",
-             #              "Source")
-             escape = FALSE) 
-}
-
-
-table_ds %>% 
-  kableExtra::kable_styling(full_width = TRUE, 
-                            font_size = 11,
-                            latex_options = c("hold_position")) %>% 
-  kableExtra::row_spec(0, bold = TRUE, font_size = 12) 
-
-
-
-
-    
-
-```
-
+**Table \@ref(tab:tab-dendro-sites)**
 
 
 ## Statistical Analyses {#sec:stat-gam}
@@ -857,14 +592,7 @@ This would inadvertently create a left-shift in Figure$~$\@ref(fig:fig-cambial-e
 Assuming that to be the case, the actual difference in average rates would be greater than presented here.
 
 
-(ref:cambial-effect) Rates for annual incremental growth differ between recent and earlier times, as predicted by a hierarchical GAM (see Section [Dendrochronological analyses](#sec:methods-dendro). Thick lines and bands are for mean and 95$~\%$ confidence interval of all annual predictions across a time group (fine lines). On average, early stages of recent growth (up to approximately 22 years) exceed that of earlier periods discernibly. 
-
-```{r fig-cambial-effect, fig.cap="(ref:cambial-effect)", out.width="50%", include=TRUE, eval=TRUE}
-
-
-knitr::include_graphics(here::here("analysis/figures/fig-biwi-growth.png"))
-
-```
+**Figure \@ref(fig:fig-cambial-effect)**
 
 ## Model selection
 
@@ -1117,8 +845,11 @@ Despite being a case study for a single city, we believe our work may provide a 
 
 AGH and IH were supported through the Helmholtz-Climate-Initiative (HI-CAM), funded by the Helmholtz Initiative and Networking Fund; the authors are responsible for the content of this publication.
 
-# Appendices
-Information too detailed to be included in the main text, for instance a list of areas sampled, may be presented in appendices which are to be placed before the References. Appendices should be as short and succinct as possible.
+# Appendix {-}
+
+
+
+
 
 <!-- <!-- The following line inserts a page break  --> 
 `r pgbreak()`
@@ -1127,20 +858,315 @@ Information too detailed to be included in the main text, for instance a list of
 <!-- The following line ensures the references appear here for the MS Word or HTML output files, rather than right at the end of the document (this will not work for PDF files):  -->
 <div id="refs"></div>
 
+
 `r pgbreak()`
 
-<!-- ### Colophon -->
+# Figures
 
-<!-- This report was generated on `r Sys.time()` using the following computational environment and dependencies:  -->
+## Legends
 
-<!-- ```{r colophon, cache = FALSE} -->
-<!-- # which R packages and versions? -->
-<!-- if ("devtools" %in% installed.packages()) devtools::session_info() -->
-<!-- ``` -->
 
-<!-- The current Git commit details are: -->
 
-<!-- ```{r} -->
-<!-- # what commit is this file at?  -->
-<!-- if ("git2r" %in% installed.packages() & git2r::in_repository(path = ".")) git2r::repository(here::here())   -->
-<!-- ``` -->
+**Figure \@ref(fig:fig-study-area)** Berlin's generalized land-use derived from @suvkberlin2019 and location within the European context (inset).
+
+
+**Figure \@ref(fig:fig-temp-overview)** Overview of data sets used for assessing the relationship between temperature and tree growth, with data sources in rows and averaged time intervals in columns. Note the varying spatial coverage and resolution as noted in Table \@ref(tab:tab-dsources).
+
+
+
+**Figure \@ref(fig:fig-cambial-effect)** Rates for annual incremental growth differ between recent and earlier times, as predicted by a hierarchical GAM (see Section [Dendrochronological analyses](#sec:methods-dendro). Thick lines and bands are for mean and 95$~\%$ confidence interval of all annual predictions across a time group (fine lines). On average, early stages of recent growth (up to approximately 22 years) exceed that of earlier periods discernibly. 
+
+
+
+
+`r pgbreak()`
+
+## Visualization
+
+
+```{r fig-study-area, fig.cap = "PLACEHOLDER", fig.width = 12, fig.height = 14, out.width="50%"}
+
+
+
+
+knitr::include_graphics(here::here("analysis/figures/map_00_studyarea.png"))
+```
+
+
+```{r fig-temp-overview, fig.cap="PLACEHOLDER",fig.width = 12, fig.height = 12, out.width="100%"}
+
+
+
+
+knitr::include_graphics(here::here("./analysis/figures/fig_temp_maps.png"))
+```
+
+
+```{r fig-cambial-effect, fig.cap="PLACEHOLDER", out.width="50%", include=TRUE, eval=TRUE}
+
+
+knitr::include_graphics(here::here("analysis/figures/fig-biwi-growth.png"))
+
+```
+
+
+
+`r pgbreak()`
+
+
+# Tables
+
+```{r dsources-prep, include=FALSE}
+
+options(knitr.kable.NA = "")
+
+
+dsources_path <- "analysis/data/tables/data_sources.xlsx"
+dsources <- readxl::read_excel(dsources_path, na = "NA")
+dsources$Accessed <- format(dsources$Accessed, "%b '%y")
+
+```
+
+```{r tab-dsources, eval = TRUE}
+
+caption <- "Data description used for maps/visualizations and analyses. Resolution and radius are in $m$, the latter is the buffer in which data was averaged around each tree. A zero-radius refers to a point extraction from categorical and location specific data. Polygons with radius data were rasterized to a resolution of $5~m$"
+caption_ov_short <- "Data descriptions"
+
+dsource <- dsources[-which(dsources$File == 'Wintertime_gridded_UHI_data.zip'), ]
+
+
+dsources <- dsources %>%
+    dplyr::mutate(Category = forcats::fct_relevel(Category, 'trees', 'temperature', 'landuse', 'ancillary', 'gov')) %>% 
+    arrange(Category) %>%
+  dplyr::select(Name = `Name-eng`, Accessed, Type, Unit = `Unit-latex`, Resolution, Radius, Source = `Source-short`, Reference = TextRef) %>%
+  # dplyr::filter(Name != "UHI Berlin",
+  dplyr::filter(Name != "Park Trees",
+                Name != "Riparian Trees") 
+
+
+if (grepl("docx", out_format)) {
+    table_ds <- dsources %>% 
+        knitr::kable(booktabs = TRUE,
+                     
+                     caption = caption,
+                     caption.short = caption,
+                     format = "pipe",
+                     # col.names = c("Subject/Relevance",
+                     #              "Desc.",
+                     #              "Type",
+                     #              "Obsv. (n)",
+                     #              "Resolution (m)",
+                     #              "Source")
+                     escape = FALSE) %>% 
+        kableExtra::landscape()
+} else if(knitr::is_latex_output() ){
+    table_ds <- dsources %>% 
+        knitr::kable(booktabs = TRUE,
+                     
+                     caption = caption,
+                     caption.short = caption,
+                     format = "latex",
+                     # col.names = c("Subject/Relevance",
+                     #              "Desc.",
+                     #              "Type",
+                     #              "Obsv. (n)",
+                     #              "Resolution (m)",
+                     #              "Source")
+                     escape = FALSE) %>% 
+        kableExtra::landscape()
+    
+} else {
+    table_ds <- dsources %>% 
+        knitr::kable(booktabs = TRUE,
+                     format = "html",
+                     
+                     caption = caption,
+                     caption.short = caption_ov_short,
+                     # col.names = c("Subject/Relevance",
+                     #              "Desc.",
+                     #              "Type",
+                     #              "Obsv. (n)",
+                     #              "Resolution (m)",
+                     #              "Source")
+                     escape = FALSE) 
+}
+
+
+table_ds %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 11,
+                            latex_options = c("hold_position")) %>% 
+  kableExtra::row_spec(0, bold = TRUE, font_size = 12) 
+
+
+# dsources %>%
+#   
+#   knitr::kable(caption = caption, escape = FALSE) %>%
+#   kableExtra::kable_styling(full_width = TRUE,
+#                             bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+
+# flextable::set_flextable_defaults(padding.left = 0)
+# 
+# dsources %>%
+#   dplyr::select(`Name-eng`, Accessed, Type, Source, TextRef) %>%
+#   flextable::flextable() %>%
+#   flextable::autofit()
+
+
+```
+
+
+```{r tab-age}
+
+drake::loadd(age_tables)
+
+age_tables <- age_tables %>% 
+  dplyr::arrange(desc(n_total))
+colnames(age_tables)[c(1,7,8, 9)] <- c("Genera", "150+", "Total (n)", "Missing (n)") 
+
+age_tables <- dplyr::bind_rows(age_tables[age_tables$Genera!="Other",],
+                        age_tables[age_tables$Genera=="Other",])
+
+  
+add_row <- as.data.frame(matrix(c(NA, colSums(age_tables[,-1])), nrow = 1))
+add_row[1,1] <- "Marg. Totals"
+colnames(add_row) <- colnames(age_tables)
+
+age_tables <- dplyr::bind_rows(age_tables,
+                    add_row)
+
+
+caption_trees <- "Binned age-distribution for street tree genera in Berlin data set, and entries missing age information. "
+caption_trees_short <- "Binned age-distribution for genera in Berlin data set."
+
+if (grepl("docx", out_format)) {
+    table_dat_req_kable <- age_tables %>% 
+        knitr::kable(booktabs = TRUE,
+                     format = "pipe",
+                     caption = caption_trees,
+                     caption.short = caption_trees_short
+        ) %>% 
+        kableExtra::row_spec(13, hline_after = TRUE) 
+} else if(knitr::is_latex_output() ){
+    table_dat_req_kable <- age_tables %>% 
+        knitr::kable(booktabs = TRUE,
+                     format = "latex",
+                     caption = caption_trees,
+                     caption.short = caption_trees_short
+        ) %>% 
+        kableExtra::row_spec(13, hline_after = TRUE) 
+    
+} else {
+    table_dat_req_kable <- age_tables %>% 
+        knitr::kable(booktabs = TRUE,
+                     format = "html",
+                     caption = caption_trees,
+                     caption.short = caption_trees_short
+        ) %>% 
+        kableExtra::row_spec(13, extra_css = "border-bottom: 1px solid")
+    
+    # %>% 
+#   kableExtra::kable_styling(full_width = TRUE, 
+#                             font_size = 10) %>% 
+#   kableExtra::column_spec(1, italic = TRUE) %>%
+#   kableExtra::row_spec(0, bold = TRUE) %>% 
+#     kableExtra::row_spec(13, hline_after = TRUE) 
+
+}
+
+
+   table_dat_req_kable %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 11) %>% 
+  kableExtra::column_spec(1, italic = TRUE) %>%  
+  kableExtra::row_spec(0, italic = FALSE, bold = TRUE, font_size = 12) 
+
+```
+
+
+
+
+```{r tab-dendro-sites}
+
+drake::loadd(series_long)
+drake::loadd(species_lookup)
+
+sampling_site_overview <-     series_long %>% 
+        dplyr::filter(grepl("urban", x = site_type)) %>% 
+        dplyr::select(sample_location, species, tree_id) %>% 
+        dplyr::group_by(sample_location, species) %>%
+        dplyr::summarize(tree_id = unique(tree_id)) %>% 
+        # mutate(site_type = gsub("[-].*$", "", site_type)) %>% 
+        dplyr::tally() %>% 
+    dplyr::mutate(sample_location = stringr::str_replace(sample_location, "[-][a-zA-Zä]+$", "") %>% 
+               stringr::str_replace(pattern = "-StEi", ""))
+
+
+spec_matched <- species_lookup$Species[match(sampling_site_overview$species, species_lookup$Code)]
+
+sampling_site_overview$species_long <- spec_matched
+
+sampling_site_overview <- sampling_site_overview %>% 
+    dplyr::select(Location = sample_location, Species = species_long, n)
+
+
+
+caption <- "Overview of urban sampling locations and species sample sizes (n). Individual trees were sampled two or tree times to obtain a mean-tree ring width series."
+caption_ov_short <- caption
+
+
+if (grepl("docx", out_format) ){
+  table_ds <- sampling_site_overview %>% 
+  knitr::kable(booktabs = TRUE,
+              
+             caption = caption,
+             caption.short = caption,
+             format = "pipe",
+             escape = FALSE) 
+} else if (knitr::is_latex_output() ) {
+  table_ds <- sampling_site_overview %>% 
+  knitr::kable(booktabs = TRUE,
+              
+             caption = caption,
+             caption.short = caption,
+             format = "latex",
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             escape = FALSE) 
+  
+} else {
+table_ds <- sampling_site_overview %>% 
+  knitr::kable(booktabs = TRUE,
+               format = "html",
+               
+             caption = caption,
+             caption.short = caption_ov_short,
+             # col.names = c("Subject/Relevance",
+             #              "Desc.",
+             #              "Type",
+             #              "Obsv. (n)",
+             #              "Resolution (m)",
+             #              "Source")
+             escape = FALSE) 
+}
+
+
+table_ds %>% 
+  kableExtra::kable_styling(full_width = TRUE, 
+                            font_size = 11,
+                            latex_options = c("hold_position")) %>% 
+  kableExtra::row_spec(0, bold = TRUE, font_size = 12) 
+
+
+
+
+    
+
+```
+
+

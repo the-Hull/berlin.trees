@@ -546,14 +546,18 @@ plan <- drake::drake_plan(
 
     # Plotting --------------------------------
 
+   journal_fig_width_single = 8.2,
+   journal_fig_width_double = 17,
+   journal_fig_width_mid = 8.2 * 1.5,
+
 
    ### map: study area ------
 
    plot_study_area_map = make_map_study_area(blu = berlin_lu,
                                              berlin_poly = berlin_polygons,
-                                             path_out = drake::file_out("./analysis/figures/map_00_studyarea.png"),
-                                             height = 5.5,
-                                             width = 7,
+                                             path_out = drake::file_out("./analysis/figures/map_00_studyarea.tiff"),
+                                             height = journal_fig_width_single * 0.7857143,
+                                             width = journal_fig_width_single,
                                              dpi = 300),
 
 
@@ -1037,14 +1041,14 @@ plan <- drake::drake_plan(
         output_format = "bookdown::html_document2",
         quiet = TRUE
     ),
-    paper_word = rmarkdown::render(
-        knitr_in("./analysis/paper/paper.Rmd"),
-        output_dir = "./analysis/paper/",
-        output_file = file_out("paper_knit.docx"),
-        # output_file = "./paper_knit.html",
-        output_format = bookdown::word_document2(),
-        quiet = TRUE
-    ),
+    # paper_word = rmarkdown::render(
+    #     knitr_in("./analysis/paper/paper.Rmd"),
+    #     output_dir = "./analysis/paper/",
+    #     output_file = file_out("paper_knit.docx"),
+    #     # output_file = "./paper_knit.html",
+    #     output_format = bookdown::word_document2(),
+    #     quiet = TRUE
+    # ),
     # paper_pdf = rmarkdown::render(
     #     knitr_in("./analysis/paper/paper.Rmd"),
     #     output_dir = "./analysis/paper/",
