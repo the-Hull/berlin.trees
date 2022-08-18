@@ -629,15 +629,9 @@ Thus, we considered the model with the overall greatest predictive skill and lar
 For this variable combination, the model structure with age and temperature interaction also had a lower AIC ($AIC~=~8.95 \cdot 10^5$) compared to the additive one ($AIC~=~8.98 \cdot 10^5$).
 <!-- For this variable combination, the model structure with age and temperature interaction also had a lower AIC ($AIC~=~`r format(aic_tens, digits = 3, scientific = TRUE)`$) compared to the additive one ($AIC~=~`r format(aic_add, digits = 3, scientific = TRUE)`$). -->
 
-(ref:model-deviance) Overview of model fit, expressed as explained deviance, for all tested models. The Panels distinguish between models without (top) and with (bottom) spatial smooths to account for autocorrelated residuals. Colored areas reflect (inclusion of) temperature and (excess) heat measures. Symbols identify models with an interaction between temperature and age (diamond), and without (circle), while symbol colors highlight  covariates and their reference radius (i.e. 150/300$~m$, but also note x-axis labels). Symbol size indicates the model's included observations (i.e., sample size). Generally, including temperature (interactions) improve model fits above the null model (age only) and other non-temperature models. However, note the importance ofplanting bed area and LCZ6 cover is apparent even without including temperature. The LandSat-derived UHI measures provide the best fit on average, with the model including a temperature-age interaction and LCZ6 cover scoring highest overall. 
 
+**Figure \@ref(fig:fig-model-deviance)**
 
-```{r fig-model-deviance, fig.cap="(ref:model-deviance)", out.width="100%", include=TRUE, eval=TRUE}
-
-
-knitr::include_graphics(here::here("analysis/figures/fig_model_deviance.png"))
-
-```
 
 
 The final model, comprising a temperature-age interaction, the covariate $LCZ6_{\frac{}{150~m}}$ and LandSat derived UHI following Equation$~$\@ref(eq:gam-full), showed good agreement between predicted and observed $DBH$ for the majority of observations (Figure$~$\@ref(fig:fig-model-performance); $R^2~=~0.79$) resulting in a fairly low MAE of $6.03~cm$, and a RMSE of $7.7\cdot 10^{-7}$. 
@@ -645,14 +639,7 @@ While some prediction errors are large (spread in Figure$~$\@ref(fig:fig-model-p
 Thus, we consider using species and age-group averages as appropriate for identifying and discussing relationships between $DBH$ and other covariates.
 
 
-(ref:model-performance) Predicted $vs.$ observed data for the best model according to explained deviance and AIC comparison, based on the LandSat-derived UHI measure [@chakraborty2019] for average summer conditions (2007) and LCZ6 [open to mid-rise,  @stewart2012]. Hexagons and colors represent x-y bins (i.e., in the observed-predicted space) and their counts (N), and the red line is a least-squares fit.  The model captures the mean response well, as indicated by lighter colors along the dashed 1:1 line, and its close approximation by the least squares fit, as well as model metrics (see text label in figure).
-
-```{r fig-model-performance, fig.cap="(ref:model-performance)", out.width="50%", include=TRUE, eval=TRUE}
-
-
-knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_lcz6_obs_pred.png"))
-
-```
+**Figure$~$\@ref(fig:fig-model-performance)**
 
 
 ## Urban heat and urban fabric effects on stem growth
@@ -877,6 +864,11 @@ AGH and IH were supported through the Helmholtz-Climate-Initiative (HI-CAM), fun
 **Figure \@ref(fig:fig-cambial-effect)** Rates for annual incremental growth differ between recent and earlier times, as predicted by a hierarchical GAM (see Section [Dendrochronological analyses](#sec:methods-dendro). Thick lines and bands are for mean and 95$~\%$ confidence interval of all annual predictions across a time group (fine lines). On average, early stages of recent growth (up to approximately 22 years) exceed that of earlier periods discernibly. 
 
 
+**Figure \@ref(fig:fig-model-deviance)** Overview of model fit, expressed as explained deviance, for all tested models. The Panels distinguish between models without (top) and with (bottom) spatial smooths to account for autocorrelated residuals. Colored areas reflect (inclusion of) temperature and (excess) heat measures. Symbols identify models with an interaction between temperature and age (diamond), and without (circle), while symbol colors highlight  covariates and their reference radius (i.e. 150/300$~m$, but also note x-axis labels). Symbol size indicates the model's included observations (i.e., sample size). Generally, including temperature (interactions) improve model fits above the null model (age only) and other non-temperature models. However, note the importance ofplanting bed area and LCZ6 cover is apparent even without including temperature. The LandSat-derived UHI measures provide the best fit on average, with the model including a temperature-age interaction and LCZ6 cover scoring highest overall. 
+
+**Figure \@ref(fig:fig-model-performance)** Predicted $vs.$ observed data for the best model according to explained deviance and AIC comparison, based on the LandSat-derived UHI measure [@chakraborty2019] for average summer conditions (2007) and LCZ6 [open to mid-rise,  @stewart2012]. Hexagons and colors represent x-y bins (i.e., in the observed-predicted space) and their counts (N), and the red line is a least-squares fit.  The model captures the mean response well, as indicated by lighter colors along the dashed 1:1 line, and its close approximation by the least squares fit, as well as model metrics (see text label in figure).
+
+
 
 
 `r pgbreak()`
@@ -906,6 +898,23 @@ knitr::include_graphics(here::here("./analysis/figures/fig_temp_maps.png"))
 
 
 knitr::include_graphics(here::here("analysis/figures/fig-biwi-growth.png"))
+
+```
+
+
+
+```{r fig-model-deviance, fig.cap="PLACEHOLDER", out.width="100%", include=TRUE, eval=TRUE}
+
+
+knitr::include_graphics(here::here("analysis/figures/fig_model_deviance.png"))
+
+```
+
+
+```{r fig-model-performance, fig.cap="(ref:model-performance)", out.width="50%", include=TRUE, eval=TRUE}
+
+
+knitr::include_graphics(here::here("analysis/figures/fig-gam-dbh_temp-day2007_lcz6_obs_pred.png"))
 
 ```
 
