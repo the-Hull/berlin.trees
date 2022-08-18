@@ -11,7 +11,9 @@ output:
     bookdown::html_document2:
       fig_caption: yes
       toc: true
+      number_sections: false
     bookdown::word_document2:
+      number_sections: true
       fig_caption: yes
       reference_docx: "../templates/template.docx" # Insert path for the DOCX file
       pandoc_args:
@@ -21,6 +23,7 @@ output:
     bookdown::pdf_document2:
       fig_caption: yes
       toc: yes
+      number_sections: true
 header-includes:
 - \usepackage{amsmath}
 - \usepackage{booktabs}
@@ -39,17 +42,8 @@ bibliography:
   - 07_phenoTram.bib
 csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
 abstract: |
-
-The manifold ecological and societal benefits urban trees provide depend on their health and performance. 
-Excess heat common for cities (i.e., Urban Heat Island; UHI) combined with other urban conditions, affects tree physiological processes with outcomes ranging from enhanced growth to branch die-back and even mortality. 
-Thus, assessing the effect of increased temperatures on urban trees is necessary for understanding and adapting to current and expected climatic and socio-economic conditions – as well as their interactions - in this century.
-The growing conditions of urban trees vary substantially in space and time, jointly controlled by local climate and the urban fabric. 
-However, to date, studies assessing growth dynamics have primarily been based on remote sensing (typically with productivity as a growth proxy) focusing on community rather than individual level, or relied on labor-intensive methods that limit sample sizes and thus spatial (and temporal) coverage. 
-Here, we present an approach to assess the growth potential of tree species in relation to the UHI in a large metropolis, Berlin (Germany), accounting for location-specific factors down to individual tree level for an extensive inventory data set comprising nearly 700000 trees. 
-Out of a suite of generalized additive models based on different UHI or temperature data sets and ancillary environmental/urban data, we identified the best variable combinations to predict diameter at breast height while accounting for age, management effects, and the spatial dependence of observations (autocorrelation) for the ten most abundant street trees.
-
-
-  **Populate..We analzed tree growth (potential) and its relationship with the Urban Heat Island (UHI) effect, as well as other characteristics of the urban fabric, for the ten most abundant street tree species/cultivars in Berlin using open data. We identify the most heat-sensitive species, give recommendations for future tree selections and provide guidelines to for local authorities for the prioitiziation of data acquisition (i.e., inventories) as well as data provision.**
+  The socio-ecological benefits that urban trees provide depend on their health and performance. Excess heat (i.e., Urban Heat Island; UHI) and other urban conditions affect tree physiology with outcomes from enhanced growth to mortality. Resilient urban forests in the face of climate change require species-specific understanding of growth responses. However, to date, studies assessing growth dynamics were primarily based on remote sensing of communities rather than individuals, or relied on labor-intensive methods that can limit the spatial coverage necessary to account for highly variable urban growing conditions. Here, we analyze growth dynamics of common urban tree species over time and across space for Berlin (Germany), a large metropolis, combining dendroecological (temporal) and inventory assessments (spatial). First, we show that annual increments increased across the 20th century for early (i.e., young) growth. Second, we use an approach relying on open inventory data to identify growth potential (diameter) in relation to excess heat across Berlin while accounting for age, potential management effects, and the urban fabric (e.g., planting area; building density, height; available soil nutrients) by applying generalized additive models for the ten most abundant species. Our analyses showed that younger trees may benefit from increased temperatures, while older individuals feature lower growth at greater UHI magnitudes. Furthermore, we show that planting area as well as building density modulate growth responses to temperature. Lastly, we discuss implications for the management of urban trees in the context of climate change mitigation, considering that younger trees are predominantly located at UHI “hot spots” and will undergo the observed age-dependent shift in temperature-growth sensitivity. By relying on increasingly available open data (inventories, urban/environmental data) our approach here is or will be readily transferable to other urban regions, allowing for species-specific growth assessments, while accounting for urban conditions at an individual level.
+  
 keywords: |
   Uferbaeume; Anlagenbaeume; Strassenbaeume; 
 highlights: |
@@ -266,7 +260,7 @@ table_ov <- overview_table %>%
 <!-- As a result, the absolute growth potential of a species can be inferred given, for example, a specific location, age or UHI magnitude.  -->
 <!-- Further, the impact of UHI loading can be predicted for a single species across all of Berlin as a continuous surface.** -->
 <!-- The inclusion of independent, tree-level growth data, however, is paramount as it allows:   -->
-<!-- 1) validating the publicly-available Senate dataset ($DBH$) while providing a more reliable estimate of tree age,   -->
+<!-- 1) validating the publicly-available Senate data set ($DBH$) while providing a more reliable estimate of tree age,   -->
 <!-- 2) applying the model with annual basal area as a response (enabling incorporating effects of varying climate/UHI intensities over time), and   -->
 <!-- 3) comparing $DBH$ (Senate data) and basal area-derived models for a subset of locations and species, increasing confidence in Berlin-wide predictions.  -->
 <!-- We acknolwedge results from [@gregg2003], which indicated impeded growth adjacent to intense urban clusters, rather than enhancement within them. -->
@@ -522,7 +516,7 @@ The urban heat loading was then calculated as
 where $T$ is temperature ($^\circ C$) $x$ and $y$ define an urban grid cell.
 The LandSat-derived surface UHI data set by @chakraborty2019 (referred to as LandSat) estimates its measure in a similar fashion and the reader is referred to the detailed description therein; note this data set provides day and night-time averaged UHI estimates at 500$~m$ resolution, which were extracted for the hottest summer in this record (2007).
 
-(ref:temp-overview) Overview of temperature datasets used for assessing modelling impact on tree growth, with data sources in rows and averaged times in columns. Note the varying spatial coverage and resolution.
+(ref:temp-overview) Overview of data sets used for assessing the relationship between temperature and tree growth, with data sources in rows and averaged time intervals in columns. Note the varying spatial coverage and resolution as noted in Table \@ref(tab:tab-dsources).
 
 ```{r fig-temp-overview, fig.cap="(ref:temp-overview)",fig.width = 12, fig.height = 12, out.width="100%"}
 
@@ -594,7 +588,7 @@ sampling_site_overview <- sampling_site_overview %>%
 
 
 
-caption <- "Overview of urban sampling locations and respective tree species coverage. Individual trees were sampled two or tree times to obtain a mean-tree ring width series."
+caption <- "Overview of urban sampling locations and species sample sizes (n). Individual trees were sampled two or tree times to obtain a mean-tree ring width series."
 caption_ov_short <- caption
 
 
@@ -800,8 +794,7 @@ g(DBH_i) = f(x_i,y_i) + f_j(age_i) +  c_{i,j} + \tau_{i,k} + \epsilon_i
 where $g()$ is a log-link for $DBH \sim Gamma$, and $i$, $j$ are indices for observations and species, respectively, and $t$ refers to an (excess) heat measure from UrbClim, Berlin EnvAt or LandSat at different times (morning, afternoon/day, night; cf. Section$~$\@ref(sec:dsources)); $c$ is a species-dependent intercept, while $tau$ represents a matrix of random effect coefficients for $k$ districts to account for differing management regimes across the city.
 A global spatial smooth $f(x_i,y_i)$ (representing projected coordinates in UTM) via a Gaussian process [cf. p. 242 in @wood2017] was included to account for the spatial structure of observations, which reduced auto-correlation of model residuals considerably (see supplemental information).
 These were compared to a sub-set of models without a spatial component (cf. Equation$~$\@ref(eq:gam-nocovariate), and Figure$~$\@ref(fig:fig-model-deviance) but not further discussed there).
-We also tested a suite of models without the spatial smooth for comparison
-**what's the impact of remaining auto correlation? inflated errors, larger coefficients?**
+We also tested a suite of models without the spatial smooth for comparison.
 
 Furthermore, we implemented the interaction between temperature and age (i.e., $f_j(temp, age)$) as tensor smooths [@wood2006] to account for the different variable scales (i.e., units); all models were also tested without this interaction using a thin plate regression spline smooth for temperature (not shown in equations above).
 The functions $f_j$ are for species-specific smooths [i.e., with individual smoothness penalties and functional shapes as detailed by @pedersen2019].
@@ -905,7 +898,7 @@ Thus, we considered the model with the overall greatest predictive skill and lar
 For this variable combination, the model structure with age and temperature interaction also had a lower AIC ($AIC~=~8.95 \cdot 10^5$) compared to the additive one ($AIC~=~8.98 \cdot 10^5$).
 <!-- For this variable combination, the model structure with age and temperature interaction also had a lower AIC ($AIC~=~`r format(aic_tens, digits = 3, scientific = TRUE)`$) compared to the additive one ($AIC~=~`r format(aic_add, digits = 3, scientific = TRUE)`$). -->
 
-(ref:model-deviance) Overview of model fit, expressed as explained deviance, for all tested models. The Panels distinguish between models without (top) and with (bottom) spatial smooths to account for autocorrelation of residuals. Colored sub-sections define models without and with the applied (excess) heat measures. Symbols identify models with an interaction between temperature and age (diamond), and without (circle), while colors highlight included covariates and their reference radius (i.e. 150/300$~m$, but also note x-axis labels), and size indicates the model's observations. Generally, including temperature (interactions) improve model fits above the null model (age only), and excluding planting bed area and LCZ6 cover, also above other non-temperature models. The LandSat-derived UHI measures provide the best fit on average, with the model including a temperature-age interaction and LCZ6 cover scoring highest. 
+(ref:model-deviance) Overview of model fit, expressed as explained deviance, for all tested models. The Panels distinguish between models without (top) and with (bottom) spatial smooths to account for autocorrelated residuals. Colored areas reflect (inclusion of) temperature and (excess) heat measures. Symbols identify models with an interaction between temperature and age (diamond), and without (circle), while symbol colors highlight  covariates and their reference radius (i.e. 150/300$~m$, but also note x-axis labels). Symbol size indicates the model's included observations (i.e., sample size). Generally, including temperature (interactions) improve model fits above the null model (age only) and other non-temperature models. However, note the importance ofplanting bed area and LCZ6 cover is apparent even without including temperature. The LandSat-derived UHI measures provide the best fit on average, with the model including a temperature-age interaction and LCZ6 cover scoring highest overall. 
 
 
 ```{r fig-model-deviance, fig.cap="(ref:model-deviance)", out.width="100%", include=TRUE, eval=TRUE}
@@ -921,7 +914,7 @@ While some prediction errors are large (spread in Figure$~$\@ref(fig:fig-model-p
 Thus, we consider using species and age-group averages as appropriate for identifying and discussing relationships between $DBH$ and other covariates.
 
 
-(ref:model-performance) Predicted $vs.$ observed data for the best model according to explained deviance and AIC comparison, based on the LandSat-derived UHI measure [@chakraborty2019] for average summer conditions (2007) and LCZ6 [open to mid-rise,  @stewart2012]. Hexagons and colors represent x-y bins (i.e., in the observed-predicted space) and their counts (N), and the red line is a least-squares fit.  The model captures the mean response well, as indicated by lighters colors along dashed 1:1 line, and its close approximation by the least squares fit, as well as model metrics (see text label in plot).
+(ref:model-performance) Predicted $vs.$ observed data for the best model according to explained deviance and AIC comparison, based on the LandSat-derived UHI measure [@chakraborty2019] for average summer conditions (2007) and LCZ6 [open to mid-rise,  @stewart2012]. Hexagons and colors represent x-y bins (i.e., in the observed-predicted space) and their counts (N), and the red line is a least-squares fit.  The model captures the mean response well, as indicated by lighter colors along the dashed 1:1 line, and its close approximation by the least squares fit, as well as model metrics (see text label in figure).
 
 ```{r fig-model-performance, fig.cap="(ref:model-performance)", out.width="50%", include=TRUE, eval=TRUE}
 
