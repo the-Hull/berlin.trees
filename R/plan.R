@@ -613,8 +613,8 @@ plan <- drake::drake_plan(
                           base_size = 18,
                           file = "./analysis/figures/fig_temp_maps.png",
                           dpi = 300,
-                          height = 12,
-                          width = 12),
+                          height = journal_fig_width_double,
+                          width = journal_fig_width_double),
 
 
    ### bar: Tree counts ------------
@@ -686,8 +686,8 @@ plan <- drake::drake_plan(
        deviance_list = gam_deviances,
        base_size = 18,
        file = drake::file_out("./analysis/figures/fig_model_deviance.png"),
-       height = 10,
-       width = 12,
+       height =  0.8333333 * journal_fig_width_double,
+       width = journal_fig_width_double,
        dpi = 300),
 
 
@@ -723,8 +723,8 @@ plan <- drake::drake_plan(
        prediction_range = "within",
        base_size = 18,
        file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_lcz6.png"),
-       height = 11,
-       width = 18,
+       height = 0.6111111 * journal_fig_width_double,
+       width = journal_fig_width_double,
        dpi = 300),
 
    plot_gam_temp_prediction_fullmodel = plot_dbh_temp_single_var(
@@ -832,8 +832,8 @@ plan <- drake::drake_plan(
                                  base_size = 18,
                                  x_label = expression('Proportional Cover - LCZ6'[bar(150~m)]),
                                  file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_xvar-lcz6_tilia.png"),
-                                 height = 7,
-                                 width = 8,
+                                 height = 0.875 * journal_fig_width_single,
+                                 width = journal_fig_width_single,
                                  dpi = 300),
 
 
@@ -864,8 +864,8 @@ plan <- drake::drake_plan(
                                             dpi = 300),
    plot_obs_pred_single_temp_lcz6 = plot_obs_predicted_model(path_model = bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_lcz6_reBEZIRK_var-day_2007', 'model_file_path'],
                                             file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_lcz6_obs_pred.png"),
-                                            height = 7,
-                                            width = 8,
+                                            height = 0.875 * journal_fig_width_single,
+                                            width = journal_fig_width_single,
                                             dpi = 300),
 
 
@@ -883,8 +883,8 @@ plan <- drake::drake_plan(
                                                 prediction_range = "within",
                                                 base_size = 18,
                                                 file = "./analysis/figures/fig_model_day2007_lcz6_growthsens.png",
-                                                height = 6,
-                                                width = 12,
+                                                height = journal_fig_width_double * 0.5,
+                                                width = journal_fig_width_double,
                                                 dpi = 300),
 
 
@@ -916,8 +916,8 @@ plan <- drake::drake_plan(
    biwi_plot = make_biwi_plot(biwi_preds,
                               base_size = 18,
                               file = drake::file_out("./analysis/figures/fig-biwi-growth.png"),
-                              height = 8,
-                              width = 8,
+                              height = journal_fig_width_single,
+                              width = journal_fig_width_single,
                               dpi = 300),
 
 
@@ -1033,14 +1033,14 @@ plan <- drake::drake_plan(
 
 
     # Reporting ------------------------------
-    paper_html = rmarkdown::render(
-        knitr_in("./analysis/paper/paper.Rmd"),
-        output_dir = "./analysis/paper/",
-        output_file = file_out("paper_knit.html"),
-        # output_format = bookdown::html_document2(),
-        output_format = "bookdown::html_document2",
-        quiet = TRUE
-    ),
+    # paper_html = rmarkdown::render(
+    #     knitr_in("./analysis/paper/paper.Rmd"),
+    #     output_dir = "./analysis/paper/",
+    #     output_file = file_out("paper_knit.html"),
+    #     # output_format = bookdown::html_document2(),
+    #     output_format = "bookdown::html_document2",
+    #     quiet = TRUE
+    # ),
     # paper_word = rmarkdown::render(
     #     knitr_in("./analysis/paper/paper.Rmd"),
     #     output_dir = "./analysis/paper/",

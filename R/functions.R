@@ -3842,7 +3842,7 @@ FFGGHH
         plot_layout(design = layout, heights = 1/3)
 
 
-    png(filename = file, width = width, height = height, res = dpi, units = "in")
+    png(filename = file, width = width, height = height, res = dpi, units = "cm")
 
     gp <- grid::gpar(fontfamily = "Roboto Condensed", fontsize = base_size)
 
@@ -4291,7 +4291,8 @@ make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
                     plot = plt,
                     height = height,
                     width = width,
-                    dpi = dpi)
+                    dpi = dpi,
+                    units = 'cm')
 
 
 
@@ -4650,7 +4651,8 @@ make_deviance_plot <- function(deviance_list,
                     plot = gplot,
                     dpi = dpi,
                     height = height,
-                    width = width)
+                    width = width,
+                    units = 'cm')
 
     return(gplot)
 }
@@ -4933,7 +4935,8 @@ plot_dbh_temp_single_var <- function(pred_list,
                     plot = gplot,
                     dpi = dpi,
                     height = height,
-                    width = width)
+                    width = width,
+                    units = 'cm')
 
 
 }
@@ -5208,7 +5211,8 @@ plot_dbh_temp_single_var_flex <- function(pred_list,
                     plot = gplot,
                     dpi = dpi,
                     height = height,
-                    width = width)
+                    width = width,
+                    units = 'cm')
 
 
 }
@@ -5318,7 +5322,8 @@ plot_obs_predicted_model <- function(path_model,
                     plot = gplot,
                     dpi = dpi,
                     height = height,
-                    width = width)
+                    width = width,
+                    units = 'cm')
 
     return(gplot)
 
@@ -5538,7 +5543,7 @@ plot_dbh_temp_comparison <- function(
            width = width,
            height = height,
            dpi = dpi,
-           units = "in")
+           units = "cm")
 
     return(list(plot = gplot, est_plot = estimate_plot, lms = lms, df = plot_data, estimates = zero_val))
 
@@ -5736,7 +5741,8 @@ make_biwi_plot <- function(biwi_preds,
                     plot = gplot,
                     dpi = dpi,
                     height = height,
-                    width = width)
+                    width = width,
+                    units = 'cm')
 
     return(file)
 
