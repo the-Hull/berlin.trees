@@ -4178,7 +4178,7 @@ make_ranef_plot <- function(model_out,
 #' @export
 #'
 #' @examples
-make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
+make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi, base_size = 10){
 
 
 
@@ -4204,7 +4204,6 @@ make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
 
 
 
-    base_size <- 16
 
 
 
@@ -4235,7 +4234,8 @@ make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
                          # geom_sf(data = countries  %>%
                          #             dplyr::filter(admin != 'Russia'),
                          ggplot2::aes(fill = admin == 'Germany'),
-                         color = "gray20", show.legend = FALSE) +
+                         color = "gray20", show.legend = FALSE,
+                         size = 0.25) +
         ggplot2::geom_sf(data = berlin_loc, fill = "firebrick1", shape = 23, size = 2) +
         ggplot2::coord_sf(xlim = c(-10,45), ylim = c(34,71), crs = 4326) +
         # geom_sf(data = countries  %>%
@@ -4270,7 +4270,7 @@ make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
         ggplot2::scale_color_manual(values = c("greenspace" = "seagreen4",
                                                "urbanized" = "beige",
                                                "water" = "steelblue1")) +
-        ggplot2::coord_sf(xlim = c(370000, 425000.2), ylim = c(5795000    , 5837259.4 )) +
+        ggplot2::coord_sf(xlim = c(370000, 425000.2), ylim = c(5791000    , 5837259.4 )) +
         ggplot2::scale_y_continuous(breaks = seq(52.35, 52.65, by = 0.1)) +
         ggplot2::theme_minimal(
             # base_family = "Roboto Condensed",
@@ -4292,7 +4292,8 @@ make_map_study_area <- function(blu, berlin_poly, path_out, height, width, dpi){
                     height = height,
                     width = width,
                     dpi = dpi,
-                    units = 'cm')
+                    units = 'cm',
+                    bg = 'white')
 
 
 
@@ -4512,7 +4513,7 @@ make_deviance_plot <- function(deviance_list,
                                 "bold(Berlin~EnvAt)"
                             ),
                             x = c(4, 9, 11.5, 14),
-                            y = 79) %>%
+                            y = c(78, 75.5, 75.5, 75.5)) %>%
         rbind(
             data.frame(is_spatial = rep(FALSE, 4),
                        name = c(
@@ -4522,7 +4523,7 @@ make_deviance_plot <- function(deviance_list,
                            "bold(Berlin~EnvAt)"
                        ),
                        x = c(4, 9, 11.5, 14),
-                       y = 75.5)
+                       y = c(74.7, 72.7, 72.7, 72.7))
         )
 
 
@@ -4596,7 +4597,8 @@ make_deviance_plot <- function(deviance_list,
 
         geom_text(data = temp_text,
                   aes(x = x, y = y, label = name),
-                  parse = TRUE) +
+                  parse = TRUE,
+                  size = 2.5) +
 
 
 
@@ -4612,12 +4614,13 @@ make_deviance_plot <- function(deviance_list,
                         # fill = mod_group),
                         fill = mod_class),
                     alpha = 0.8) +
+        scale_size(range = c(1, 3)) +
         # geom_linerange(data = mod_means, aes(x = y, xmin = ymin, xmax = ymax), color = "black") +
         # geom_point(data = mod_means, aes(y = y), size = 3, shape = 21, color = "white", fill = "black") +
 
         guides(fill = guide_legend(
             override.aes = list(
-                size = 5,
+                size = 3,
                 shape = 21
                 # shape = c(rep(21, 2),
                 #           23,
@@ -4625,11 +4628,11 @@ make_deviance_plot <- function(deviance_list,
                 #           rep(23, 8))
                 ),
             ncol = 2),
-            shape = guide_legend(override.aes = list(size = 5))) +
-        theme_minimal(base_size = 14) +
+            shape = guide_legend(override.aes = list(size = 3))) +
+        theme_minimal(base_size = base_size) +
         theme(legend.position = "top",
               legend.direction = "vertical",
-              strip.text = element_text(size = 14)) +
+              strip.text = element_text(size = 8)) +
         # scale_fill_brewer(type = "qual", palette = "Set3") +
         scale_shape_manual(values = c("TRUE" = 23, "FALSE" = 21), labels = c("Interaction", "Additive")) +
         scale_fill_manual(values = pals::kelly(n = n_distinct(sub("(.*[_]species[_])(.*)", replacement = "\\2", deviance_list$deviances$mod_group))),
@@ -4905,7 +4908,7 @@ plot_dbh_temp_single_var <- function(pred_list,
 
 
         # geom_line(linetype = 1)  +
-        geom_line(linetype = 3, color = "black", size = 0.35)  +
+        geom_line(linetype = 1, color = "black", size = 0.35)  +
         geom_line(data = plot_data %>% filter(prediction_range == "within")) +
 
 
@@ -4918,12 +4921,15 @@ plot_dbh_temp_single_var <- function(pred_list,
         theme_minimal(base_size = base_size) +
         theme(legend.position = 'top',
               legend.direction = "horizontal",
-              panel.spacing = unit(1.25, "lines"),
-              strip.text = element_text(size = 12),
+              panel.spacing.x = unit(0.25, "lines"),
+              panel.spacing.y = unit(0.75, "lines"),
+              strip.text = element_text(size = 6, face = 'italic'),
               strip.text.y = element_blank()) +
 
         scale_color_brewer(palette = 2, type = "qual") +
         scale_fill_brewer(palette = 2, type = "qual") +
+        scale_y_continuous(n.breaks = 3) +
+        scale_x_continuous(breaks = c(-3,0,5)) +
 
         labs(color = "Age Group",
              fill = "Age Group",
@@ -5195,7 +5201,7 @@ plot_dbh_temp_single_var_flex <- function(pred_list,
         theme(legend.position = 'top',
               legend.direction = "horizontal",
               panel.spacing = unit(2, "lines"),
-              strip.text = element_text(size = 12)) +
+              strip.text = element_text(size = 10)) +
 
         scale_color_brewer(palette = 2, type = "qual") +
         scale_fill_brewer(palette = 2, type = "qual") +
@@ -5310,12 +5316,13 @@ plot_obs_predicted_model <- function(path_model,
         geom_smooth(method = "lm", formula = "y ~ x", color = "red") +
         geom_abline(slope = 1, intercept = 0, linetype = 2, color = "gray40") +
         scale_fill_viridis_c(option = "plasma") +
-        theme_minimal(base_size = 18) +
+        theme_minimal(base_size = base_size) +
         labs(x = "Predicted", y = "Observed", fill = "N") +
         annotate("text",
                  x = 50,
                  y = 200,
-                 label = as.expression(bquote(R[adj]^2~'='~.(adjr)~~~~RMSE~'='~.(mod_rmse)~~~~MAE~'='~.(mod_mae))))
+                 size = 2.5,
+                 label = as.expression(bquote(atop(R[adj]^2~'='~.(adjr),RMSE~'='~.(mod_rmse)~~~~MAE~'='~.(mod_mae)))))
 
 
     ggplot2::ggsave(filename = file,
@@ -5511,7 +5518,8 @@ plot_dbh_temp_comparison <- function(
                   show.legend = FALSE) +
         geom_text(aes(y = species_corrected,
                       x = rown,
-                      label = round(estimate, 2))) +
+                      label = round(estimate, 2)),
+                  size = 2.5) +
         facet_wrap(~age) +
         ggplot2::scale_fill_distiller(palette = "RdBu",
                                       rescaler = mid_rescaler(),
@@ -5731,7 +5739,7 @@ make_biwi_plot <- function(biwi_preds,
         # scale_fill_brewer(type = "qual", palette = 2) +
         # scale_color_brewer(type = "qual", palette = 2) +
         scale_color_manual(values = pals::tol(2), aesthetics = c("fill", "color")) +
-        theme_minimal(base_size = 18) +
+        theme_minimal(base_size = base_size) +
         theme(legend.position = c(0.75, y = 0.75))
 
 

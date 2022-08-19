@@ -610,7 +610,7 @@ plan <- drake::drake_plan(
                           envat = berlin_heat_model_2015,
                           urbclim = raster::stack(uhi_urbclim),
                           berlin_poly = berlin_polygons,
-                          base_size = 18,
+                          base_size = 8,
                           file = "./analysis/figures/fig_temp_maps.png",
                           dpi = 300,
                           height = journal_fig_width_double,
@@ -684,7 +684,7 @@ plan <- drake::drake_plan(
 
    plot_gam_deviance = make_deviance_plot(
        deviance_list = gam_deviances,
-       base_size = 18,
+       base_size = 10,
        file = drake::file_out("./analysis/figures/fig_model_deviance.png"),
        height =  0.8333333 * journal_fig_width_double,
        width = journal_fig_width_double,
@@ -721,9 +721,9 @@ plan <- drake::drake_plan(
        age_filter = NULL,
        age_expression = age_expr,
        prediction_range = "within",
-       base_size = 18,
+       base_size = 12,
        file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_lcz6.png"),
-       height = 0.6111111 * journal_fig_width_double,
+       height = 0.75 * journal_fig_width_double,
        width = journal_fig_width_double,
        dpi = 300),
 
@@ -829,7 +829,7 @@ plan <- drake::drake_plan(
                                  # species_filter = c("Tilia cordata","Platanus acerifolia"),
                                  age_expression = age_expr,
                                  prediction_range = "within",
-                                 base_size = 18,
+                                 base_size = 10,
                                  x_label = expression('Proportional Cover - LCZ6'[bar(150~m)]),
                                  file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_xvar-lcz6_tilia.png"),
                                  height = 0.875 * journal_fig_width_single,
@@ -866,6 +866,7 @@ plan <- drake::drake_plan(
                                             file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_lcz6_obs_pred.png"),
                                             height = 0.875 * journal_fig_width_single,
                                             width = journal_fig_width_single,
+                                            base_size = 10,
                                             dpi = 300),
 
 
@@ -881,7 +882,7 @@ plan <- drake::drake_plan(
                                                 # species_filter = c("Tilia cordata","Platanus acerifolia"),
                                                 age_expression = age_expr,
                                                 prediction_range = "within",
-                                                base_size = 18,
+                                                base_size = 10,
                                                 file = "./analysis/figures/fig_model_day2007_lcz6_growthsens.png",
                                                 height = journal_fig_width_double * 0.5,
                                                 width = journal_fig_width_double,
@@ -914,11 +915,11 @@ plan <- drake::drake_plan(
    biwi_preds = biwi_mod_predict(series_long),
 
    biwi_plot = make_biwi_plot(biwi_preds,
-                              base_size = 18,
                               file = drake::file_out("./analysis/figures/fig-biwi-growth.png"),
                               height = journal_fig_width_single,
                               width = journal_fig_width_single,
-                              dpi = 300),
+                              dpi = 300,
+                              base_size = 10),
 
 
    ### SI: Heat comparison ------------------------------
@@ -1033,14 +1034,14 @@ plan <- drake::drake_plan(
 
 
     # Reporting ------------------------------
-    # paper_html = rmarkdown::render(
-    #     knitr_in("./analysis/paper/paper.Rmd"),
-    #     output_dir = "./analysis/paper/",
-    #     output_file = file_out("paper_knit.html"),
-    #     # output_format = bookdown::html_document2(),
-    #     output_format = "bookdown::html_document2",
-    #     quiet = TRUE
-    # ),
+    paper_html = rmarkdown::render(
+        knitr_in("./analysis/paper/paper.Rmd"),
+        output_dir = "./analysis/paper/",
+        output_file = file_out("paper_knit.html"),
+        # output_format = bookdown::html_document2(),
+        output_format = "bookdown::html_document2",
+        quiet = TRUE
+    ),
     # paper_word = rmarkdown::render(
     #     knitr_in("./analysis/paper/paper.Rmd"),
     #     output_dir = "./analysis/paper/",

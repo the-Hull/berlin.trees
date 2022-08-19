@@ -281,7 +281,7 @@ The city provides extensive public green space covering around 30$~\%$ of its ar
 <!-- It has a pronounced urban heat island, owing to its high degree of built-up and sealed surfaces, with air temperatures up to 12$^\circ C$ higher in urban compared to adjacent rural areas [@fenner2014]. -->
 
 
-**Fig. \@ref(fig:fig-study_area)**
+**Fig. \@ref(fig:fig-study-area) **
 
 
 <!-- ## General approach: space-for-time analyses -->
@@ -298,7 +298,7 @@ The city provides extensive public green space covering around 30$~\%$ of its ar
 
 An overview of data used for models, including sources, types, and application, is provided in Table$~$\@ref(tab:tab-dsources), with detailed descriptions in the following subsections.
 
-**Table Table$~$\@ref(tab:tab-dsources)**
+**Table$~$\@ref(tab:tab-dsources)**
 
 
 ### Street trees  
@@ -344,7 +344,7 @@ The urban heat loading was then calculated as
 where $T$ is temperature ($^\circ C$) $x$ and $y$ define an urban grid cell.
 The LandSat-derived surface UHI data set by @chakraborty2019 (referred to as LandSat) estimates its measure in a similar fashion and the reader is referred to the detailed description therein; note this data set provides day and night-time averaged UHI estimates at 500$~m$ resolution, which were extracted for the hottest summer in this record (2007).
 
-**Fig. \@ref(fig:fig-temp-overview)
+**Fig. \@ref(fig:fig-temp-overview)**
 
 
 ### Ancillary environmental data
@@ -577,7 +577,7 @@ Thus, we consider using species and age-group averages as appropriate for identi
 
 ## Urban heat and urban fabric effects on stem growth
 
-Relationships derived via the GAM in Equation$~$\@ref(eq:gam-full) with LCZ6 as covariate show fairly consistent responses across age groups considering trajectories, yet they differ somewhat in shape (Figure$~$\@ref(fig:fig-heat-effect)) and considerably in absolute magnitude (i.e., slope in Fig.$\@ref(fig:fig-temp-sens)).
+Relationships derived via the GAM in Equation$~$\@ref(eq:gam-full) with LCZ6 as covariate show fairly consistent responses across age groups considering trajectories, yet they differ somewhat in shape (Figure$~$\@ref(fig:fig-heat-effect)) and considerably in absolute magnitude (i.e., slope in Fig.$~$\@ref(fig:fig-temp-sens)).
 Generally, younger age groups (30-35) showed increased growth (strongest for *A. hippocastanum*, *T. intermedia*, *T. intermedia* 'Pallida'), or little to no impact (*Acer platanoides*, *Acer pseudoplatanus*), with stronger UHI magnitude.
 At older ages, this trajectory gradually shifted toward decreasing stem diameter at higher temperatures, with *T. euchlora*, *A. pseudoplatanus* and *P. acerifolia* having the most negative relationships.
 Notably, *Platanus acerifolia* showed an earlier reversal of sensitivity at age group 45-50 as compared to other species. This may be due to the stronger upward curvature towards the estimates' lower temperature limit (see respective panel in Figure$~$\@ref(fig:fig-heat-effect)).
@@ -678,7 +678,7 @@ The presented results here are correlative.
 While their interpretation follows first principles and may also allow anticipating the performance of a given tree under a range of increased temperatures, insights derived from mechanistic understanding are indispensable.
 This is because a change in one environmental condition, e.g., temperature or pest abundance, may also entail alterations to other drivers, and ultimately, affect physiological processes in ways not yet captured in existing data.
 Furthermore, the data provided in Berlin's tree inventory required extensive quality controlling, and it is likely that inaccurate (diameter, age) or interpolated (diameter) observations were including in the analyses.
-However, the minimum requirement of 10000 observations per species, and the focus on average diameter responses across age groups decreased potential impacts of such observations may have had to a degree that was considered satisfactory, while uncertainty is communicated effectively (i.e., larger confidence bands for *T. intermedia 'Pallida'*).
+However, the minimum requirement of 10000 observations per species, and the focus on average diameter responses across age groups decreased potential impacts of such observations to a degree that was considered satisfactory, while uncertainty is communicated effectively and transparently (i.e., larger confidence bands for *T. intermedia 'Pallida'*).
 Further, the utility and transferability of the approach  *per se* were considered of value to the community and practitioners.
 
 
