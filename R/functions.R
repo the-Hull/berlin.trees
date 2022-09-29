@@ -3842,7 +3842,7 @@ FFGGHH
         plot_layout(design = layout, heights = 1/3)
 
 
-    png(filename = file, width = width, height = height, res = dpi, units = "cm")
+    tiff(filename = file, width = width, height = height, res = dpi, units = "cm")
 
     gp <- grid::gpar(fontfamily = "Roboto Condensed", fontsize = base_size)
 
@@ -4655,7 +4655,8 @@ make_deviance_plot <- function(deviance_list,
                     dpi = dpi,
                     height = height,
                     width = width,
-                    units = 'cm')
+                    units = 'cm',
+                    bg = 'white')
 
     return(gplot)
 }
@@ -4942,7 +4943,8 @@ plot_dbh_temp_single_var <- function(pred_list,
                     dpi = dpi,
                     height = height,
                     width = width,
-                    units = 'cm')
+                    units = 'cm',
+                    bg = 'white')
 
 
 }
@@ -5218,7 +5220,8 @@ plot_dbh_temp_single_var_flex <- function(pred_list,
                     dpi = dpi,
                     height = height,
                     width = width,
-                    units = 'cm')
+                    units = 'cm',
+                    bg = 'white')
 
 
 }
@@ -5330,7 +5333,8 @@ plot_obs_predicted_model <- function(path_model,
                     dpi = dpi,
                     height = height,
                     width = width,
-                    units = 'cm')
+                    units = 'cm',
+                    bg = 'white')
 
     return(gplot)
 
@@ -5551,7 +5555,8 @@ plot_dbh_temp_comparison <- function(
            width = width,
            height = height,
            dpi = dpi,
-           units = "cm")
+           units = "cm",
+           bg = 'white')
 
     return(list(plot = gplot, est_plot = estimate_plot, lms = lms, df = plot_data, estimates = zero_val))
 
@@ -5750,7 +5755,8 @@ make_biwi_plot <- function(biwi_preds,
                     dpi = dpi,
                     height = height,
                     width = width,
-                    units = 'cm')
+                    units = 'cm',
+                    bg = 'white')
 
     return(file)
 

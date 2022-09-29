@@ -551,14 +551,159 @@ plan <- drake::drake_plan(
    journal_fig_width_mid = 8.2 * 1.5,
 
 
+   # UFUG Submission --------------------------
+
+   base_path_fig = "./analysis/figures/ufug_submission/",
+
    ### map: study area ------
 
    plot_study_area_map = make_map_study_area(blu = berlin_lu,
                                              berlin_poly = berlin_polygons,
-                                             path_out = drake::file_out("./analysis/figures/map_00_studyarea.tiff"),
+                                             path_out = paste0(base_path_fig, "01_single_map_studyarea.tiff"),
                                              height = journal_fig_width_single * 0.7857143,
                                              width = journal_fig_width_single,
                                              dpi = 300),
+
+
+   ### map: temp/UHI overview ----------------
+
+   plot_uhi_overview_maps = plot_temp_maps(landsat = uhi_stacks,
+                                           envat = berlin_heat_model_2015,
+                                           urbclim = raster::stack(uhi_urbclim),
+                                           berlin_poly = berlin_polygons,
+                                           base_size = 8,
+                                           file = paste0(base_path_fig, "02_double_map_temp.tiff"),
+                                           dpi = 300,
+                                           height = journal_fig_width_double,
+                                           width = journal_fig_width_double),
+
+
+
+   ### BIWI: cambial age vs. annual growth -------------------
+
+   species_lookup = read.csv(drake::file_in("analysis/data/tables/species_lookup.csv"), header = TRUE),
+
+
+
+   series_long = prep_rwl_data(path_meta_cores = drake::file_in("./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx"),
+                               path_meta_trees = drake::file_in("./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx"),
+                               path_meta_sites = drake::file_in("./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx"),
+                               path_dir_fh = drake::file_in("./analysis/data/raw_data/biwi/rwl/")),
+
+   biwi_preds = biwi_mod_predict(series_long),
+
+   biwi_plot = make_biwi_plot(biwi_preds,
+                              file = paste0(base_path_fig, "03_single_biwi_annual_growth.tiff"),
+                              height = journal_fig_width_single,
+                              width = journal_fig_width_single,
+                              dpi = 300,
+                              base_size = 10),
+
+
+
+
+
+
+
+   ### stat: GAMM deviance ------------------
+
+
+   gam_deviances = extract_mod_deviance(readRDS(mod_summaries_filtered)),
+   # gam_deviances = extract_mod_deviance(readRDS(drake::file_in("analysis/data/models/stat/summary/mod_filtered_summary.Rds"))),
+
+   plot_gam_deviance = make_deviance_plot(
+       deviance_list = gam_deviances,
+       base_size = 10,
+       file = paste0(base_path_fig, "04_double_model_deviance.tiff"),
+       height =  0.8333333 * journal_fig_width_double,
+       width = journal_fig_width_double,
+       dpi = 300),
+
+
+    # obs vs. pred day2007, lcz6
+    plot_obs_pred_single_temp_lcz6 =
+        plot_obs_predicted_model(path_model = bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_lcz6_reBEZIRK_var-day_2007', 'model_file_path'],
+                                 file = paste0(base_path_fig, "05_single_gam-dbh_temp_day2007_lcz6_obs_pred.tiff"),
+                                 height = 0.875 * journal_fig_width_single,
+                                 width = journal_fig_width_single,
+                                 base_size = 10,
+                                 dpi = 300),
+
+
+   ### stat: gamm predictions
+
+
+   # uhi2007, lcz6
+   plot_gam_temp_lcz6_prediction = plot_dbh_temp_single_var(
+       pred_list = pred_data_single_tempvar_fixed_lcz6,
+       model_df = model_df_stat_filtered,
+       age_filter = NULL,
+       age_expression = age_expr,
+       prediction_range = "within",
+       base_size = 12,
+       file = paste0(base_path_fig, "06_double_gam-dbh_temp-day2007_lcz6.png"),
+       height = 0.75 * journal_fig_width_double,
+       width = journal_fig_width_double,
+       dpi = 300),
+
+
+
+
+
+
+
+   ### stat: dbh temp sensitivites (plot and calc) --------------
+
+
+   plot_dbh_sens_lms = plot_dbh_temp_comparison(pred_list = pred_data_single_tempvar_fixed_lcz6,
+                                                model_df = model_df_stat_filtered,
+                                                age_filter = c('[45 - 50]', '[75 - 80]', '[90 - 95]'),
+                                                species_filter = NULL,
+                                                # species_filter = c("Tilia cordata", "Tilia platyphyllos"),
+                                                # species_filter = c("Tilia cordata","Platanus acerifolia"),
+                                                age_expression = age_expr,
+                                                prediction_range = "within",
+                                                base_size = 10,
+                                                file = paste0(base_path_fig, "07_double_day2007_lcz6_growth_sensitivity.tiff"),
+                                                height = journal_fig_width_double * 0.5,
+                                                width = journal_fig_width_double,
+                                                dpi = 300),
+
+
+
+   # tilia
+   plot_gam_temp_prediction_single_genus_lcz6 =
+       plot_dbh_temp_single_var_flex(pred_list = pred_data_single_tempvar_multi_lcz6,
+                                     model_df = model_df_stat_filtered,
+                                     var = "lcz_prop_6",
+                                     age_filter = c("[45 - 50]", "[60 - 65]", '[75 - 80]', '[90 - 95]'),
+                                     species_filter = c("Tilia cordata", "Tilia platyphyllos"),
+                                     # species_filter = c("Tilia cordata","Platanus acerifolia"),
+                                     age_expression = age_expr,
+                                     prediction_range = "within",
+                                     base_size = 10,
+                                     x_label = expression('Proportional Cover - LCZ6'[bar(150~m)]),
+                                     file = paste0(base_path_fig, "08_single_dbh_temp-day2007_xvar-lcz6_tilia.tiff"),
+                                     height = 0.875 * journal_fig_width_single,
+                                     width = journal_fig_width_single,
+                                     dpi = 300),
+
+
+
+
+
+
+
+
+
+   # Other plots --------------------------------
+
+
+
+
+
+
+
 
 
    ### map: Tree overview-----
@@ -604,17 +749,6 @@ plan <- drake::drake_plan(
                                                                                UHI~(degree*C)))),
 
 
-   ### map: temp/UHI overview ----------------
-
-   plot_uhi_overview_maps = plot_temp_maps(landsat = uhi_stacks,
-                          envat = berlin_heat_model_2015,
-                          urbclim = raster::stack(uhi_urbclim),
-                          berlin_poly = berlin_polygons,
-                          base_size = 8,
-                          file = "./analysis/figures/fig_temp_maps.png",
-                          dpi = 300,
-                          height = journal_fig_width_double,
-                          width = journal_fig_width_double),
 
 
    ### bar: Tree counts ------------
@@ -676,19 +810,7 @@ plan <- drake::drake_plan(
                                                  dpi = 300),
 
 
-   ### stat: GAMM deviance ------------------
 
-
-   gam_deviances = extract_mod_deviance(readRDS(mod_summaries_filtered)),
-   # gam_deviances = extract_mod_deviance(readRDS(drake::file_in("analysis/data/models/stat/summary/mod_filtered_summary.Rds"))),
-
-   plot_gam_deviance = make_deviance_plot(
-       deviance_list = gam_deviances,
-       base_size = 10,
-       file = drake::file_out("./analysis/figures/fig_model_deviance.png"),
-       height =  0.8333333 * journal_fig_width_double,
-       width = journal_fig_width_double,
-       dpi = 300),
 
 
    ### stat: GAMM AIC ------------------
@@ -715,17 +837,7 @@ plan <- drake::drake_plan(
        width = 18,
        dpi = 300),
 
-   plot_gam_temp_lcz6_prediction = plot_dbh_temp_single_var(
-       pred_list = pred_data_single_tempvar_fixed_lcz6,
-       model_df = model_df_stat_filtered,
-       age_filter = NULL,
-       age_expression = age_expr,
-       prediction_range = "within",
-       base_size = 12,
-       file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_lcz6.png"),
-       height = 0.75 * journal_fig_width_double,
-       width = journal_fig_width_double,
-       dpi = 300),
+
 
    plot_gam_temp_prediction_fullmodel = plot_dbh_temp_single_var(
        pred_list = pred_data_single_tempvar_fullmodel,
@@ -821,20 +933,7 @@ plan <- drake::drake_plan(
                                  dpi = 300),
 
 
-   plot_gam_temp_prediction_single_genus_lcz6 = plot_dbh_temp_single_var_flex(pred_list = pred_data_single_tempvar_multi_lcz6,
-                                 model_df = model_df_stat_filtered,
-                                 var = "lcz_prop_6",
-                                 age_filter = c("[45 - 50]", "[60 - 65]", '[75 - 80]', '[90 - 95]'),
-                                 species_filter = c("Tilia cordata", "Tilia platyphyllos"),
-                                 # species_filter = c("Tilia cordata","Platanus acerifolia"),
-                                 age_expression = age_expr,
-                                 prediction_range = "within",
-                                 base_size = 10,
-                                 x_label = expression('Proportional Cover - LCZ6'[bar(150~m)]),
-                                 file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_xvar-lcz6_tilia.png"),
-                                 height = 0.875 * journal_fig_width_single,
-                                 width = journal_fig_width_single,
-                                 dpi = 300),
+
 
 
    plot_gam_temp_prediction_single_genus_lcz6_300 = plot_dbh_temp_single_var_flex(
@@ -862,31 +961,11 @@ plan <- drake::drake_plan(
                                             height = 7,
                                             width = 8,
                                             dpi = 300),
-   plot_obs_pred_single_temp_lcz6 = plot_obs_predicted_model(path_model = bam_dbh_filtered[bam_dbh_filtered$model=='mI_spatial_age_x_temp_by_species_lcz6_reBEZIRK_var-day_2007', 'model_file_path'],
-                                            file = drake::file_out("./analysis/figures/fig-gam-dbh_temp-day2007_lcz6_obs_pred.png"),
-                                            height = 0.875 * journal_fig_width_single,
-                                            width = journal_fig_width_single,
-                                            base_size = 10,
-                                            dpi = 300),
 
 
 
-   ### stat: dbh temp sensitivites (plot and calc) --------------
 
 
-   plot_dbh_sens_lms = plot_dbh_temp_comparison(pred_list = pred_data_single_tempvar_fixed_lcz6,
-                                                model_df = model_df_stat_filtered,
-                                                age_filter = c('[45 - 50]', '[75 - 80]', '[90 - 95]'),
-                                                species_filter = NULL,
-                                                # species_filter = c("Tilia cordata", "Tilia platyphyllos"),
-                                                # species_filter = c("Tilia cordata","Platanus acerifolia"),
-                                                age_expression = age_expr,
-                                                prediction_range = "within",
-                                                base_size = 10,
-                                                file = "./analysis/figures/fig_model_day2007_lcz6_growthsens.png",
-                                                height = journal_fig_width_double * 0.5,
-                                                width = journal_fig_width_double,
-                                                dpi = 300),
 
 
    ### stat: moran comparison ------------------
@@ -901,25 +980,6 @@ plan <- drake::drake_plan(
                          dpi = 300),
 
 
-   ### BIWI: cambial age vs. annual growth -------------------
-
-   species_lookup = read.csv(drake::file_in("analysis/data/tables/species_lookup.csv"), header = TRUE),
-
-
-
-   series_long = prep_rwl_data(path_meta_cores = drake::file_in("./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx"),
-                                path_meta_trees = drake::file_in("./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx"),
-                                path_meta_sites = drake::file_in("./analysis/data/raw_data/biwi/BIWi_INV_20190123.xlsx"),
-                                path_dir_fh = drake::file_in("./analysis/data/raw_data/biwi/rwl/")),
-
-   biwi_preds = biwi_mod_predict(series_long),
-
-   biwi_plot = make_biwi_plot(biwi_preds,
-                              file = drake::file_out("./analysis/figures/fig-biwi-growth.png"),
-                              height = journal_fig_width_single,
-                              width = journal_fig_width_single,
-                              dpi = 300,
-                              base_size = 10),
 
 
    ### SI: Heat comparison ------------------------------
@@ -1042,14 +1102,14 @@ plan <- drake::drake_plan(
         output_format = "bookdown::html_document2",
         quiet = TRUE
     ),
-    # paper_word = rmarkdown::render(
-    #     knitr_in("./analysis/paper/paper.Rmd"),
-    #     output_dir = "./analysis/paper/",
-    #     output_file = file_out("paper_knit.docx"),
-    #     # output_file = "./paper_knit.html",
-    #     output_format = bookdown::word_document2(),
-    #     quiet = TRUE
-    # ),
+    paper_word = rmarkdown::render(
+        knitr_in("./analysis/paper/paper.Rmd"),
+        output_dir = "./analysis/paper/",
+        output_file = file_out("paper_knit.docx"),
+        # output_file = "./paper_knit.html",
+        output_format = "bookdown::word_document2",
+        quiet = TRUE
+    ),
     # paper_pdf = rmarkdown::render(
     #     knitr_in("./analysis/paper/paper.Rmd"),
     #     output_dir = "./analysis/paper/",
