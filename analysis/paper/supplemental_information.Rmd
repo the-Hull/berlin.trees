@@ -1,7 +1,7 @@
 ---
 title: "Supplement to: Assessing the impact of urban heating on tree growth in Berlin with open inventory and environmental data"
 author:
-  - Alexander G. Hurley$^{a *}$, Ingo Heinrich$^a$, ...
+  - Alexander G. Hurley$^{a *}$, Ingo Heinrich$^a$
   - $^a$ *Geoforschungszentrum Potsdam, Section 4.3, Germany*
   - "* Corresponding author: hurley@gfz-potsdam.de"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
@@ -10,16 +10,6 @@ output:
     bookdown::html_document2:
       fig_caption: yes
       toc: true
-    bookdown::word_document2:
-      fig_caption: yes
-      reference_docx: "../templates/template.docx" # Insert path for the DOCX file
-      pandoc_args:
-      - --lua-filter=../templates/scholarly-metadata.lua
-      - --lua-filter=../templates/author-info-blocks.lua
-      - --lua-filter=../templates/pagebreak.lua
-    bookdown::pdf_document2:
-      fig_caption: yes
-      toc: yes
 header-includes:
 - \usepackage{booktabs}
 - \usepackage{longtable}
@@ -36,12 +26,7 @@ bibliography:
   - 04_gfz_UHI.bib
   - 07_phenoTram.bib
 csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
-abstract: |
-  **This document outlines the rationale for an analysis of tree growth (potential) and its relationship with the Urban Heat Island (UHI) effect in Berlin using an extensive, publicly available data set. It introduces preliminary results and provides an outlook for up-coming and potential work.**
-keywords: |
-  Uferbaeume; Anlagenbaeume; Strassenbaeume; 
-highlights: |
-  We will see. 
+
 ---
 
 <style>
@@ -85,37 +70,107 @@ library(kableExtra)
 # library(patchwork)
 ```
 
-# Overview
+# Code and reproducibility
 
-- Upload full code with DOI
-- datacleanr imgs
-- diagnostic lm imgs
-- spatial comparison (Moran's I)
-- AIC figure
 
-<!-- # Acknowledgements -->
+The code to reproduce the paper and its analyses, as well as this supplement, are found at [https://github.com/the-Hull/berlin.trees/](), with permanently archived versions at **DOI**.
+The project relies on the workflow management tool `drake`, where all analyses steps are maintained within the file `berlin.trees/R/plan.R`, with necessary functions in `berlin.trees/R/functions.R`.
+The code downloads most necessary files to execute the analyses.
+However, some files were too large for tracking with version control (i.e., `git` on GitHub); thus, should any issues arise with executing the code, please contact the corresponding author.
 
-<!-- <!-- The following line inserts a page break  --> 
-<!-- `r pgbreak()` -->
+Further information on `drake` is available at:  
+- William Michael Landau, (2018). The drake R package: a pipeline toolkit for
+  reproducibility and high-performance computing. **Journal of Open Source Software, 3(21)**,
+  550, https://doi.org/10.21105/joss.00550
 
-# References 
-<!-- The following line ensures the references appear here for the MS Word or HTML output files, rather than right at the end of the document (this will not work for PDF files):  -->
-<div id="refs"></div>
 
-`r pgbreak()`
+# Data quality control for street tree inventory
 
-### Colophon
+Manual data processing for quality control was done with a bespoke software  `datacleanr` by [@hurley2022], where obvious outliers or clearly interpolated data were removed.
+The latter was deemed necessary, as several observations in multiple city districts were derived by linear relationships (i.e., straight-line), which do not capture the ontogenic growth dynamics of trees, and leave no variation related to variables other than age.
+All of these operations were recorded, and can be viewed in the repository [https://github.com/the-Hull/berlin.trees/]() and reproduced via the supplementary code:  
 
-This report was generated on `r Sys.time()` using the following computational environment and dependencies: 
+- exploratory and diagnostic plots for age and diameter relationships: `berlin.trees/analysis/figures/eda/`
+- `datacleanr` cleaning operations: `berlin.trees/analysis/data/raw_data/tree_splits`
 
-```{r colophon, cache = FALSE}
-# which R packages and versions?
-if ("devtools" %in% installed.packages()) devtools::session_info()
+
+
+```{r fig-diag-dcr, fig.cap = "Manual data inspection and cleaning with the R package `datacleanr`. This example for the genus *Tilia* in the district Spandau clearly shows linearly interpolated age-diameter observations. These were manually removed with utmost diligence to retain non-interpolated data. Note, that the supplementary code includes files to view and reproduce the results of manual cleaning in *analysis/data/raw_data/tree_splits/*.", fig.width = 14, fig.height = 14, out.width="100%"}
+
+
+knitr::include_graphics(here::here("analysis/figures/diagnostic_00_datacleanr-Tilia-district_spandau.png"))
 ```
 
-The current Git commit details are:
 
-```{r}
-# what commit is this file at? 
-if ("git2r" %in% installed.packages() & git2r::in_repository(path = ".")) git2r::repository(here::here())  
+Lastly, observations with unlikely diameter-age combinations were identified via the residuals of a generalized linear model between diameter and age with a Gamma log-link distribution: if individual residuals exceeded seven times the median absolute deviation of all residuals, they were removed.
+The median absolute deviation (MAD) is comparable to the inter-quartile range, yet more robust to outliers:
+
+\begin{equation}
+  MAD = median(\|X_i - median(X)\|) 
+  (\#eq:mad)
+\end{equation}
+
+
+
+
+```{r fig-diag-lm, fig.cap = "Observations with unlikely diameter-age combinations ($dbh_{cm}~vs.~STANDALTER$) were identified via the residuals of a generalized linear model between diameter and age with a Gamma log-link distribution for every species included in the study. Where individual residuals exceeded seven times the median absolute deviation of all residuals, they were removed. The line is the fitted model, and colors represent retained or removed observations (see legend). See main text (Section Street Trees) for further explanation.", fig.width = 14, fig.height = 14, out.width="100%"}
+
+
+knitr::include_graphics(here::here("analysis/figures/diagnostic_01_model_data.png"))
 ```
+
+
+
+# Spatial auto-correlation
+
+Exploratory analyses of (initial) model resiudals showed spatial auto-correlation was present in the structure of the inventory data (identified by correlation of x and y coordinates with residuals).
+Note that this was expected given that trees planted on the same road (and/or neighborhood, district) may share several features, such as planting time, species, adjacent urban fabric. 
+Thus, we included model features (i.e., dependent variables) in the model formulation to account for spatial auto-correlation. 
+This was achieved with isometric smoothing splines with basis derived from both x and y co-ordinates (i.e., interaction terms in the generalized additive model). 
+We used Morans' I to calcualte spatial dependency with the function `Moran.I()` from the `R` package `ape`.
+
+$$
+I = \frac{n}{S_0} \cdot \frac{\sum_{i=1}^{n} \sum_{j=1}^{n} w_{ij}(y_{i} - \bar{y})(y_{j} - \bar{y})} { \sum_{i=1}^{n} (y_{i} - \bar{y})^2}
+$$
+where $y_{i}$ are individual observations, $w_{ij}$ are distance weights, $n$ are the totall number of observations, and $S_{0} = \sum_{i=1}^{n} \cdot \sum_{j=1}^{n} w_{ij}$.
+
+Details on `ape` can be found in:
+
+- *Paradis E. & Schliep K. 2019. ape 5.0: an environment for modern phylogenetics and evolutionary analyses in R. **Bioinformatics 35**: 526-528.*
+
+Due to computational limitations, we split the data set into several groups using a spatial grid from the Berlin authorities, based on $2 \cdot 2~km$ cells, found at:  
+- [https://fbinter.stadt-berlin.de/fb/atom//DOP/Blattschnitt2x2km.gif](), 
+
+with further details at:  
+- [https://fbinter.stadt-berlin.de/fb/berlin/service_intern.jsp?id=a_luftbild2010_cir@senstadt&type=FEED]() (accessed at 2022-09-29), 
+
+with the resulting splits below:
+
+
+```{r fig-grid, fig.cap = "Grid for splitting observations into discrete groups. Regions are based on $2 \\cdot 2~km$ grid cells and grouped based on Berlin's data acquisition scheme for aerial images", echo = FALSE, out.width='50%'}
+
+grid <- sf::st_read(here::here("analysis/data/raw_data/spatial_ancillary/grid_2x2.geojson"), quiet = TRUE)
+
+library(ggplot2)
+ggplot() +
+  geom_sf(data = grid, aes(fill = grid_region, color = grid_region)) +
+  scale_fill_brewer(palette = 'Set3') +
+  scale_color_brewer(palette = 'Set3') +
+  theme_minimal() +
+  labs(title = "Gridded Berlin regions (2x2 km)", color = "Grid Region", fill = "Grid Region")
+  
+```
+
+We observed a considerable reduction of Moran's I (i.e., spatial auto-correlation) by including spatial terms in the model structure (i.e., x and y coordinates). 
+Given the large sample sizes available for this study we considered this approach (i.e., spatial terms) satisfactory to ensure the inference of model coefficients was not violated due to dependence of residuals.
+
+
+```{r fig-moran, echo = FALSE, fig.cap = "Comparison of Moran's I with and without spatial terms included in the model structure as dependent variable (bar color) between two model structures (additive on left, and interaction structures for temperature on the right).", out.width='100%'}
+
+knitr::include_graphics(here::here("analysis/figures/fig-gam-spatial_moran_comparison_blocks.png"))
+
+
+```
+
+
+

@@ -1,0 +1,28 @@
+---
+title: "CRediT author statement"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+always_allow_html: true
+output: 
+    bookdown::word_document2:
+      fig_caption: yes
+      reference_docx: "../templates/template.docx" # Insert path for the DOCX file
+header-includes:
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage[normalem]{ulem}
+csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
+
+---
+
+Following https://www.elsevier.com/authors/policies-and-guidelines/credit-author-statement
+
+
+Alexander Hurley: Conceptualization, Methodology, Data curation, Formal analysis, Visualization, Writing - Original Draft.
+Ingo Heinreich: Resources, Investigation, Project administration, Funding acquisition, Writing - Review & Editing

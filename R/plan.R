@@ -553,7 +553,7 @@ plan <- drake::drake_plan(
 
    # UFUG Submission --------------------------
 
-   base_path_fig = "./analysis/figures/ufug_submission/",
+   base_path_fig = "./analysis/figures/ufug_submission/hurley_heinrich_",
 
    ### map: study area ------
 
@@ -1094,22 +1094,22 @@ plan <- drake::drake_plan(
 
 
     # Reporting ------------------------------
-    paper_html = rmarkdown::render(
-        knitr_in("./analysis/paper/paper.Rmd"),
-        output_dir = "./analysis/paper/",
-        output_file = file_out("paper_knit.html"),
-        # output_format = bookdown::html_document2(),
-        output_format = "bookdown::html_document2",
-        quiet = TRUE
-    ),
-    paper_word = rmarkdown::render(
-        knitr_in("./analysis/paper/paper.Rmd"),
-        output_dir = "./analysis/paper/",
-        output_file = file_out("paper_knit.docx"),
-        # output_file = "./paper_knit.html",
-        output_format = "bookdown::word_document2",
-        quiet = TRUE
-    ),
+    # paper_html = rmarkdown::render(
+    #     knitr_in("./analysis/paper/paper.Rmd"),
+    #     output_dir = "./analysis/paper/",
+    #     output_file = file_out("paper_knit.html"),
+    #     # output_format = bookdown::html_document2(),
+    #     output_format = "bookdown::html_document2",
+    #     quiet = TRUE
+    # ),
+    # paper_word = rmarkdown::render(
+    #     knitr_in("./analysis/paper/paper.Rmd"),
+    #     output_dir = "./analysis/paper/",
+    #     output_file = file_out("paper_knit.docx"),
+    #     # output_file = "./paper_knit.html",
+    #     output_format = "bookdown::word_document2",
+    #     quiet = TRUE
+    # ),
     # paper_pdf = rmarkdown::render(
     #     knitr_in("./analysis/paper/paper.Rmd"),
     #     output_dir = "./analysis/paper/",
@@ -1123,9 +1123,19 @@ plan <- drake::drake_plan(
        knitr_in("./analysis/paper/supplemental_information.Rmd"),
        output_dir = "./analysis/paper/",
        output_file = file_out("supplemental_information.html"),
-       output_format = bookdown::html_document2(),
+       output_format = "bookdown::html_document2",
+       quiet = TRUE
+   ),
+
+   author_cred_word = rmarkdown::render(
+       knitr_in("./analysis/paper/author_statement_credit.Rmd"),
+       output_dir = "./analysis/paper/",
+       output_file = file_out("author_statement_credit.docx"),
+       output_format = "bookdown::word_document2",
        quiet = TRUE
    )
+
+
 
 )
 

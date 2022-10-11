@@ -152,7 +152,7 @@ These differences in growth trends may result from contrasting species-specific 
 <!-- Space-for-time substitutions and time series comparisons between and within locations are a common approach (cf. studies above) to generate inferences in observational (rather than treatment-control) studies, where manipulations are costly or logistically unfeasible due to time and/or financial constraints. -->
 <!-- However, they require  accounting for confounding factors specific to trees' environments, such as street characteristics, development intensity, available soil volume, etc. -->
 <!-- While several of the aforementioned studies applied these approaches to quantify temperature and excess heat on growth, they typically compare trees grouped using qualitative or summary descriptors of sampling sites, disregarding the spatio-temporal variability in location-specific factors noted above. -->
-Several of the aforementioned studies applied space-for-time substitutions or time series comparisons to quantify temperature and excess heat on growth for a given region.
+Multiple of the aforementioned studies applied space-for-time substitutions or time series comparisons to quantify temperature and excess heat on growth for a given region.
 However, they typically compared trees grouped using qualitative or summary descriptors of sampling sites, disregarding the spatial and/or temporal variability in location-specific factors noted above.
 This can hinder the extrapolation from individual sampling sites toward predicting effects across entire urban areas and tree stocks, especially when studies rely on labor-intensive methods, 
 <!-- which are limited logistically by sampling effort,  -->
@@ -320,7 +320,8 @@ The median absolute deviation (MAD) is comparable to the inter-quartile range, y
   (\#eq:mad)
 \end{equation}
 
-This approach is considered conservative (see supplementary information), yet all analyses were carried forward with the unfiltered and filtered data - no considerable differences were found, thus subsequent sections are based on the filtered data.
+Similar cut-off approaches are frequently applied in allometric and trait databases [e.g., @kattge2020]. We considered this approach (i.e., $MAD \cdot 7$) conservative, and necessary given the presence of clearly erroneous data.
+The approach and impact thereof are visualized in the supplementary information (Section Data quality control).
 <!-- which were processed with the bespoke software datacleanr by Hurley et al., submitted), -->
 <!-- Characteristics of street trees and their respective environments were collated from the city's tree inventory, as well as various elements of the Berlin Environment Atlas, which are openly available via https://daten.berlin.de and curated by the city's government. -->
 <!-- The data used from the inventory includes species, location, age, and diameter at breast height (dbh). -->
@@ -728,7 +729,7 @@ This also includes the collection and porivison of standardized (meta) data for 
 
 
 
-## Conclusion
+# Conclusion
 
 We showcased the application of a GAM-driven analyses to identify the sensitivity of urban tree growth to environmental and urban drivers in a space-for-time framework. 
 The extensive data coverage (tree inventory and covariates) allowed us to account for location-specific factors and identify the most influences on growth potential (i.e., maximum diameter) for individual species.
@@ -750,10 +751,7 @@ Despite being a case study for a single city, we believe our work may provide a 
 # Acknowledgements
 
 AGH and IH were supported through the Helmholtz-Climate-Initiative (HI-CAM), funded by the Helmholtz Initiative and Networking Fund; the authors are responsible for the content of this publication.
-
-# Author Contributions
-
-
+We thank Prof Dr Christoph Schneider for providing dendrochronological data and pertinent discussion on its use.
 
 
 
