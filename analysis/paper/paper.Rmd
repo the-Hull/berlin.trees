@@ -129,7 +129,7 @@ In particular, the availability of soil water is critical for cell expansion [e.
 <!-- 	- Compounded by decreased Precip in cities?! Moser reischl? -->
 
 
-Several urban tree species have been shown to have tendencies of enhanced growth rates and/or productivity compared to rural conspecifics [e.g., @briber2015; @obrien2012], which is typically attributed to increased temperatures [@jia2018; @pretzsch2017], however, a broad range of effect sizes and signs (i.e., reduced growth) specific to species and location are also commonly reported alongside.
+Several urban tree species have been shown to have tendencies of enhanced growth rates and/or productivity compared to rural conspecifics [e.g., @briber2015; @obrien2012], which is typically attributed to increased temperatures [@jia2018; @pretzsch2017], however, a broad range of effect sizes and signs (i.e., reduced growth) specific to species and location are also commonly reported alongside [e.g., @berland2020].
 For instance, @zhao2016 showed that productivity rates, as a proxy for growth, increased within urban clusters as urbanization intensifies using remotely sensed vegetation indices.
 Furthermore, @moser-reischl2019a identified positive associations between air temperature and radial growth for two species commonly selected by urban planners (*Tilia  cordata* MilL., *Rubinia pseudoacacia*) in Munich.
 <!-- [@briber2015; @obrien2012] … generally increased growth -->
@@ -488,7 +488,6 @@ Deviance for the Gamma distribution is calculated as
 
 \begin{equation}
 D(y, \hat{\mu}) = 2 \cdot \left\{ \frac{y−\hat{\mu}}{\hat{\mu}}  − log(\frac{y}{\hat{\mu}}) \right\}
-
 (\#eq:gam-deviance)
 \end{equation}
 

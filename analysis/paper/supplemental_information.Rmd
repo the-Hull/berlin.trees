@@ -10,6 +10,7 @@ output:
     bookdown::html_document2:
       fig_caption: yes
       toc: true
+toc-title: "Table of Contents"
 header-includes:
 - \usepackage{booktabs}
 - \usepackage{longtable}
@@ -172,5 +173,5 @@ knitr::include_graphics(here::here("analysis/figures/fig-gam-spatial_moran_compa
 
 ```
 
-
+# References
 
