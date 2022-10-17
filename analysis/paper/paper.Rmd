@@ -2,8 +2,9 @@
 title: "Assessing the impact of urban heating on tree growth in Berlin with open inventory and environmental data"
 author:
   - Alexander G. Hurley$^{a *}$, Ingo Heinrich$^{a,b}$, ...
-  - $^a$ *Geoforschungszentrum Potsdam, Section 4.3, Potsdam, Germany*
+  - $^a$ *Geoforschungszentrum Potsdam, Climate Dynamics and Landscape Evolution, Potsdam, Germany*
   - $^b$ *Deutsches Archäologisches Institut, Dendroclimatology, Berlin, Germany*
+  - $^c$ *Geography Department, Humboldt-Universität zu Berlin, Berlin, Germany*
   - "* Corresponding author: hurley@gfz-potsdam.de"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 always_allow_html: true
@@ -111,7 +112,7 @@ It is typically related to the structure and density of urban land-use [@kuttler
 In temperate climates, this results in strongest UHI magnitudes at night [cf. @fenner2014].
 For example, Berlin features the most intense UHI in Germany due to its large extent and development intensity  with an average air temperature increase of around 5 K at night-times (2001-2010) with maxima of up to 11 K [@fenner2014] in urban $vs.$ rural areas.
 
-**Delete**? Increased air temperatures due to UHIs can affect tree growth through altering several physiological processes across plant organs directly or indirectly [@dusenge2019].
+Increased air temperatures due to UHIs can affect tree growth through altering several physiological processes across plant organs directly or indirectly [@dusenge2019].
 Generally, reaction times at cellular level increase with temperature up to a maximum, after which a drop in enzymatic activity results in a species-dependent optimum curve  [@arcus2016; @parent2010]. 
 In leaves this optimum response is reflected in the net assimilation rate of carbohydrates, as a balance of photosynthesis and respiration, with losses exceeding gains more rapidly with increasing temperatures [@long1991].
 These responses vary between species [@tjoelker2001] as well as intra-specifically due to local acclimation, i.e., a shift of optimum temperature responses after prolonged exposure [@yamori2014], and threshold temperatures before tissue damage occurs [for review see @geange2021].
@@ -311,7 +312,7 @@ Note that only street trees in urban, not rural areas or within green spaces, we
 Implausible observations, possibly from erroneous data entry, were removed.
 Additional manual data processing for quality control was done with a bespoke software  `datacleanr` by [@hurley2022], where obvious outliers or clearly interpolated data were removed.
 The latter was deemed necessary, as several observations in multiple city districts were derived by linear relationships (i.e., straight-line), which do not capture the ontogenic growth dynamics of trees, and leave no variation related to variables other than age.
-All of these operations were recorded, and can be viewed and reproduced via the supplementary code.
+All of these operations were recorded, and can be viewed and reproduced via the code linked in the supplementary material S1.
 Lastly, observations with unlikely diameter-age combinations were identified via the residuals of a generalized linear model between diameter and age with a Gamma log-link distribution: if individual residuals exceeded seven times the median absolute deviation of all residuals, they were removed.
 The median absolute deviation (MAD) is comparable to the inter-quartile range, yet more robust to outliers:
 
@@ -320,8 +321,8 @@ The median absolute deviation (MAD) is comparable to the inter-quartile range, y
   (\#eq:mad)
 \end{equation}
 
-Similar cut-off approaches are frequently applied in allometric and trait databases [e.g., @kattge2020]. We considered this approach (i.e., $MAD \cdot 7$) conservative, and necessary given the presence of clearly erroneous data.
-The approach and impact thereof are visualized in the supplementary information (Section Data quality control).
+Similar cut-off approaches are frequently applied in allometric and trait databases. We considered this approach (i.e., $MAD \cdot 7$) conservative, and necessary given the presence of clearly erroneous data.
+The approach and impact thereof are visualized in the supplementary material S1 (Section Data quality control).
 <!-- which were processed with the bespoke software datacleanr by Hurley et al., submitted), -->
 <!-- Characteristics of street trees and their respective environments were collated from the city's tree inventory, as well as various elements of the Berlin Environment Atlas, which are openly available via https://daten.berlin.de and curated by the city's government. -->
 <!-- The data used from the inventory includes species, location, age, and diameter at breast height (dbh). -->
@@ -428,7 +429,7 @@ g(\Delta r_i) =  f(year_i) + f_j(cambial~age_i)  + c_{i,j} + \tau_{i,k} + e_i
 
 where $g()$ is a log-link for $\Delta r \sim Gamma$, $\Delta r$ is the annual radial increment for observation $i$. 
 A global temporal (by year) and time-dependent ($j$, $\leq 1960$ or $>1960$) trend in cambial age were implemented with thin plate regression splines (default smoothing function in `mgcv`); $c_j$ is a time-group dependent intercept, while $tau$ represents a matrix of random effect coefficients for $k$ species to account for differences in growth patterns, and $e_i = \phi e_{i−1} + \epsilon_i$.
-A $3^{rd}$-order autocorrelation-moving average (ARMA) correlation structure was applied (i.e., $\phi(3,1)$) to account for the dependency of $\Delta r$ across years for each tree, as is frequently the case for tree growth [e.g., see @Fritts1989]; the detailed implementation for this model is given in the supplemental material code.
+A $3^{rd}$-order autocorrelation-moving average (ARMA) correlation structure was applied (i.e., $\phi(3,1)$) to account for the dependency of $\Delta r$ across years for each tree, as is frequently the case for tree growth [e.g., see @Fritts1989]; the detailed implementation for this model is given in code linked to in the supplemental material S1.
 $\Delta r$ was then derived for a range of cambial ages, and averaged for both time groups, allowing a comparison of recent to earlier growth.
 We acknowledge that tree cores obtained at breast height do not represent absolute tree age.
 However, here they serve as a proxy for growth between young ($\gtrapprox 1960$) and older individuals to contextualize growth patterns inferred from the larger-scale tree inventory.
@@ -475,7 +476,7 @@ Furthermore, we implemented the interaction between temperature and age (i.e., $
 The functions $f_j$ are for species-specific smooths [i.e., with individual smoothness penalties and functional shapes as detailed by @pedersen2019].
 The covariates for planting bed area and soil nutrient availability were log transformed to account for their skewed distribution, improving the estimation of coefficients for their respective basis functions.
 Note, that Equation$~$\@ref(eq:gam-age) was considered as the appropriate null model for interpretations, and a model including all covariates and the temperature-age interaction was tested as a saturated model.
-Models were implemented with `mgcv::bam()` [@wood2017a;@li2020a] and readers are referred to the detailed implementation in the supplemental material code.
+Models were implemented with `mgcv::bam()` [@wood2017a;@li2020a] and readers are referred to the detailed implementation in the code linked to in the supplemental material.
 Considering all combinations of (excess) heat measures and covariates (with point, as well as 150/300$~m$ extractions), a total of `r nrow(drake::readd(bam_dbh_filtered))` models were applied.
 With these models, we derived age and species dependent $DBH$ averages across a temperature measure from predicted values in 5-year age groups starting at 30, 45, 60, 75, 90
 
@@ -657,8 +658,8 @@ We lack data on demographic differences in management to confirm this, and ackno
 Generally, the ten investigated species and cultivars showed consistent responses in sign, but differed substantially in magnitude, modulated by age.
 *Aesculum hippocastanum* , *Tilia intermedia*, *T. intermedia* 'pallida' and showed greatest absolute growth at high temperatures at younger (30-35) as well as older ages (60-65).
 The drought tolerance and performance under high temperatures is well documented for the latter two and features in tree selection frameworks, such as species climate matrices in @roloff2009 and in @brune2016, where several studies investigating (hydro)climatic sensitivity were summarized.
-Contrastingly, *Acer pseudoplatanus* showed decreased absolute growth with higher temperatures; this corresponds with their classification as *not very suitable* under [@roloff2009].
-*Platanus acerifolia* and *Acer platanoides* are considered *suitable* and *very suitable* under @roloff2009, yet show the greatest decline with temperatures here.
+Contrastingly, *Acer pseudoplatanus* showed decreased absolute growth with higher temperatures; this corresponds with their classification as *not very suitable* according to @roloff2009.
+*Platanus acerifolia* and *Acer platanoides* are considered *suitable* and *very suitable* (@roloff2009), yet show the greatest decline with temperatures here.
 Indeed, several studies reviewed in @brune2016 highlight *A. platanoides* as drought-tolerant.
 Such contrasting indications are also reported for *A. pseudoplatanus*, and even report *A. hippocastanum* as only moderately tolerant, despite performing best here. 
 These differences may be due to idiosyncrasies of planting sites, such as low soil volume and increased potential for water stress, (long-term) interactions with pathogens and herbivores [e.g., @meineke2018], or perhaps related to data quality.
@@ -731,7 +732,7 @@ This also includes the collection and porivison of standardized (meta) data for 
 # Conclusion
 
 We showcased the application of a GAM-driven analyses to identify the sensitivity of urban tree growth to environmental and urban drivers in a space-for-time framework. 
-The extensive data coverage (tree inventory and covariates) allowed us to account for location-specific factors and identify the most influences on growth potential (i.e., maximum diameter) for individual species.
+The extensive data coverage (tree inventory and covariates) allowed us to account for location-specific influences and identify the factors with strongest impacts on growth potentials (i.e., maximum diameter) for individual species.
 The identified age-dependent shift of temperature sensitivity, which was fairly consistent across species, as well as inter-specific differences thereof, will inform and guide further research. 
 Notably, increasing the confidence in and coverage of data collection on less abundant species is key to maximize the potential of the approach developed here.
 <!-- Lastly, together with recommendations for tree selection and infrastructure management, we hope to contribute to the design of best-practices for adaptation and mitigation using street trees with the flexible yet simple analyses approach (regarding data requirements) taken here. -->
@@ -750,9 +751,11 @@ Despite being a case study for a single city, we believe our work may provide a 
 # Acknowledgements
 
 AGH and IH were supported through the Helmholtz-Climate-Initiative (HI-CAM), funded by the Helmholtz Initiative and Networking Fund; the authors are responsible for the content of this publication.
-We thank Prof Dr Christoph Schneider for providing dendrochronological data and pertinent discussion on its use.
+We thank Prof Dr Christoph Schneider for providing dendrochronological data and pertinent discussion on its use, as well as Berlin's senate for providing FAIR data and support for its use.
 
+# Supplementary material
 
+**File S1**: html document outlining 1) code and reproducibility for this study, 2) data quality control, and 3) handling of spatial autocorrelation.
 
 <!-- <!-- The following line inserts a page break  --> 
 `r pgbreak()`

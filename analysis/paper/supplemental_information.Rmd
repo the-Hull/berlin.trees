@@ -124,7 +124,7 @@ knitr::include_graphics(here::here("analysis/figures/diagnostic_01_model_data.pn
 
 # Spatial auto-correlation
 
-Exploratory analyses of (initial) model resiudals showed spatial auto-correlation was present in the structure of the inventory data (identified by correlation of x and y coordinates with residuals).
+Exploratory analyses of (initial) model residuals showed spatial auto-correlation was present in the structure of the inventory data (identified by correlation of x and y coordinates with residuals).
 Note that this was expected given that trees planted on the same road (and/or neighborhood, district) may share several features, such as planting time, species, adjacent urban fabric. 
 Thus, we included model features (i.e., dependent variables) in the model formulation to account for spatial auto-correlation. 
 This was achieved with isometric smoothing splines with basis derived from both x and y co-ordinates (i.e., interaction terms in the generalized additive model). 

@@ -1105,7 +1105,7 @@ plan <- drake::drake_plan(
     paper_word = rmarkdown::render(
         knitr_in("./analysis/paper/paper.Rmd"),
         output_dir = "./analysis/paper/",
-        output_file = file_out("paper_knit.docx"),
+        output_file = file_out("Hurley-et-al_UFUG_berlin-trees.docx"),
         # output_file = "./paper_knit.html",
         output_format = "bookdown::word_document2",
         quiet = TRUE
@@ -1122,7 +1122,7 @@ plan <- drake::drake_plan(
    si_html = rmarkdown::render(
        knitr_in("./analysis/paper/supplemental_information.Rmd"),
        output_dir = "./analysis/paper/",
-       output_file = file_out("supplemental_information.html"),
+       output_file = file_out("Hurley-et-al_UFUG_berlin-trees_SI.html"),
        output_format = "bookdown::html_document2",
        quiet = TRUE
    ),
