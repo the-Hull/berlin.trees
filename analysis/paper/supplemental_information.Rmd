@@ -1,8 +1,10 @@
 ---
 title: "Supplement to: Assessing the impact of urban heating on tree growth in Berlin with open inventory and environmental data"
 author:
-  - Alexander G. Hurley$^{a *}$, Ingo Heinrich$^a$
+  - Alexander G. Hurley$^{a *}$, Ingo Heinrich$^{a,b,c}$
   - $^a$ *Geoforschungszentrum Potsdam, Section 4.3, Germany*
+  - $^b$ *Deutsches Archäologisches Institut, Dendroclimatology, Berlin, Germany*
+  - $^c$ *Geography Department, Humboldt-Universität zu Berlin, Berlin, Germany*
   - "* Corresponding author: hurley@gfz-potsdam.de"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 always_allow_html: true
@@ -74,15 +76,14 @@ library(kableExtra)
 # Code and reproducibility
 
 
-The code to reproduce the paper and its analyses, as well as this supplement, are found at [https://github.com/the-Hull/berlin.trees/](), with permanently archived versions at **DOI**.
-The project relies on the workflow management tool `drake`, where all analyses steps are maintained within the file `berlin.trees/R/plan.R`, with necessary functions in `berlin.trees/R/functions.R`.
+The code to reproduce the paper and its analyses, as well as this supplement, are found at [https://github.com/the-Hull/berlin.trees/](), with a **permanently archived version at [https://doi.org/10.5281/zenodo.7217031]()**.  
+The project relies on the workflow management tool `drake`, where all analyses steps are maintained within the file `berlin.trees/R/plan.R`, with functions representing actions/steps in `berlin.trees/R/functions.R`.
 The code downloads most necessary files to execute the analyses.
 However, some files were too large for tracking with version control (i.e., `git` on GitHub); thus, should any issues arise with executing the code, please contact the corresponding author.
 
 Further information on `drake` is available at:  
 - William Michael Landau, (2018). The drake R package: a pipeline toolkit for
-  reproducibility and high-performance computing. **Journal of Open Source Software, 3(21)**,
-  550, https://doi.org/10.21105/joss.00550
+  reproducibility and high-performance computing. **Journal of Open Source Software, 3(21)**, 550, https://doi.org/10.21105/joss.00550
 
 
 # Data quality control for street tree inventory

@@ -3584,6 +3584,7 @@ plot_temp_maps <- function(landsat,
     rn[1] <- floor(rn[1])
     rn[2] <- ceiling(rn[2])
 
+
     p_envat_night  <- ggplot2::ggplot() +
 
 
@@ -3669,7 +3670,7 @@ plot_temp_maps <- function(landsat,
         ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
 
         ggplot2::scale_fill_distiller(palette = "RdBu",
-                                      # rescaler = mid_rescaler(),
+                                      rescaler = mid_rescaler(),
                                       na.value = "transparent")   +
 
 
@@ -3726,7 +3727,7 @@ plot_temp_maps <- function(landsat,
         ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
 
         ggplot2::scale_fill_distiller(palette = "RdBu",
-                                      # rescaler = mid_rescaler(),
+                                      rescaler = mid_rescaler(),
                                       na.value = "transparent")   +
 
         # ggplot2::scale_fill_viridis_c(option = "plasma", na.value = "transparent",
@@ -3780,7 +3781,7 @@ plot_temp_maps <- function(landsat,
         ggplot2::coord_sf(xlim = xlim, ylim = ylim) +
 
         ggplot2::scale_fill_distiller(palette = "RdBu",
-                                      # rescaler = mid_rescaler(),
+                                      rescaler = mid_rescaler(),
                                       na.value = "transparent")   +
 
         # ggplot2::scale_fill_viridis_c(option = "plasma", na.value = "transparent",
@@ -3839,7 +3840,8 @@ FFGGHH
         p_list$p_urbclim_night +
 
 
-        plot_layout(design = layout, heights = 1/3)
+        plot_layout(design = layout, heights = 1/3) +
+        theme(plot.margin = margin(r = 13))
 
 
     tiff(filename = file, width = width, height = height, res = dpi, units = "cm")
@@ -3849,7 +3851,7 @@ FFGGHH
     print(p_map)
     grid::grid.text(gp = gp, "UrbClim", x = 0.03, y = 1/3 * 0.5, rot = 90)
     grid::grid.text(gp = gp, "Berlin EnvAT", x = 0.03, y = 1/3 * 0.5 + 1/3, rot = 90)
-    grid::grid.text(gp = gp, "LandSat", x = 0.03, y = 1/3 * 0.5 + 2 * 1/3, rot = 90)
+    grid::grid.text(gp = gp, "MODIS", x = 0.03, y = 1/3 * 0.5 + 2 * 1/3, rot = 90)
 
     grid::grid.text(gp = gp, "Morning (0400)", y = 0.03, x = 1/3 * 0.5)
     grid::grid.text(gp = gp, "Day / Afternoon (1400)", y = 0.03, x = 1/3 * 0.5 + 1/3)
@@ -4509,7 +4511,7 @@ make_deviance_plot <- function(deviance_list,
                             name = c(
                                 "bold(No~Temperature)",
                                 "bold(Urbclim)",
-                                "bold(Landsat)",
+                                "bold(MODIS)",
                                 "bold(Berlin~EnvAt)"
                             ),
                             x = c(4, 9, 11.5, 14),
@@ -4519,7 +4521,7 @@ make_deviance_plot <- function(deviance_list,
                        name = c(
                            "bold(No~Temperature)",
                            "bold(Urbclim)",
-                           "bold(Landsat)",
+                           "bold(MODIS)",
                            "bold(Berlin~EnvAt)"
                        ),
                        x = c(4, 9, 11.5, 14),
@@ -5408,7 +5410,14 @@ plot_dbh_temp_comparison <- function(
                       species_corrected = ifelse(
                           species_corrected == "A. pseudo- platanus",
                           "A. pseudoplatanus",
-                          species_corrected)) %>%
+                          species_corrected),
+                      species_corrected = ifelse(
+                          species_corrected == "A. hippo- castanum",
+                          "A. hippocastanum",
+                          species_corrected),
+
+
+                      ) %>%
         dplyr::arrange(uhi_tempvar) %>%
         tidyr::drop_na(temp_degc) %>%
         dplyr::group_by(species_corrected, age_group) %>%
@@ -5548,7 +5557,8 @@ plot_dbh_temp_comparison <- function(
                     widths = c(0.7, 0.3)) &
         theme(legend.position='bottom',
               legend.box = 'vertical',
-              legend.text = element_text(face = "italic"))
+              legend.margin = margin(),
+              legend.text = element_text(face = "italic", size = 7))
 
     ggsave(filename = file,
            plot = p_plot,
@@ -6544,6 +6554,7 @@ shorten_species <- function(species){
 
             spec <- paste(x[2:length(x)], collapse = " ")
             spec <- ifelse(spec == "pseudoplatanus", "pseudo- platanus", spec)
+            spec <- ifelse(spec == "hippocastanum", "hippo- castanum", spec)
 
             return(spec)
         })

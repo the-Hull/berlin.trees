@@ -9,8 +9,10 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Alexander G. Hurley^{a *}, Ingo Heinrich^a" />
+<meta name="author" content="Alexander G. Hurley^{a *}, Ingo Heinrich^{a,b,c}" />
 <meta name="author" content="^a Geoforschungszentrum Potsdam, Section 4.3, Germany" />
+<meta name="author" content="^b Deutsches Archäologisches Institut, Dendroclimatology, Berlin, Germany" />
+<meta name="author" content="^c Geography Department, Humboldt-Universität zu Berlin, Berlin, Germany" />
 <meta name="author" content="* Corresponding author: hurley@gfz-potsdam.de" />
 
 
@@ -192,10 +194,12 @@ summary {
 
 
 <h1 class="title toc-ignore">Supplement to: Assessing the impact of urban heating on tree growth in Berlin with open inventory and environmental data</h1>
-<h4 class="author">Alexander G. Hurley<span class="math inline">\(^{a *}\)</span>, Ingo Heinrich<span class="math inline">\(^a\)</span></h4>
+<h4 class="author">Alexander G. Hurley<span class="math inline">\(^{a *}\)</span>, Ingo Heinrich<span class="math inline">\(^{a,b,c}\)</span></h4>
 <h4 class="author"><span class="math inline">\(^a\)</span> <em>Geoforschungszentrum Potsdam, Section 4.3, Germany</em></h4>
+<h4 class="author"><span class="math inline">\(^b\)</span> <em>Deutsches Archäologisches Institut, Dendroclimatology, Berlin, Germany</em></h4>
+<h4 class="author"><span class="math inline">\(^c\)</span> <em>Geography Department, Humboldt-Universität zu Berlin, Berlin, Germany</em></h4>
 <h4 class="author">* Corresponding author: <a href="mailto:hurley@gfz-potsdam.de" class="email">hurley@gfz-potsdam.de</a></h4>
-<h4 class="date">17 October, 2022</h4>
+<h4 class="date">24 September, 2023</h4>
 
 </div>
 
@@ -216,14 +220,13 @@ text-align: justify}
 <!-- This is the format for text comments that will be ignored during renderings. Do not put R code in these comments because it will not be ignored. -->
 <div id="code-and-reproducibility" class="section level1" number="1">
 <h1><span class="header-section-number">1</span> Code and reproducibility</h1>
-<p>The code to reproduce the paper and its analyses, as well as this supplement, are found at <a href>https://github.com/the-Hull/berlin.trees/</a>, with permanently archived versions at <strong>DOI</strong>.
-The project relies on the workflow management tool <code>drake</code>, where all analyses steps are maintained within the file <code>berlin.trees/R/plan.R</code>, with necessary functions in <code>berlin.trees/R/functions.R</code>.
+<p>The code to reproduce the paper and its analyses, as well as this supplement, are found at <a href>https://github.com/the-Hull/berlin.trees/</a>, with a <strong>permanently archived version at <a href>https://doi.org/10.5281/zenodo.7217031</a></strong>.<br />
+The project relies on the workflow management tool <code>drake</code>, where all analyses steps are maintained within the file <code>berlin.trees/R/plan.R</code>, with functions representing actions/steps in <code>berlin.trees/R/functions.R</code>.
 The code downloads most necessary files to execute the analyses.
 However, some files were too large for tracking with version control (i.e., <code>git</code> on GitHub); thus, should any issues arise with executing the code, please contact the corresponding author.</p>
 <p>Further information on <code>drake</code> is available at:<br />
 - William Michael Landau, (2018). The drake R package: a pipeline toolkit for
-reproducibility and high-performance computing. <strong>Journal of Open Source Software, 3(21)</strong>,
-550, <a href="https://doi.org/10.21105/joss.00550" class="uri">https://doi.org/10.21105/joss.00550</a></p>
+reproducibility and high-performance computing. <strong>Journal of Open Source Software, 3(21)</strong>, 550, <a href="https://doi.org/10.21105/joss.00550" class="uri">https://doi.org/10.21105/joss.00550</a></p>
 </div>
 <div id="data-quality-control-for-street-tree-inventory" class="section level1" number="2">
 <h1><span class="header-section-number">2</span> Data quality control for street tree inventory</h1>

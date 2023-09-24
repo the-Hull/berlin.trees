@@ -641,7 +641,7 @@ plan <- drake::drake_plan(
        age_expression = age_expr,
        prediction_range = "within",
        base_size = 12,
-       file = paste0(base_path_fig, "06_double_gam-dbh_temp-day2007_lcz6.png"),
+       file = paste0(base_path_fig, "06_double_gam-dbh_temp-day2007_lcz6.tiff"),
        height = 0.75 * journal_fig_width_double,
        width = journal_fig_width_double,
        dpi = 300),
